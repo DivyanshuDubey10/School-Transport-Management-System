@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import messagebox
 from database import connect_database
+from ui.admin_dashboard import AdminDashboard
 
 
 class LoginWindow:
@@ -90,7 +91,10 @@ class LoginWindow:
         )
         admin = cursor.fetchone()
         if admin:
-            messagebox.showinfo("Success", "Login Sucessful!")
+           messagebox.showinfo("Success", "Login Successful!")
+           self.window.destroy()
+           dashboard = AdminDashboard()
+           dashboard.run()
         else:
             messagebox.showerror("Error", "Invalid username or password.")
 
