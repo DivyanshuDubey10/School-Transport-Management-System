@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from ui.student_management import StudentManagement
+from ui.student_records import StudentRecords
 
 class AdminDashboard:
     
@@ -74,6 +75,15 @@ class AdminDashboard:
             command=self.open_student_management
         )
         self.student_button.pack(pady=10)
+        
+        # Student Records Button
+        self.student_records_button = ctk.CTkButton(
+            self.sidebar_frame,
+            text="Student Records",
+            width=170,
+            command=self.open_student_records
+        )
+        self.student_records_button.pack(pady=10, padx=20)
 
         # Parent Management Button
         self.parent_button = ctk.CTkButton(
@@ -110,6 +120,10 @@ class AdminDashboard:
     def open_student_management(self):
         student=StudentManagement()
         student.run()
+        
+    def open_student_records(self):
+        records=StudentRecords()
+        records.run()
         
     def run(self):
         self.window.mainloop()
