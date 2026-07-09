@@ -91,6 +91,51 @@ class StudentRecords:
         )
         self.update_button.pack(pady=10)
         
+        self.delete_button = ctk.CTkButton(
+            self.window,
+            text="Delete Student",
+            command = self.delete_student
+        )
+        self.delete_button.pack(pady=10)
+        
+    def delete_student(self):
+        
+        if not hasattr(self, "selected_student_id"):
+                messagebox.showerror(
+                    "Error",
+                    "Please select a student first."
+                )
+                return
+
+        confirm = messagebox.askyesno(
+            "Confirm Delete",
+            "Are you sure you want to delete this student?"
+        )
+
+        if not confirm:
+            return
+        
+        connection = connect_database()
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            DELETE FROM student
+            WHERE student_id = ?
+            """,
+            (self.selected_student_id,)
+        )
+
+        connection.commit()
+        connection.close()
+
+        messagebox.showinfo(
+            "Success",
+            "Student deleted successfully!"
+        )
+
+        self.load_students()
+                
     def open_update_window(self):
 
         if not hasattr(self, "selected_student_id"):
