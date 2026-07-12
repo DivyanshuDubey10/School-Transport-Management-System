@@ -1,6 +1,8 @@
 import customtkinter as ctk
 from ui.student_management import StudentManagement
 from ui.student_records import StudentRecords
+from ui.parent_management import ParentManagement
+from ui.parent_records import ParentRecords
 
 class AdminDashboard:
     
@@ -89,9 +91,19 @@ class AdminDashboard:
         self.parent_button = ctk.CTkButton(
             self.sidebar_frame,
             text="Parent Management",
-            width=170
-       )
+            width=170,
+            command=self.open_parent_management
+        )
         self.parent_button.pack(pady=10)
+        
+        # Student Record Button
+        self.parent_record_button = ctk.CTkButton(
+            self.sidebar_frame,
+            text="Parent Records",
+            width=170,
+            command=self.open_parent_records
+        )
+        self.parent_record_button.pack(pady="10")
 
         # Bus Management Button
         self.bus_button = ctk.CTkButton(
@@ -113,7 +125,7 @@ class AdminDashboard:
         self.logout_button = ctk.CTkButton(
             self.sidebar_frame,
             text="Logout",
-            width=170
+            width=170,
         )
         self.logout_button.pack(pady=10)
         
@@ -123,6 +135,14 @@ class AdminDashboard:
         
     def open_student_records(self):
         records=StudentRecords()
+        records.run()
+        
+    def open_parent_management(self):
+        parent=ParentManagement()
+        parent.run()
+        
+    def open_parent_records(self):
+        records=ParentRecords()
         records.run()
         
     def run(self):
