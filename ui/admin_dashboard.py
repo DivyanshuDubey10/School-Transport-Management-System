@@ -6,13 +6,26 @@ from ui.parent_records import ParentRecords
 
 class AdminDashboard:
     
-    def __init__(self):
-        self.window = ctk.CTk()
+    def __init__(self, master=None):
+        self.master = master
+        if master is None:
+            self.window = ctk.CTk()
+        else:
+            self.window = ctk.CTkToplevel(master)
+            # If we close the admin dashboard, we should quit the app
+            self.window.protocol("WM_DELETE_WINDOW", self.on_close)
+
         self.window.title("Admin Dashboard")
         self.window.geometry("900x600")
         self.window.resizable(False, False)
         
         self.create_widgets()
+        
+    def on_close(self):
+        if self.master:
+            self.master.destroy()
+        else:
+            self.window.destroy()
             
     def create_widgets(self):
         
@@ -130,21 +143,22 @@ class AdminDashboard:
         self.logout_button.pack(pady=10)
         
     def open_student_management(self):
-        student=StudentManagement()
+        student=StudentManagement(master=self.window)
         student.run()
         
     def open_student_records(self):
-        records=StudentRecords()
+        records=StudentRecords(master=self.window)
         records.run()
         
     def open_parent_management(self):
-        parent=ParentManagement()
+        parent=ParentManagement(master=self.window)
         parent.run()
         
     def open_parent_records(self):
-        records=ParentRecords()
+        records=ParentRecords(master=self.window)
         records.run()
         
     def run(self):
-        self.window.mainloop()
+        if not isinstance(self.window, ctk.CTkToplevel):
+            self.window.mainloop()
         

@@ -6,8 +6,11 @@ from ui.admin_dashboard import AdminDashboard
 
 class LoginWindow:
 
-    def __init__(self):
-        self.window = ctk.CTk()
+    def __init__(self, master=None):
+        if master is None:
+            self.window = ctk.CTk()
+        else:
+            self.window = ctk.CTkToplevel(master)
 
         self.window.title("School Transport Management System")
         self.window.geometry("900x600")
@@ -92,11 +95,15 @@ class LoginWindow:
         admin = cursor.fetchone()
         if admin:
            messagebox.showinfo("Success", "Login Successful!")
-           self.window.destroy()
-           dashboard = AdminDashboard()
+           if isinstance(self.window, ctk.CTk):
+               self.window.withdraw()
+           else:
+               self.window.destroy()
+           dashboard = AdminDashboard(master=self.window.master if isinstance(self.window, ctk.CTkToplevel) else self.window)
            dashboard.run()
         else:
             messagebox.showerror("Error", "Invalid username or password.")
 
     def run(self):
-        self.window.mainloop()
+        if not isinstance(self.window, ctk.CTkToplevel):
+            self.window.mainloop()

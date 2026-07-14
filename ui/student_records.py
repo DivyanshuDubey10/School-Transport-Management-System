@@ -9,8 +9,12 @@ from database import connect_database
 
 class StudentRecords:
     
-    def __init__(self):
-        self.window = ctk.CTk()
+    def __init__(self, master=None):
+        if master is None:
+            self.window = ctk.CTk()
+        else:
+            self.window = ctk.CTkToplevel(master)
+            
         self.window.title("Student Records")
         self.window.geometry("1200x900")
         self.window.resizable(True, True)
@@ -19,7 +23,8 @@ class StudentRecords:
         self.load_students()
         
     def run(self):
-        self.window.mainloop()
+        if not isinstance(self.window, ctk.CTkToplevel):
+            self.window.mainloop()
         
     def select_student(self, event):
         selected = self.students_table.focus()
@@ -41,6 +46,10 @@ class StudentRecords:
             font=("Arial", 28, "bold")
         )
         self.title.pack(pady=20)
+        
+        style = ttk.Style()
+        style.configure("Treeview", font=("Arial", 14), rowheight=35)
+        style.configure("Treeview.Heading", font=("Arial", 16, "bold"))
         
         self.students_table = ttk.Treeview(
             self.window,
@@ -73,15 +82,15 @@ class StudentRecords:
         self.students_table.heading("Route", text="Route ID")
         self.students_table.heading("Fee", text="Fee Status")
         
-        self.students_table.column("ID", width=60)
-        self.students_table.column("Name", width=180)
-        self.students_table.column("Class", width=80)
-        self.students_table.column("Parent", width=80)
-        self.students_table.column("Phone", width=120)
-        self.students_table.column("Address", width=200)
-        self.students_table.column("Bus", width=80)
-        self.students_table.column("Route", width=80)
-        self.students_table.column("Fee", width=120)
+        self.students_table.column("ID", width=80)
+        self.students_table.column("Name", width=220)
+        self.students_table.column("Class", width=100)
+        self.students_table.column("Parent", width=100)
+        self.students_table.column("Phone", width=150)
+        self.students_table.column("Address", width=300)
+        self.students_table.column("Bus", width=100)
+        self.students_table.column("Route", width=100)
+        self.students_table.column("Fee", width=150)
         
         self.students_table.pack(padx=20, pady=20, fill="both", expand=True)
         self.update_button = ctk.CTkButton(

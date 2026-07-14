@@ -5,8 +5,12 @@ from database import connect_database
 
 class ParentRecords:
     
-    def __init__(self):
-        self.window = ctk.CTk()
+    def __init__(self, master=None):
+        if master is None:
+            self.window = ctk.CTk()
+        else:
+            self.window = ctk.CTkToplevel(master)
+            
         self.window.title("Parent Records")
         self.window.geometry("1200x1000")
         self.window.resizable(True, True)
@@ -21,6 +25,10 @@ class ParentRecords:
             font=("Arial", 28,"bold")
         )
         self.title.pack(pady="20") 
+        
+        style = ttk.Style()
+        style.configure("Treeview", font=("Arial", 14), rowheight=35)
+        style.configure("Treeview.Heading", font=("Arial", 16, "bold"))
         
         self.parents_table = ttk.Treeview(
             self.window,
@@ -52,11 +60,11 @@ class ParentRecords:
         self.parents_table.heading("Address", text="Address")
         self.parents_table.heading("Username", text="Username")
         
-        self.parents_table.column("ID", width=60)
-        self.parents_table.column("Name", width=180)
-        self.parents_table.column("Phone", width=150)
-        self.parents_table.column("Address", width=220)
-        self.parents_table.column("Username", width=150)
+        self.parents_table.column("ID", width=100)
+        self.parents_table.column("Name", width=250)
+        self.parents_table.column("Phone", width=200)
+        self.parents_table.column("Address", width=350)
+        self.parents_table.column("Username", width=200)
         
         self.update_button = ctk.CTkButton(
             self.window,
@@ -207,7 +215,8 @@ class ParentRecords:
         connection.close()
         
     def run(self):
-        self.window.mainloop()
+        if not isinstance(self.window, ctk.CTkToplevel):
+            self.window.mainloop()
         
 
         

@@ -4,8 +4,12 @@ from database import connect_database
 
 class ParentManagement:
     
-    def __init__(self):
-        self.window= ctk.CTk()
+    def __init__(self, master=None):
+        if master is None:
+            self.window = ctk.CTk()
+        else:
+            self.window = ctk.CTkToplevel(master)
+            
         self.window.title("Parent Management")
         self.window.geometry("700x650")
         self.window.resizable(False, False)
@@ -142,5 +146,6 @@ class ParentManagement:
         self.address_entry.delete(0,"end")
 
     def run(self):
-        self.window.mainloop()
+        if not isinstance(self.window, ctk.CTkToplevel):
+            self.window.mainloop()
         

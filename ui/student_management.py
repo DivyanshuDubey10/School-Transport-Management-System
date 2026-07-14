@@ -5,13 +5,16 @@ from tkinter import ttk
 
 
 class StudentManagement:
-    def __init__(self):
-
-        self.window = ctk.CTk()
+    def __init__(self, master=None):
+        if master is None:
+            self.window = ctk.CTk()
+        else:
+            self.window = ctk.CTkToplevel(master)
+            
         self.window.title("Student Management")
-        self.window.geometry("1000x1000")
-        self.window.resizable(True, True)
-
+        self.window.geometry("800x800")
+        self.window.resizable(False, False)
+        
         self.create_widgets()
 
     def create_widgets(self):
@@ -242,4 +245,5 @@ class StudentManagement:
         self.route_id_entry.delete(0, "end")
 
     def run(self):
-        self.window.mainloop()
+        if not isinstance(self.window, ctk.CTkToplevel):
+            self.window.mainloop()
