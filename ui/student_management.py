@@ -90,23 +90,31 @@ class StudentManagement:
             self.window, text="Save Student", command=self.save_student
         )
         self.save_button.pack(pady=25)
-        
+
         # Student List Title
         self.list_label = ctk.CTkLabel(
-            self.window,
-            text="Student Records",
-            font=("Arial", 20, "bold")
+            self.window, text="Student Records", font=("Arial", 20, "bold")
         )
         self.list_label.pack(pady=10)
-        
+
         # Student Table
         self.students_table = ttk.Treeview(
             self.window,
-            columns=("ID","Name","Class","Parent","Phone","Address","Bus","Route","Fee"),
+            columns=(
+                "ID",
+                "Name",
+                "Class",
+                "Parent",
+                "Phone",
+                "Address",
+                "Bus",
+                "Route",
+                "Fee",
+            ),
             show="headings",
-            height=8
+            height=8,
         )
-        
+
         # Headings
         # Headings
         self.students_table.heading("ID", text="ID")
@@ -118,7 +126,7 @@ class StudentManagement:
         self.students_table.heading("Bus", text="Bus ID")
         self.students_table.heading("Route", text="Route ID")
         self.students_table.heading("Fee", text="Fee Status")
-        
+
         # Column Widths
         self.students_table.column("ID", width=50, anchor="center")
         self.students_table.column("Name", width=150)
@@ -129,14 +137,14 @@ class StudentManagement:
         self.students_table.column("Bus", width=70, anchor="center")
         self.students_table.column("Route", width=70, anchor="center")
         self.students_table.column("Fee", width=100, anchor="center")
-        
+
         self.students_table.pack(padx=10, pady=10, fill="both", expand=True)
         self.load_students()
-        
+
     def load_students(self):
         for row in self.students_table.get_children():
             self.students_table.delete(row)
-        
+
         connection = connect_database()
         cursor = connection.cursor()
         cursor.execute("SELECT * FROM student")
@@ -145,9 +153,9 @@ class StudentManagement:
 
         for student in students:
             self.students_table.insert("", "end", values=student)
-        
+
         connection.close()
-        
+
     def save_student(self):
 
         student_name = self.student_name_entry.get()
@@ -159,7 +167,7 @@ class StudentManagement:
         route_id = self.route_id_entry.get()
         fee_status = "Pending"
 
-    # Validation
+        # Validation
         if not student_name:
             messagebox.showerror("Error", "Student Name is required.")
             return
@@ -167,7 +175,7 @@ class StudentManagement:
         if not student_class:
             messagebox.showerror("Error", "Student Class is required.")
             return
- 
+
         if not parent_id:
             messagebox.showerror("Error", "Parent ID is required.")
             return
@@ -193,7 +201,7 @@ class StudentManagement:
         cursor = connection.cursor()
 
         cursor.execute(
-                """
+            """
                 INSERT INTO student
                 (
                     student_name,
@@ -207,25 +215,22 @@ class StudentManagement:
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (
-                    student_name,
-                    student_class,
-                    parent_id,
-                    phone,
-                    address,
-                    bus_id,
-                    route_id,
-                    fee_status
-                ),
-            )
+            (
+                student_name,
+                student_class,
+                parent_id,
+                phone,
+                address,
+                bus_id,
+                route_id,
+                fee_status,
+            ),
+        )
 
         connection.commit()
         self.load_students()
 
-        messagebox.showinfo(
-                "Success",
-                "Student added successfully!"
-            )
+        messagebox.showinfo("Success", "Student added successfully!")
         connection.close()
 
         self.student_name_entry.delete(0, "end")
