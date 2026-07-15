@@ -4,6 +4,7 @@ from ui.student_records import StudentRecords
 from ui.parent_management import ParentManagement
 from ui.parent_records import ParentRecords
 from ui.route_management import RouteManagement
+from ui.bus_management import BusManagement
 from ui.route_records import RouteRecords
 from ui.driver_management import DriverManagement
 from ui.driver_records import DriverRecords
@@ -126,7 +127,8 @@ class AdminDashboard:
         self.bus_button = ctk.CTkButton(
             self.sidebar_frame,
             text="Bus Management",
-            width=170
+            width=170,
+            command=self.open_bus_management
         )
         self.bus_button.pack(pady=10)
 
@@ -189,6 +191,10 @@ class AdminDashboard:
     def open_parent_records(self):
         records=ParentRecords(master=self.window)
         records.run()
+        
+    def open_bus_management(self):
+        bus_mgmt = BusManagement(master=self.window)
+        bus_mgmt.run()
         
     def open_route_management(self):
         route_mgmt = RouteManagement(master=self.window)
