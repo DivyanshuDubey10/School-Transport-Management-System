@@ -3,6 +3,8 @@ from ui.student_management import StudentManagement
 from ui.student_records import StudentRecords
 from ui.parent_management import ParentManagement
 from ui.parent_records import ParentRecords
+from ui.route_management import RouteManagement
+from ui.route_records import RouteRecords
 
 class AdminDashboard:
     
@@ -130,9 +132,19 @@ class AdminDashboard:
         self.route_button = ctk.CTkButton(
             self.sidebar_frame,
             text="Route Management",
-            width=170
+            width=170,
+            command=self.open_route_management
         )
         self.route_button.pack(pady=10)
+        
+        # Route Records Button
+        self.route_records_button = ctk.CTkButton(
+            self.sidebar_frame,
+            text="Route Records",
+            width=170,
+            command=self.open_route_records
+        )
+        self.route_records_button.pack(pady=10)
 
         # Logout Button
         self.logout_button = ctk.CTkButton(
@@ -157,6 +169,14 @@ class AdminDashboard:
     def open_parent_records(self):
         records=ParentRecords(master=self.window)
         records.run()
+        
+    def open_route_management(self):
+        route_mgmt = RouteManagement(master=self.window)
+        route_mgmt.run()
+        
+    def open_route_records(self):
+        route_recs = RouteRecords(master=self.window)
+        route_recs.run()
         
     def run(self):
         if not isinstance(self.window, ctk.CTkToplevel):
