@@ -71,6 +71,14 @@ def initialize_database():
                         FOREIGN KEY (route_id) REFERENCES route(route_id)
                     );
                     """)
+    cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS driver (
+                        driver_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        driver_name TEXT NOT NULL,
+                        driver_phone TEXT NOT NULL UNIQUE,
+                        address TEXT NOT NULL
+                    )
+                    """)
     connection.commit()
     connection.close()
 
