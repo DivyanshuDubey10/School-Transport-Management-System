@@ -6,6 +6,7 @@ from ui.parent_records import ParentRecords
 from ui.route_management import RouteManagement
 from ui.route_records import RouteRecords
 from ui.driver_management import DriverManagement
+from ui.driver_records import DriverRecords
 
 class AdminDashboard:
     
@@ -156,6 +157,15 @@ class AdminDashboard:
         )
         self.driver_button.pack(pady=10)
 
+        # Driver Records Button
+        self.driver_records_button = ctk.CTkButton(
+            self.sidebar_frame,
+            text="Driver Records",
+            width=170,
+            command=self.open_driver_records
+        )
+        self.driver_records_button.pack(pady=10)
+
         # Logout Button
         self.logout_button = ctk.CTkButton(
             self.sidebar_frame,
@@ -191,6 +201,10 @@ class AdminDashboard:
     def open_driver_management(self):
         driver_mgmt = DriverManagement(master=self.window)
         driver_mgmt.run()
+        
+    def open_driver_records(self):
+        driver_recs = DriverRecords(master=self.window)
+        driver_recs.run()
         
     def run(self):
         if not isinstance(self.window, ctk.CTkToplevel):
