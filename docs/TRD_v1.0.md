@@ -2,7 +2,7 @@
 **Project Name:** School Transport Management System (STMS)
 **Document Version:** 1.0 
 **Date:** July 2026
-**Author:** Lead Software Architect (30+ Years Exp.)
+**Author:** Lead Software Architect 
 
 ---
 
