@@ -15,7 +15,27 @@ class StudentManagement:
         self.window.geometry("800x800")
         self.window.resizable(False, False)
         
+        self.fetch_dropdown_data()
         self.create_widgets()
+        
+    def fetch_dropdown_data(self):
+        connection = connect_database()
+        cursor = connection.cursor()
+        
+        # Fetch parents
+        cursor.execute("SELECT parent_id, parent_name FROM parent")
+        self.parent_options = [f"{row[0]} - {row[1]}" for row in cursor.fetchall()]
+        if not self.parent_options: self.parent_options = [""]
+        
+        # Fetch routes and their assigned buses
+        cursor.execute("SELECT r.route_id, r.route_name, b.bus_number FROM route r LEFT JOIN bus b ON r.route_id = b.route_id")
+        self.route_options = []
+        for row in cursor.fetchall():
+            bus_str = f" (Bus: {row[2]})" if row[2] else " (No Bus)"
+            self.route_options.append(f"{row[0]} - {row[1]}{bus_str}")
+        if not self.route_options: self.route_options = [""]
+        
+        connection.close()
 
     def create_widgets(self):
 
@@ -43,50 +63,25 @@ class StudentManagement:
         )
         self.student_class_entry.pack(pady=10)
 
-        # Parent ID
-        self.parent_id_label = ctk.CTkLabel(self.window, text="Parent ID")
+        self.parent_id_label = ctk.CTkLabel(self.window, text="Parent")
         self.parent_id_label.pack()
 
-        self.parent_id_entry = ctk.CTkEntry(
-            self.window, width=300, placeholder_text="Enter Parent ID"
+        self.parent_id_entry = ctk.CTkComboBox(
+            self.window, width=300, values=self.parent_options
         )
         self.parent_id_entry.pack(pady=10)
+        self.parent_id_entry.set("Select Parent" if not self.parent_options[0] == "" else "No Parents Available")
 
-        # Phone
-        self.phone_label = ctk.CTkLabel(self.window, text="Phone")
-        self.phone_label.pack()
 
-        self.phone_entry = ctk.CTkEntry(
-            self.window, width=300, placeholder_text="Enter Phone Number"
-        )
-        self.phone_entry.pack(pady=10)
 
-        # Address
-        self.address_label = ctk.CTkLabel(self.window, text="Address")
-        self.address_label.pack()
-
-        self.address_entry = ctk.CTkEntry(
-            self.window, width=300, placeholder_text="Enter Address"
-        )
-        self.address_entry.pack(pady=10)
-
-        # Bus ID
-        self.bus_id_label = ctk.CTkLabel(self.window, text="Bus ID")
-        self.bus_id_label.pack()
-
-        self.bus_id_entry = ctk.CTkEntry(
-            self.window, width=300, placeholder_text="Enter Bus ID"
-        )
-        self.bus_id_entry.pack(pady=10)
-
-        # Route
-        self.route_id_label = ctk.CTkLabel(self.window, text="Route ID")
+        self.route_id_label = ctk.CTkLabel(self.window, text="Route")
         self.route_id_label.pack()
 
-        self.route_id_entry = ctk.CTkEntry(
-            self.window, width=300, placeholder_text="Enter Route ID"
+        self.route_id_entry = ctk.CTkComboBox(
+            self.window, width=300, values=self.route_options
         )
         self.route_id_entry.pack(pady=10)
+        self.route_id_entry.set("Select Route" if not self.route_options[0] == "" else "No Routes Available")
 
         # Save Button
         self.save_button = ctk.CTkButton(
@@ -150,7 +145,7 @@ class StudentManagement:
 
         connection = connect_database()
         cursor = connection.cursor()
-        cursor.execute("SELECT * FROM student")
+        cursor.execute("SELECT s.student_id, s.student_name, s.student_class, s.parent_id, p.phone, p.address, b.bus_id, s.route_id, s.fee_status FROM student s JOIN parent p ON s.parent_id = p.parent_id LEFT JOIN bus b ON s.route_id = b.route_id")
         students = cursor.fetchall()
         print(students)
 
@@ -163,12 +158,14 @@ class StudentManagement:
 
         student_name = self.student_name_entry.get()
         student_class = self.student_class_entry.get()
-        parent_id = self.parent_id_entry.get()
-        phone = self.phone_entry.get()
-        address = self.address_entry.get()
-        bus_id = self.bus_id_entry.get()
-        route_id = self.route_id_entry.get()
+        parent_selection = self.parent_id_entry.get()
+
+        route_selection = self.route_id_entry.get()
         fee_status = "Pending"
+        
+        # Extract IDs from the dropdown string, default to empty if not selected properly
+        parent_id = parent_selection.split(" - ")[0] if " - " in parent_selection else ""
+        route_id = route_selection.split(" - ")[0] if " - " in route_selection else ""
 
         # Validation
         if not student_name:
@@ -183,24 +180,11 @@ class StudentManagement:
             messagebox.showerror("Error", "Parent ID is required.")
             return
 
-        if not phone:
-            messagebox.showerror("Error", "Phone Number is required.")
-            return
-
-        if not address:
-            messagebox.showerror("Error", "Address is required.")
-            return
-
-        if not bus_id:
-            messagebox.showerror("Error", "Bus ID is required.")
-            return
-
         if not route_id:
             messagebox.showerror("Error", "Route ID is required.")
             return
 
         connection = connect_database()
-
         cursor = connection.cursor()
 
         cursor.execute(
@@ -210,21 +194,15 @@ class StudentManagement:
                     student_name,
                     student_class,
                     parent_id,
-                    phone,
-                    address,
-                    bus_id,
                     route_id,
                     fee_status
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?)
                 """,
             (
                 student_name,
                 student_class,
                 parent_id,
-                phone,
-                address,
-                bus_id,
                 route_id,
                 fee_status,
             ),
@@ -238,11 +216,8 @@ class StudentManagement:
 
         self.student_name_entry.delete(0, "end")
         self.student_class_entry.delete(0, "end")
-        self.parent_id_entry.delete(0, "end")
-        self.phone_entry.delete(0, "end")
-        self.address_entry.delete(0, "end")
-        self.bus_id_entry.delete(0, "end")
-        self.route_id_entry.delete(0, "end")
+        self.parent_id_entry.set("Select Parent")
+        self.route_id_entry.set("Select Route")
 
     def run(self):
         if not isinstance(self.window, ctk.CTkToplevel):

@@ -33,6 +33,7 @@ def initialize_database():
                        parent_name TEXT NOT NULL UNIQUE,
                        phone NUMBER NOT NULL UNIQUE,
                        address TEXT NOT NULL,
+                       pickup_point TEXT NOT NULL,
                        username TEXT NOT NULL,
                        password TEXT NOT NULL
                     )
@@ -43,15 +44,15 @@ def initialize_database():
                        bus_number TEXT NOT NULL UNIQUE,
                        driver_name TEXT NOT NULL,
                        driver_phone TEXT NOT NULL UNIQUE,
-                       capacity INTEGER NOT NULL
+                       capacity INTEGER NOT NULL,
+                       route_id INTEGER,
+                       FOREIGN KEY (route_id) REFERENCES route(route_id)
                    )
                    """)
     cursor.execute("""
                     CREATE TABLE IF NOT EXISTS route (
                         route_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        route_name TEXT NOT NULL,
-                        starting_point TEXT NOT NULL,
-                        ending_point TEXT NOT NULL
+                        route_name TEXT NOT NULL
                     )
                     """)
                    
@@ -61,23 +62,11 @@ def initialize_database():
                         student_name TEXT NOT NULL,
                         student_class TEXT NOT NULL,
                         parent_id INTEGER NOT NULL,
-                        phone TEXT NOT NULL UNIQUE,
-                        address TEXT NOT NULL,
-                        bus_id INTEGER NOT NULL,
                         route_id INTEGER NOT NULL,
                         fee_status TEXT NOT NULL,
                         FOREIGN KEY (parent_id) REFERENCES parent(parent_id)
-                        FOREIGN KEY (bus_id) REFERENCES bus(bus_id)
                         FOREIGN KEY (route_id) REFERENCES route(route_id)
                     );
-                    """)
-    cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS driver (
-                        driver_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        driver_name TEXT NOT NULL,
-                        driver_phone TEXT NOT NULL UNIQUE,
-                        address TEXT NOT NULL
-                    )
                     """)
     connection.commit()
     connection.close()

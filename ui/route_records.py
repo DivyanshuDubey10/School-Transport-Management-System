@@ -38,9 +38,7 @@ class RouteRecords:
             self.window,
             columns=(
                 "ID",
-                "Route Name",
-                "Starting Point",
-                "Ending Point"
+                "Route Name"
             ),
             show="headings",
             height=15
@@ -59,13 +57,9 @@ class RouteRecords:
         )
         self.routes_table.heading("ID", text="ID")
         self.routes_table.heading("Route Name", text="Route Name")
-        self.routes_table.heading("Starting Point", text="Starting Point")
-        self.routes_table.heading("Ending Point", text="Ending Point")
         
         self.routes_table.column("ID", width=100)
-        self.routes_table.column("Route Name", width=250)
-        self.routes_table.column("Starting Point", width=300)
-        self.routes_table.column("Ending Point", width=300)
+        self.routes_table.column("Route Name", width=500)
         
         self.update_button = ctk.CTkButton(
             self.window,
@@ -144,17 +138,6 @@ class RouteRecords:
         self.name_entry.pack(pady=5)
         self.name_entry.insert(0, self.selected_route[1])
 
-        # Starting Point
-        ctk.CTkLabel(self.update_window, text="Starting Point").pack()
-        self.start_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.start_entry.pack(pady=5)
-        self.start_entry.insert(0, self.selected_route[2])
-
-        # Ending Point
-        ctk.CTkLabel(self.update_window, text="Ending Point").pack()
-        self.end_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.end_entry.pack(pady=5)
-        self.end_entry.insert(0, self.selected_route[3])
 
         # Save Button
         self.save_button = ctk.CTkButton(
@@ -166,10 +149,8 @@ class RouteRecords:
 
     def update_route(self):
         route_name = self.name_entry.get()
-        starting_point = self.start_entry.get()
-        ending_point = self.end_entry.get()
 
-        if not all([route_name, starting_point, ending_point]):
+        if not route_name:
             messagebox.showerror("Error", "All fields are required.")
             return
 
@@ -180,10 +161,10 @@ class RouteRecords:
             cursor.execute(
                 """
                 UPDATE route
-                SET route_name = ?, starting_point = ?, ending_point = ?
+                SET route_name = ?
                 WHERE route_id = ?
                 """,
-                (route_name, starting_point, ending_point, self.selected_route_id)
+                (route_name, self.selected_route_id)
             )
             connection.commit()
             messagebox.showinfo("Success", "Route updated successfully!")
@@ -202,7 +183,7 @@ class RouteRecords:
         connection = connect_database()
         cursor = connection.cursor()
         
-        cursor.execute("SELECT route_id, route_name, starting_point, ending_point FROM route")
+        cursor.execute("SELECT route_id, route_name FROM route")
         routes = cursor.fetchall()
         
         for route in routes:

@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import messagebox
+import sqlite3
 from database import connect_database
 
 class ParentManagement:
@@ -91,6 +92,19 @@ class ParentManagement:
         )
         self.address_entry.pack(pady=10)
         
+        self.pickup_label = ctk.CTkLabel(
+            self.window,
+            text="Pickup Point"
+        )
+        self.pickup_label.pack()
+
+        self.pickup_entry = ctk.CTkEntry(
+            self.window,
+            width=300,
+            placeholder_text="Enter Pickup Point"
+        )
+        self.pickup_entry.pack(pady=10)
+        
         self.save_button = ctk.CTkButton(
             self.window,
             text="Save Parent",
@@ -104,6 +118,7 @@ class ParentManagement:
         password = self.password_entry.get()
         phone = self.phone_entry.get()
         address = self.address_entry.get()
+        pickup_point = self.pickup_entry.get()
         
         if not parent_name:
             messagebox.showerror("Error", "Parent Name is required.")
@@ -124,26 +139,36 @@ class ParentManagement:
         if not address:
             messagebox.showerror("Error", "Address is required.")
             return
+            
+        if not pickup_point:
+            messagebox.showerror("Error", "Pickup Point is required.")
+            return
+            
         connection = connect_database()
         cursor = connection.cursor()
-        cursor.execute (
-            
-            """ 
-            INSERT INTO parent (parent_name, username, password, phone, address)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (parent_name, username, password, phone, address)
-        )
-        connection.commit()
-        connection.close()
-        messagebox.showinfo(
-             "Success", "Parent information saved successfully."
+        try:
+            cursor.execute (
+                """ 
+                INSERT INTO parent (parent_name, username, password, phone, address, pickup_point)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (parent_name, username, password, phone, address, pickup_point)
             )
-        self.parent_name_entry.delete(0,"end")
+            connection.commit()
+            messagebox.showinfo(
+                 "Success", "Parent information saved successfully."
+            )
+            
+            self.parent_name_entry.delete(0, 'end')
+        except sqlite3.IntegrityError:
+            messagebox.showerror("Error", "Parent Name or Phone already exists in the system!")
+        finally:
+            connection.close()
         self.username_entry.delete(0,"end")
         self.password_entry.delete(0,"end")
         self.phone_entry.delete(0,"end")
         self.address_entry.delete(0,"end")
+        self.pickup_entry.delete(0,"end")
 
     def run(self):
         if not isinstance(self.window, ctk.CTkToplevel):

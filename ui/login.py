@@ -2,6 +2,7 @@ import customtkinter as ctk
 from tkinter import messagebox
 from database import connect_database
 from ui.admin_dashboard import AdminDashboard
+from ui.parent_dashboard import ParentDashboard
 
 
 class LoginWindow:
@@ -88,21 +89,40 @@ class LoginWindow:
         connection = connect_database()
         cursor = connection.cursor()
         
+        # Check Admin first
         cursor.execute(
             "SELECT * FROM admin WHERE USERNAME = ? AND password = ?",
             (username, password)
         )
         admin = cursor.fetchone()
         if admin:
-           messagebox.showinfo("Success", "Login Successful!")
+           messagebox.showinfo("Success", "Login Successful as Admin!")
            if isinstance(self.window, ctk.CTk):
                self.window.withdraw()
            else:
                self.window.destroy()
            dashboard = AdminDashboard(master=self.window.master if isinstance(self.window, ctk.CTkToplevel) else self.window)
            dashboard.run()
-        else:
-            messagebox.showerror("Error", "Invalid username or password.")
+           return
+
+        # Check Parent
+        cursor.execute(
+            "SELECT * FROM parent WHERE username = ? AND password = ?",
+            (username, password)
+        )
+        parent = cursor.fetchone()
+        if parent:
+           messagebox.showinfo("Success", f"Welcome back, {parent[1]}!")
+           if isinstance(self.window, ctk.CTk):
+               self.window.withdraw()
+           else:
+               self.window.destroy()
+           parent_id = parent[0]
+           dashboard = ParentDashboard(parent_id, master=self.window.master if isinstance(self.window, ctk.CTkToplevel) else self.window)
+           dashboard.run()
+           return
+           
+        messagebox.showerror("Error", "Invalid username or password.")
 
     def run(self):
         if not isinstance(self.window, ctk.CTkToplevel):

@@ -37,6 +37,7 @@ class ParentRecords:
                 "Name",
                 "Phone",
                 "Address",
+                "Pickup Point",
                 "Username"
             ),
             show="headings",
@@ -58,13 +59,15 @@ class ParentRecords:
         self.parents_table.heading("Name", text="Parent Name")
         self.parents_table.heading("Phone", text="Phone")
         self.parents_table.heading("Address", text="Address")
+        self.parents_table.heading("Pickup Point", text="Pickup Point")
         self.parents_table.heading("Username", text="Username")
         
         self.parents_table.column("ID", width=100)
-        self.parents_table.column("Name", width=250)
-        self.parents_table.column("Phone", width=200)
-        self.parents_table.column("Address", width=350)
-        self.parents_table.column("Username", width=200)
+        self.parents_table.column("Name", width=200)
+        self.parents_table.column("Phone", width=150)
+        self.parents_table.column("Address", width=250)
+        self.parents_table.column("Pickup Point", width=200)
+        self.parents_table.column("Username", width=150)
         
         self.update_button = ctk.CTkButton(
             self.window,
@@ -151,12 +154,18 @@ class ParentRecords:
         self.address_entry = ctk.CTkEntry(self.update_window, width=300)
         self.address_entry.pack(pady=5)
         self.address_entry.insert(0, self.selected_parent[3])
+        
+        # Pickup Point
+        ctk.CTkLabel(self.update_window, text="Pickup Point").pack()
+        self.pickup_entry = ctk.CTkEntry(self.update_window, width=300)
+        self.pickup_entry.pack(pady=5)
+        self.pickup_entry.insert(0, self.selected_parent[4])
 
         # Username
         ctk.CTkLabel(self.update_window, text="Username").pack()
         self.username_entry = ctk.CTkEntry(self.update_window, width=300)
         self.username_entry.pack(pady=5)
-        self.username_entry.insert(0, self.selected_parent[4])
+        self.username_entry.insert(0, self.selected_parent[5])
 
         # Save Button
         self.save_button = ctk.CTkButton(
@@ -170,9 +179,10 @@ class ParentRecords:
         parent_name = self.name_entry.get()
         phone = self.phone_entry.get()
         address = self.address_entry.get()
+        pickup_point = self.pickup_entry.get()
         username = self.username_entry.get()
 
-        if not all([parent_name, phone, address, username]):
+        if not all([parent_name, phone, address, pickup_point, username]):
             messagebox.showerror("Error", "All fields are required.")
             return
 
@@ -182,10 +192,10 @@ class ParentRecords:
         cursor.execute(
             """
             UPDATE parent
-            SET parent_name = ?, phone = ?, address = ?, username = ?
+            SET parent_name = ?, phone = ?, address = ?, pickup_point = ?, username = ?
             WHERE parent_id = ?
             """,
-            (parent_name, phone, address, username, self.selected_parent_id)
+            (parent_name, phone, address, pickup_point, username, self.selected_parent_id)
         )
 
         connection.commit()
@@ -202,7 +212,7 @@ class ParentRecords:
         connection = connect_database()
         cursor = connection.cursor()
         
-        cursor.execute("SELECT parent_id, parent_name, phone, address, username FROM parent")
+        cursor.execute("SELECT parent_id, parent_name, phone, address, pickup_point, username FROM parent")
         
         parents = cursor.fetchall()
         
