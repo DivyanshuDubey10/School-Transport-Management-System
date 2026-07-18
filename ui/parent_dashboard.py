@@ -31,26 +31,22 @@ class ParentDashboard:
             self.window.destroy()
 
     def fetch_data(self):
+        from dal import db_dal
+        
+        # We don't fetch parent name individually in DAL yet, or we can use get_all_parents and filter, or add a method.
+        # Let's add get_parent_by_id in DAL if needed, or just run a quick query.
+        # Actually I will use get_parent_by_id logic or fetch it here.
+        # Since I'm refactoring, let's just do it directly using DAL.
+        
         connection = connect_database()
         cursor = connection.cursor()
-        
-        # Fetch parent name
         cursor.execute("SELECT parent_name FROM parent WHERE parent_id = ?", (self.parent_id,))
         result = cursor.fetchone()
         self.parent_name = result[0] if result else "Parent"
-
-        # Fetch children info
-        cursor.execute("""
-            SELECT s.student_name, s.student_class, b.bus_number, b.driver_name, b.driver_phone, 
-                   r.route_name, s.fee_status, p.pickup_point
-            FROM student s
-            JOIN parent p ON s.parent_id = p.parent_id
-            LEFT JOIN route r ON s.route_id = r.route_id
-            LEFT JOIN bus b ON r.route_id = b.route_id
-            WHERE s.parent_id = ?
-        """, (self.parent_id,))
-        self.children_records = cursor.fetchall()
         connection.close()
+
+        # Fetch children info via DAL
+        self.children_records = db_dal.get_parent_dashboard_students(self.parent_id)
 
     def create_widgets(self):
         # Header Frame

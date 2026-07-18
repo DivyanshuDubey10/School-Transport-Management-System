@@ -4,100 +4,90 @@ from database import connect_database
 from tkinter import ttk
 
 
-class StudentManagement:
-    def __init__(self, master=None):
-        if master is None:
-            self.window = ctk.CTk()
-        else:
-            self.window = ctk.CTkToplevel(master)
-            
-        self.window.title("Student Management")
-        self.window.geometry("800x800")
-        self.window.resizable(False, False)
+class StudentManagement(ctk.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master, fg_color="transparent")
         
         self.fetch_dropdown_data()
         self.create_widgets()
         
     def fetch_dropdown_data(self):
-        connection = connect_database()
-        cursor = connection.cursor()
+        from dal import db_dal
         
         # Fetch parents
-        cursor.execute("SELECT parent_id, parent_name FROM parent")
-        self.parent_options = [f"{row[0]} - {row[1]}" for row in cursor.fetchall()]
+        parents = db_dal.get_all_parents_dropdown()
+        self.parent_options = [f"{row[0]} - {row[1]}" for row in parents]
         if not self.parent_options: self.parent_options = [""]
         
         # Fetch routes and their assigned buses
-        cursor.execute("SELECT r.route_id, r.route_name, b.bus_number FROM route r LEFT JOIN bus b ON r.route_id = b.route_id")
+        routes = db_dal.get_all_routes_with_bus_dropdown()
         self.route_options = []
-        for row in cursor.fetchall():
+        for row in routes:
             bus_str = f" (Bus: {row[2]})" if row[2] else " (No Bus)"
             self.route_options.append(f"{row[0]} - {row[1]}{bus_str}")
         if not self.route_options: self.route_options = [""]
-        
-        connection.close()
 
     def create_widgets(self):
 
         # Title
         self.title = ctk.CTkLabel(
-            self.window, text="Student Management", font=("Arial", 28, "bold")
+            self, text="Student Management", font=("Arial", 28, "bold")
         )
         self.title.pack(pady=20)
 
         # Student Name
-        self.student_name_label = ctk.CTkLabel(self.window, text="Student Name")
+        self.student_name_label = ctk.CTkLabel(self, text="Student Name")
         self.student_name_label.pack()
 
         self.student_name_entry = ctk.CTkEntry(
-            self.window, width=300, placeholder_text="Enter Student Name"
+            self, width=300, placeholder_text="Enter Student Name"
         )
         self.student_name_entry.pack(pady=10)
 
         # Student Class
-        self.student_class_label = ctk.CTkLabel(self.window, text="Student Class")
+        self.student_class_label = ctk.CTkLabel(self, text="Student Class")
         self.student_class_label.pack()
 
         self.student_class_entry = ctk.CTkEntry(
-            self.window, width=300, placeholder_text="Enter Student Class"
+            self, width=300, placeholder_text="Enter Student Class"
         )
         self.student_class_entry.pack(pady=10)
 
-        self.parent_id_label = ctk.CTkLabel(self.window, text="Parent")
+        self.parent_id_label = ctk.CTkLabel(self, text="Parent")
         self.parent_id_label.pack()
 
         self.parent_id_entry = ctk.CTkComboBox(
-            self.window, width=300, values=self.parent_options
+            self, width=300, values=self.parent_options
         )
         self.parent_id_entry.pack(pady=10)
         self.parent_id_entry.set("Select Parent" if not self.parent_options[0] == "" else "No Parents Available")
 
 
 
-        self.route_id_label = ctk.CTkLabel(self.window, text="Route")
+        self.route_id_label = ctk.CTkLabel(self, text="Route")
         self.route_id_label.pack()
 
         self.route_id_entry = ctk.CTkComboBox(
-            self.window, width=300, values=self.route_options
+            self, width=300, values=self.route_options
         )
         self.route_id_entry.pack(pady=10)
         self.route_id_entry.set("Select Route" if not self.route_options[0] == "" else "No Routes Available")
 
         # Save Button
         self.save_button = ctk.CTkButton(
-            self.window, text="Save Student", command=self.save_student
+            self, text="Save Student", command=self.save_student
         )
         self.save_button.pack(pady=25)
 
         # Student List Title
         self.list_label = ctk.CTkLabel(
-            self.window, text="Student Records", font=("Arial", 20, "bold")
+            self, text="Student Records", font=("Arial", 20, "bold")
         )
         self.list_label.pack(pady=10)
 
         # Student Table
         self.students_table = ttk.Treeview(
-            self.window,
+            self,
             columns=(
                 "ID",
                 "Name",
@@ -143,16 +133,11 @@ class StudentManagement:
         for row in self.students_table.get_children():
             self.students_table.delete(row)
 
-        connection = connect_database()
-        cursor = connection.cursor()
-        cursor.execute("SELECT s.student_id, s.student_name, s.student_class, s.parent_id, p.phone, p.address, b.bus_id, s.route_id, s.fee_status FROM student s JOIN parent p ON s.parent_id = p.parent_id LEFT JOIN bus b ON s.route_id = b.route_id")
-        students = cursor.fetchall()
-        print(students)
+        from dal import db_dal
+        students = db_dal.get_all_students()
 
         for student in students:
             self.students_table.insert("", "end", values=student)
-
-        connection.close()
 
     def save_student(self):
 
@@ -184,41 +169,20 @@ class StudentManagement:
             messagebox.showerror("Error", "Route ID is required.")
             return
 
-        connection = connect_database()
-        cursor = connection.cursor()
+        from dal import db_dal
+        
+        is_full, current_students, capacity = db_dal.check_bus_capacity(route_id)
+        if is_full:
+            messagebox.showerror("Capacity Error", f"The bus for this route is at capacity ({current_students}/{capacity}). Cannot add student.")
+            return
 
-        cursor.execute(
-            """
-                INSERT INTO student
-                (
-                    student_name,
-                    student_class,
-                    parent_id,
-                    route_id,
-                    fee_status
-                )
-                VALUES (?, ?, ?, ?, ?)
-                """,
-            (
-                student_name,
-                student_class,
-                parent_id,
-                route_id,
-                fee_status,
-            ),
-        )
-
-        connection.commit()
-        self.load_students()
-
-        messagebox.showinfo("Success", "Student added successfully!")
-        connection.close()
+        success = db_dal.add_student(student_name, student_class, parent_id, route_id, fee_status)
+        if success:
+            self.load_students()
+            messagebox.showinfo("Success", "Student added successfully!")
 
         self.student_name_entry.delete(0, "end")
         self.student_class_entry.delete(0, "end")
         self.parent_id_entry.set("Select Parent")
         self.route_id_entry.set("Select Route")
 
-    def run(self):
-        if not isinstance(self.window, ctk.CTkToplevel):
-            self.window.mainloop()

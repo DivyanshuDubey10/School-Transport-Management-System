@@ -7,35 +7,38 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import connect_database
 
-class RouteRecords:
+class RouteRecords(ctk.CTkFrame):
     
-    def __init__(self, master=None):
-        if master is None:
-            self.window = ctk.CTk()
-        else:
-            self.window = ctk.CTkToplevel(master)
-            
-        self.window.title("Route Records")
-        self.window.geometry("1000x800")
-        self.window.resizable(True, True)
+    def __init__(self, master):
+        super().__init__(master, fg_color="transparent")
         
         self.create_widgets()
         self.load_routes()
         
     def create_widgets(self):
         self.title = ctk.CTkLabel(
-            self.window,
+            self,
             text="Route Records",
-            font=("Arial", 28, "bold")
+            font=("Arial", 28, "bold") 
         )
         self.title.pack(pady=20)
+        
+        # Search Frame
+        self.search_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.search_frame.pack(pady=(0, 10))
+        
+        self.search_entry = ctk.CTkEntry(self.search_frame, placeholder_text="Search by Route Name...", width=300)
+        self.search_entry.pack(side="left", padx=10)
+        
+        self.search_button = ctk.CTkButton(self.search_frame, text="Search", width=100, command=self.load_routes)
+        self.search_button.pack(side="left")
         
         style = ttk.Style()
         style.configure("Treeview", font=("Arial", 14), rowheight=35)
         style.configure("Treeview.Heading", font=("Arial", 16, "bold"))
         
         self.routes_table = ttk.Treeview(
-            self.window,
+            self,
             columns=(
                 "ID",
                 "Route Name"
@@ -62,14 +65,14 @@ class RouteRecords:
         self.routes_table.column("Route Name", width=500)
         
         self.update_button = ctk.CTkButton(
-            self.window,
+            self,
             text="Update Route",
             command=self.open_update_window
         )
         self.update_button.pack(pady=10)
         
         self.delete_button = ctk.CTkButton(
-            self.window,
+            self,
             text="Delete Route",
             command=self.delete_route
         )
@@ -98,20 +101,16 @@ class RouteRecords:
         if not confirm:
             return
 
-        connection = connect_database()
-        cursor = connection.cursor()
-
+        from dal import db_dal
+        
         try:
-            cursor.execute(
-                "DELETE FROM route WHERE route_id = ?",
-                (self.selected_route_id,)
-            )
-            connection.commit()
-            messagebox.showinfo("Success", "Route deleted successfully!")
+            success = db_dal.delete_route(self.selected_route_id)
+            if success:
+                messagebox.showinfo("Success", "Route deleted successfully!")
+            else:
+                messagebox.showerror("Error", "Could not delete route.")
         except Exception as e:
             messagebox.showerror("Error", f"Could not delete route: {e}")
-        finally:
-            connection.close()
             
         self.load_routes()
 
@@ -120,7 +119,7 @@ class RouteRecords:
             messagebox.showerror("Error", "Please select a route first.")
             return
 
-        self.update_window = ctk.CTkToplevel(self.window)
+        self.update_window = ctk.CTkToplevel(self)
         self.update_window.title("Update Route")
         self.update_window.geometry("500x500")
         self.update_window.resizable(False, False)
@@ -154,25 +153,17 @@ class RouteRecords:
             messagebox.showerror("Error", "All fields are required.")
             return
 
-        connection = connect_database()
-        cursor = connection.cursor()
+        from dal import db_dal
 
         try:
-            cursor.execute(
-                """
-                UPDATE route
-                SET route_name = ?
-                WHERE route_id = ?
-                """,
-                (route_name, self.selected_route_id)
-            )
-            connection.commit()
-            messagebox.showinfo("Success", "Route updated successfully!")
-            self.update_window.destroy()
+            success = db_dal.update_route(self.selected_route_id, route_name)
+            if success:
+                messagebox.showinfo("Success", "Route updated successfully!")
+                self.update_window.destroy()
+            else:
+                messagebox.showerror("Error", "Failed to update route.")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update route: {e}")
-        finally:
-            connection.close()
             
         self.load_routes()
         
@@ -180,11 +171,12 @@ class RouteRecords:
         for row in self.routes_table.get_children():
             self.routes_table.delete(row)
             
-        connection = connect_database()
-        cursor = connection.cursor()
-        
-        cursor.execute("SELECT route_id, route_name FROM route")
-        routes = cursor.fetchall()
+        search_query = ""
+        if hasattr(self, 'search_entry'):
+            search_query = self.search_entry.get().strip()
+            
+        from dal import db_dal
+        routes = db_dal.get_all_routes(search_query=search_query)
         
         for route in routes:
             self.routes_table.insert(
@@ -192,12 +184,4 @@ class RouteRecords:
                 "end",
                 values=route
             )
-        connection.close()
         
-    def run(self):
-        if not isinstance(self.window, ctk.CTkToplevel):
-            self.window.mainloop()
-
-if __name__ == "__main__":
-    app = RouteRecords()
-    app.run()

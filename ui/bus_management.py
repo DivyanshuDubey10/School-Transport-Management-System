@@ -4,45 +4,23 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from database import connect_database
 
-class BusManagement:
+class BusManagement(ctk.CTkFrame):
     
-    def __init__(self, master=None):
-        if master is None:
-            self.window = ctk.CTk()
-        else:
-            self.window = ctk.CTkToplevel(master)
-            
-        self.window.title("Bus Management")
-        self.window.geometry("700x550")
-        self.window.resizable(False, False)
-        
-        self.fetch_drivers()
+    def __init__(self, master):
+        super().__init__(master, fg_color="transparent")
         self.fetch_routes()
         self.create_widgets()
         
-    def fetch_drivers(self):
-        connection = connect_database()
-        cursor = connection.cursor()
-        cursor.execute("SELECT driver_name, driver_phone FROM driver")
-        rows = cursor.fetchall()
-        connection.close()
-        
-        self.drivers = {row[0]: row[1] for row in rows}
-        self.driver_names = list(self.drivers.keys())
-        
     def fetch_routes(self):
-        connection = connect_database()
-        cursor = connection.cursor()
-        cursor.execute("SELECT route_id, route_name FROM route")
-        self.route_options = [f"{row[0]} - {row[1]}" for row in cursor.fetchall()]
+        from dal import db_dal
+        routes = db_dal.get_all_routes()
+        self.route_options = [f"{row[0]} - {row[1]}" for row in routes]
         if not self.route_options: self.route_options = [""]
-        connection.close()
     
     def create_widgets(self):
         self.title = ctk.CTkLabel(
-            self.window,
+            self,
             text="Add New Bus",
             font=("Arial", 28, "bold")
         )
@@ -50,14 +28,14 @@ class BusManagement:
         
         # Bus Number
         self.bus_number_label = ctk.CTkLabel(
-            self.window,
+            self,
             text="Bus Number",
             font=("Arial", 16)
         )
         self.bus_number_label.pack(pady=(10, 5))
         
         self.bus_number_entry = ctk.CTkEntry(
-            self.window,
+            self,
             width=300,
             placeholder_text="Enter Bus Number"
         )
@@ -65,14 +43,14 @@ class BusManagement:
         
         # Driver Name
         self.driver_name_label = ctk.CTkLabel(
-            self.window,
+            self,
             text="Driver Name",
             font=("Arial", 16)
         )
         self.driver_name_label.pack(pady=(10, 5))
         
         self.driver_name_entry = ctk.CTkEntry(
-            self.window,
+            self,
             width=300,
             placeholder_text="Enter Driver Name"
         )
@@ -80,14 +58,14 @@ class BusManagement:
         
         # Driver Phone
         self.driver_phone_label = ctk.CTkLabel(
-            self.window,
+            self,
             text="Driver Phone",
             font=("Arial", 16)
         )
         self.driver_phone_label.pack(pady=(10, 5))
         
         self.driver_phone_entry = ctk.CTkEntry(
-            self.window,
+            self,
             width=300,
             placeholder_text="Enter Driver Phone"
         )
@@ -95,14 +73,14 @@ class BusManagement:
         
         # Capacity
         self.capacity_label = ctk.CTkLabel(
-            self.window,
+            self,
             text="Capacity",
             font=("Arial", 16)
         )
         self.capacity_label.pack(pady=(10, 5))
         
         self.capacity_entry = ctk.CTkEntry(
-            self.window,
+            self,
             width=300,
             placeholder_text="Enter Bus Capacity"
         )
@@ -110,21 +88,21 @@ class BusManagement:
         
         # Route Assignment
         self.route_label = ctk.CTkLabel(
-            self.window,
+            self,
             text="Assign Route",
             font=("Arial", 16)
         )
         self.route_label.pack(pady=(10, 5))
         
         self.route_dropdown = ctk.CTkComboBox(
-            self.window, width=300, values=self.route_options
+            self, width=300, values=self.route_options
         )
         self.route_dropdown.pack(pady=(0, 20))
         self.route_dropdown.set("Select Route" if not self.route_options[0] == "" else "No Routes Available")
         
         # Save Button
         self.save_button = ctk.CTkButton(
-            self.window,
+            self,
             text="Save Bus",
             command=self.save_bus
         )
@@ -161,35 +139,18 @@ class BusManagement:
             messagebox.showerror("Error", "Capacity must be a valid number.")
             return
 
-        connection = connect_database()
-        cursor = connection.cursor()
+        from dal import db_dal
         
         try:
-            cursor.execute(
-                """ 
-                INSERT INTO bus (bus_number, driver_name, driver_phone, capacity, route_id)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                (bus_number, driver_name, driver_phone, capacity, route_id if route_id else None)
-            )
-            connection.commit()
-            messagebox.showinfo("Success", "Bus saved successfully.")
-            
-            # Clear entries
-            self.bus_number_entry.delete(0, "end")
-            self.driver_name_entry.delete(0, "end")
-            self.driver_phone_entry.delete(0, "end")
-            self.capacity_entry.delete(0, "end")
-            
+            success = db_dal.add_bus(bus_number, driver_name, driver_phone, capacity, route_id if route_id else None)
+            if success:
+                messagebox.showinfo("Success", "Bus saved successfully.")
+                
+                # Clear entries
+                self.bus_number_entry.delete(0, "end")
+                self.driver_name_entry.delete(0, "end")
+                self.driver_phone_entry.delete(0, "end")
+                self.capacity_entry.delete(0, "end")
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {e}")
-        finally:
-            connection.close()
 
-    def run(self):
-        if not isinstance(self.window, ctk.CTkToplevel):
-            self.window.mainloop()
-
-if __name__ == "__main__":
-    app = BusManagement()
-    app.run()

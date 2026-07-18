@@ -7,24 +7,15 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import connect_database
 
-class StudentRecords:
+class StudentRecords(ctk.CTkFrame):
     
-    def __init__(self, master=None):
-        if master is None:
-            self.window = ctk.CTk()
-        else:
-            self.window = ctk.CTkToplevel(master)
-            
-        self.window.title("Student Records")
-        self.window.geometry("1200x900")
-        self.window.resizable(True, True)
+    def __init__(self, master):
+        super().__init__(master, fg_color="transparent")
         
         self.create_widgets()
         self.load_students()
         
-    def run(self):
-        if not isinstance(self.window, ctk.CTkToplevel):
-            self.window.mainloop()
+
         
     def select_student(self, event):
         selected = self.students_table.focus()
@@ -41,18 +32,28 @@ class StudentRecords:
     def create_widgets(self):
         
         self.title = ctk.CTkLabel(
-            self.window,
+            self,
             text="Student Records",
             font=("Arial", 28, "bold")
         )
         self.title.pack(pady=20)
+        
+        # Search Frame
+        self.search_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.search_frame.pack(pady=(0, 10))
+        
+        self.search_entry = ctk.CTkEntry(self.search_frame, placeholder_text="Search by Name or Class...", width=300)
+        self.search_entry.pack(side="left", padx=10)
+        
+        self.search_button = ctk.CTkButton(self.search_frame, text="Search", width=100, command=self.load_students)
+        self.search_button.pack(side="left")
         
         style = ttk.Style()
         style.configure("Treeview", font=("Arial", 14), rowheight=35)
         style.configure("Treeview.Heading", font=("Arial", 16, "bold"))
         
         self.students_table = ttk.Treeview(
-            self.window,
+            self,
             columns=(
                 "ID",
                 "Name",
@@ -94,14 +95,14 @@ class StudentRecords:
         
         self.students_table.pack(padx=20, pady=20, fill="both", expand=True)
         self.update_button = ctk.CTkButton(
-            self.window,
+            self,
             text="Update Student",
             command=self.open_update_window
         )
         self.update_button.pack(pady=10)
         
         self.delete_button = ctk.CTkButton(
-            self.window,
+            self,
             text="Delete Student",
             command = self.delete_student
         )
@@ -124,24 +125,16 @@ class StudentRecords:
         if not confirm:
             return
         
-        connection = connect_database()
-        cursor = connection.cursor()
+        from dal import db_dal
 
-        cursor.execute(
-            """
-            DELETE FROM student
-            WHERE student_id = ?
-            """,
-            (self.selected_student_id,)
-        )
-
-        connection.commit()
-        connection.close()
-
-        messagebox.showinfo(
-            "Success",
-            "Student deleted successfully!"
-        )
+        try:
+            success = db_dal.delete_student(self.selected_student_id)
+            if success:
+                messagebox.showinfo("Success", "Student deleted successfully!")
+            else:
+                messagebox.showerror("Error", "Could not delete student.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to delete student: {e}")
 
         self.load_students()
                 
@@ -154,9 +147,9 @@ class StudentRecords:
             )
             return
 
-        self.update_window = ctk.CTkToplevel(self.window)
+        self.update_window = ctk.CTkToplevel(self)
         self.update_window.title("Update Student")
-        self.update_window.geometry("500x700")
+        self.update_window.geometry("500x500")
         self.update_window.resizable(False, False)
 
         title = ctk.CTkLabel(
@@ -184,24 +177,6 @@ class StudentRecords:
         self.parent_entry.pack(pady=5)
         self.parent_entry.insert(0, self.selected_student[3])
 
-        # Phone
-        ctk.CTkLabel(self.update_window, text="Phone").pack()
-        self.phone_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.phone_entry.pack(pady=5)
-        self.phone_entry.insert(0, self.selected_student[4])
-
-        # Address
-        ctk.CTkLabel(self.update_window, text="Address").pack()
-        self.address_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.address_entry.pack(pady=5)
-        self.address_entry.insert(0, self.selected_student[5])
-
-        # Bus ID
-        ctk.CTkLabel(self.update_window, text="Bus ID").pack()
-        self.bus_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.bus_entry.pack(pady=5)
-        self.bus_entry.insert(0, self.selected_student[6])
-
         # Route ID
         ctk.CTkLabel(self.update_window, text="Route ID").pack()
         self.route_entry = ctk.CTkEntry(self.update_window, width=300)
@@ -224,56 +199,31 @@ class StudentRecords:
         
     def update_student(self):
         
-        print("Update function called")
-        
         student_name = self.name_entry.get()
         student_class = self.class_entry.get()
         parent_id = self.parent_entry.get()
-        phone = self.phone_entry.get()
-        address = self.address_entry.get()
-        bus_id = self.bus_entry.get()
         route_id = self.route_entry.get()
         fee_status = self.fee_entry.get()
         
-        connection = connect_database()
-        cursor = connection.cursor()
-        
-        cursor.execute(
-            """
-                UPDATE student
-                SET
-                    student_name = ?,
-                    student_class = ?,
-                    parent_id = ?,
-                    phone = ?,
-                    address = ?,
-                    bus_id = ?,
-                    route_id = ?,
-                    fee_status = ?
-                WHERE student_id = ?
-                """,
-            (
+        from dal import db_dal
+
+        try:
+            success = db_dal.update_student(
+                self.selected_student_id,
                 student_name,
                 student_class,
                 parent_id,
-                phone,
-                address,
-                bus_id,
                 route_id,
-                fee_status,
-                self.selected_student_id
+                fee_status
             )
-        )
-
-        connection.commit()
-        connection.close()
-
-        messagebox.showinfo(
-            "Success",
-            "Student updated successfully!"
-        )
-
-        self.update_window.destroy()
+            
+            if success:
+                messagebox.showinfo("Success", "Student updated successfully!")
+                self.update_window.destroy()
+            else:
+                messagebox.showerror("Error", "Could not update student.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update student: {e}")
 
         self.load_students()
         
@@ -283,22 +233,16 @@ class StudentRecords:
         for row in self.students_table.get_children():
             self.students_table.delete(row)
 
-        connection = connect_database()
-        cursor = connection.cursor()
+        search_query = ""
+        if hasattr(self, 'search_entry'):
+            search_query = self.search_entry.get().strip()
 
-        cursor.execute("SELECT * FROM student")
-
-        students = cursor.fetchall()
+        from dal import db_dal
+        students = db_dal.get_all_students(search_query=search_query)
 
         for student in students:
             self.students_table.insert(
                 "",
                 "end",
                 values=student
-            )
-
-        connection.close()
-        
-        if __name__ == "__main__":
-            app = StudentRecords()
-            app.run()
+            )

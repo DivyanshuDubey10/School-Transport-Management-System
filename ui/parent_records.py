@@ -3,35 +3,38 @@ import customtkinter as ctk
 from tkinter import messagebox
 from database import connect_database
 
-class ParentRecords:
+class ParentRecords(ctk.CTkFrame):
     
-    def __init__(self, master=None):
-        if master is None:
-            self.window = ctk.CTk()
-        else:
-            self.window = ctk.CTkToplevel(master)
-            
-        self.window.title("Parent Records")
-        self.window.geometry("1200x1000")
-        self.window.resizable(True, True)
+    def __init__(self, master):
+        super().__init__(master, fg_color="transparent")
         
         self.create_widgets()
         self.load_parents()
         
     def create_widgets(self):
         self.title = ctk.CTkLabel(
-            self.window,
+            self,
             text="Parents Records",
             font=("Arial", 28,"bold")
         )
         self.title.pack(pady="20") 
+        
+        # Search Frame
+        self.search_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.search_frame.pack(pady=(0, 10))
+        
+        self.search_entry = ctk.CTkEntry(self.search_frame, placeholder_text="Search by Name, Username or Phone...", width=300)
+        self.search_entry.pack(side="left", padx=10)
+        
+        self.search_button = ctk.CTkButton(self.search_frame, text="Search", width=100, command=self.load_parents)
+        self.search_button.pack(side="left")
         
         style = ttk.Style()
         style.configure("Treeview", font=("Arial", 14), rowheight=35)
         style.configure("Treeview.Heading", font=("Arial", 16, "bold"))
         
         self.parents_table = ttk.Treeview(
-            self.window,
+            self,
             columns=(
                 "ID",
                 "Name",
@@ -70,14 +73,14 @@ class ParentRecords:
         self.parents_table.column("Username", width=150)
         
         self.update_button = ctk.CTkButton(
-            self.window,
+            self,
             text="Update Parent",
             command=self.open_update_window
         )
         self.update_button.pack(pady=10)
         
         self.delete_button = ctk.CTkButton(
-            self.window,
+            self,
             text="Delete Parent",
             command=self.delete_parent
         )
@@ -106,16 +109,12 @@ class ParentRecords:
         if not confirm:
             return
 
-        connection = connect_database()
-        cursor = connection.cursor()
-
-        cursor.execute(
-            "DELETE FROM parent WHERE parent_id = ?",
-            (self.selected_parent_id,)
-        )
-
-        connection.commit()
-        connection.close()
+        from dal import db_dal
+        
+        success = db_dal.delete_parent(self.selected_parent_id)
+        if not success:
+            messagebox.showerror("Error", "Could not delete parent.")
+            return
 
         messagebox.showinfo("Success", "Parent deleted successfully!")
         self.load_parents()
@@ -125,7 +124,7 @@ class ParentRecords:
             messagebox.showerror("Error", "Please select a parent first.")
             return
 
-        self.update_window = ctk.CTkToplevel(self.window)
+        self.update_window = ctk.CTkToplevel(self)
         self.update_window.title("Update Parent")
         self.update_window.geometry("500x600")
         self.update_window.resizable(False, False)
@@ -186,20 +185,12 @@ class ParentRecords:
             messagebox.showerror("Error", "All fields are required.")
             return
 
-        connection = connect_database()
-        cursor = connection.cursor()
-
-        cursor.execute(
-            """
-            UPDATE parent
-            SET parent_name = ?, phone = ?, address = ?, pickup_point = ?, username = ?
-            WHERE parent_id = ?
-            """,
-            (parent_name, phone, address, pickup_point, username, self.selected_parent_id)
-        )
-
-        connection.commit()
-        connection.close()
+        from dal import db_dal
+        
+        success = db_dal.update_parent(self.selected_parent_id, parent_name, phone, address, pickup_point, username)
+        if not success:
+            messagebox.showerror("Error", "Could not update parent.")
+            return
 
         messagebox.showinfo("Success", "Parent updated successfully!")
         self.update_window.destroy()
@@ -209,12 +200,12 @@ class ParentRecords:
         for row in self.parents_table.get_children():
             self.parents_table.delete(row)
             
-        connection = connect_database()
-        cursor = connection.cursor()
-        
-        cursor.execute("SELECT parent_id, parent_name, phone, address, pickup_point, username FROM parent")
-        
-        parents = cursor.fetchall()
+        search_query = ""
+        if hasattr(self, 'search_entry'):
+            search_query = self.search_entry.get().strip()
+            
+        from dal import db_dal
+        parents = db_dal.get_all_parents(search_query=search_query)
         
         for parent in parents:
             self.parents_table.insert(
@@ -222,11 +213,4 @@ class ParentRecords:
                 "end",
                 values=parent
             )
-        connection.close()
-        
-    def run(self):
-        if not isinstance(self.window, ctk.CTkToplevel):
-            self.window.mainloop()
-        
-
-        
+        

@@ -3,63 +3,56 @@ from tkinter import messagebox
 import sqlite3
 from database import connect_database
 
-class ParentManagement:
+class ParentManagement(ctk.CTkFrame):
     
-    def __init__(self, master=None):
-        if master is None:
-            self.window = ctk.CTk()
-        else:
-            self.window = ctk.CTkToplevel(master)
-            
-        self.window.title("Parent Management")
-        self.window.geometry("700x650")
-        self.window.resizable(False, False)
+    def __init__(self, master):
+        super().__init__(master, fg_color="transparent")
         
         self.create_widgets()
     
     def create_widgets(self):
         self.title = ctk.CTkLabel(
-            self.window,
+            self,
             text="Parent Management",
             font=("Arial", 28, "bold")
         )
         self.title.pack(pady=20)
         
         self.parent_name = ctk.CTkLabel(
-            self.window,
-            text = "parent Name",
+            self,
+            text = "Parent Name",
             font = ("Arial", 16)
         )
         self.parent_name.pack(pady=10)
         
         self.parent_name_entry = ctk.CTkEntry(
-            self.window,
+            self,
             width=300,
             placeholder_text="Enter Parent Name"
         )
         self.parent_name_entry.pack(pady=10)
         
         self.username_label = ctk.CTkLabel(
-            self.window,
+            self,
             text="Username",
         )
         self.username_label.pack()
         
         self.username_entry = ctk.CTkEntry(
-            self.window,
+            self,
             width=300,
             placeholder_text="Enter Username"
         )
         self.username_entry.pack(pady=10)
         
         self.password_label = ctk.CTkLabel(
-            self.window,
+            self,
             text="Password"
         )
         self.password_label.pack()
         
         self.password_entry = ctk.CTkEntry(
-            self.window,
+            self,
             width=300,
             placeholder_text="Enter Password",
             show="*"
@@ -67,46 +60,46 @@ class ParentManagement:
         self.password_entry.pack(pady=10)
         
         self.phone_label = ctk.CTkLabel(
-            self.window,
+            self,
             text="Phone Number"
         )
         self.phone_label.pack()
 
         self.phone_entry = ctk.CTkEntry(
-            self.window,
+            self,
             width=300,
             placeholder_text="Enter Phone Number"
         )
         self.phone_entry.pack(pady=10)
         
         self.address_label = ctk.CTkLabel(
-            self.window,
+            self,
             text="Address"
         )
         self.address_label.pack()
 
         self.address_entry = ctk.CTkEntry(
-            self.window,
+            self,
             width=300,
             placeholder_text="Enter Address"
         )
         self.address_entry.pack(pady=10)
         
         self.pickup_label = ctk.CTkLabel(
-            self.window,
+            self,
             text="Pickup Point"
         )
         self.pickup_label.pack()
 
         self.pickup_entry = ctk.CTkEntry(
-            self.window,
+            self,
             width=300,
             placeholder_text="Enter Pickup Point"
         )
         self.pickup_entry.pack(pady=10)
         
         self.save_button = ctk.CTkButton(
-            self.window,
+            self,
             text="Save Parent",
             command=self.save_parent
         )
@@ -144,33 +137,21 @@ class ParentManagement:
             messagebox.showerror("Error", "Pickup Point is required.")
             return
             
-        connection = connect_database()
-        cursor = connection.cursor()
-        try:
-            cursor.execute (
-                """ 
-                INSERT INTO parent (parent_name, username, password, phone, address, pickup_point)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                (parent_name, username, password, phone, address, pickup_point)
-            )
-            connection.commit()
-            messagebox.showinfo(
-                 "Success", "Parent information saved successfully."
-            )
-            
-            self.parent_name_entry.delete(0, 'end')
-        except sqlite3.IntegrityError:
-            messagebox.showerror("Error", "Parent Name or Phone already exists in the system!")
-        finally:
-            connection.close()
-        self.username_entry.delete(0,"end")
-        self.password_entry.delete(0,"end")
-        self.phone_entry.delete(0,"end")
-        self.address_entry.delete(0,"end")
-        self.pickup_entry.delete(0,"end")
-
-    def run(self):
-        if not isinstance(self.window, ctk.CTkToplevel):
-            self.window.mainloop()
+        from dal import db_dal
         
+        try:
+            success = db_dal.add_parent(parent_name, phone, address, pickup_point, username, password)
+            if success:
+                messagebox.showinfo(
+                     "Success", "Parent information saved successfully."
+                )
+                
+                self.parent_name_entry.delete(0, 'end')
+                self.username_entry.delete(0, 'end')
+                self.password_entry.delete(0, 'end')
+                self.phone_entry.delete(0, 'end')
+                self.address_entry.delete(0, 'end')
+                self.pickup_entry.delete(0, 'end')
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {e}")
+

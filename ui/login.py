@@ -86,16 +86,12 @@ class LoginWindow:
         username = self.username_entry.get()
         password = self.password_entry.get()
 
-        connection = connect_database()
-        cursor = connection.cursor()
+        from dal import db_dal
+        import security
         
         # Check Admin first
-        cursor.execute(
-            "SELECT * FROM admin WHERE USERNAME = ? AND password = ?",
-            (username, password)
-        )
-        admin = cursor.fetchone()
-        if admin:
+        admin = db_dal.get_admin_by_username(username)
+        if admin and security.verify_password(password, admin[2]):
            messagebox.showinfo("Success", "Login Successful as Admin!")
            if isinstance(self.window, ctk.CTk):
                self.window.withdraw()
@@ -106,12 +102,8 @@ class LoginWindow:
            return
 
         # Check Parent
-        cursor.execute(
-            "SELECT * FROM parent WHERE username = ? AND password = ?",
-            (username, password)
-        )
-        parent = cursor.fetchone()
-        if parent:
+        parent = db_dal.get_parent_by_username(username)
+        if parent and security.verify_password(password, parent[6]):
            messagebox.showinfo("Success", f"Welcome back, {parent[1]}!")
            if isinstance(self.window, ctk.CTk):
                self.window.withdraw()

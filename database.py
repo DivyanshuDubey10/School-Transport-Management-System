@@ -1,5 +1,5 @@
 import sqlite3
-
+import security
 
 def connect_database():
     connection = sqlite3.connect("database.db")
@@ -20,12 +20,13 @@ def initialize_database():
     cursor.execute("SELECT * FROM admin")
     admin = cursor.fetchone()
     if admin is None:
+        hashed_pw = security.hash_password("admin123")
         cursor.execute(
             """
                        INSERT INTO admin (USERNAME, password, full_name)
                        VALUES(?, ?, ?)
         """,
-            ("admin", "admin123", "Administrator"),
+            ("admin", hashed_pw, "Administrator"),
         )
     cursor.execute("""
                    CREATE TABLE IF NOT EXISTS parent (

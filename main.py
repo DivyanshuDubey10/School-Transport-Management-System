@@ -6,6 +6,8 @@ def main():
     ctk.set_appearance_mode("Dark")
     ctk.set_default_color_theme("blue")
     
+    app = LoginWindow()
+
     # Configure global Treeview styling for dark mode
     style = ttk.Style()
     style.theme_use("default")
@@ -36,7 +38,7 @@ def main():
         foreground=[("active", "white")]
     )
 
-    app = LoginWindow()
+
     app.run()
     
 if __name__ == "__main__":

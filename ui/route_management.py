@@ -6,37 +6,30 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import connect_database
 
-class RouteManagement:
+class RouteManagement(ctk.CTkFrame):
     
-    def __init__(self, master=None):
-        if master is None:
-            self.window = ctk.CTk()
-        else:
-            self.window = ctk.CTkToplevel(master)
-            
-        self.window.title("Route Management")
-        self.window.geometry("700x500")
-        self.window.resizable(False, False)
+    def __init__(self, master):
+        super().__init__(master, fg_color="transparent")
         
         self.create_widgets()
     
     def create_widgets(self):
         self.title = ctk.CTkLabel(
-            self.window,
+            self,
             text="Add New Route",
             font=("Arial", 28, "bold")
         )
         self.title.pack(pady=20)
         
         self.route_name_label = ctk.CTkLabel(
-            self.window,
+            self,
             text="Route Name",
             font=("Arial", 16)
         )
         self.route_name_label.pack(pady=(10, 5))
         
         self.route_name_entry = ctk.CTkEntry(
-            self.window,
+            self,
             width=300,
             placeholder_text="Enter Route Name"
         )
@@ -44,7 +37,7 @@ class RouteManagement:
         
 
         self.save_button = ctk.CTkButton(
-            self.window,
+            self,
             text="Save Route",
             command=self.save_route
         )
@@ -56,32 +49,15 @@ class RouteManagement:
         if not route_name:
             messagebox.showerror("Error", "Route Name is required.")
             return
-        connection = connect_database()
-        cursor = connection.cursor()
+        from dal import db_dal
         
         try:
-            cursor.execute (
-                """ 
-                INSERT INTO route (route_name)
-                VALUES (?)
-                """,
-                (route_name,)
-            )
-            connection.commit()
-            messagebox.showinfo("Success", "Route saved successfully.")
-            
-            # Clear entries
-            self.route_name_entry.delete(0, "end")
-            
+            success = db_dal.add_route(route_name)
+            if success:
+                messagebox.showinfo("Success", "Route saved successfully.")
+                # Clear entries
+                self.route_name_entry.delete(0, "end")
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {e}")
-        finally:
-            connection.close()
 
-    def run(self):
-        if not isinstance(self.window, ctk.CTkToplevel):
-            self.window.mainloop()
 
-if __name__ == "__main__":
-    app = RouteManagement()
-    app.run()

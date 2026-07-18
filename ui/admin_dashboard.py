@@ -8,6 +8,99 @@ from ui.bus_management import BusManagement
 from ui.route_records import RouteRecords
 import database
 
+class DashboardHome(ctk.CTkFrame):
+    def __init__(self, master, app_controller):
+        super().__init__(master, fg_color="transparent")
+        self.app_controller = app_controller
+        self.create_widgets()
+        self.load_dashboard_stats()
+        
+    def load_dashboard_stats(self):
+        try:
+            from dal import db_dal
+            stats = db_dal.get_dashboard_stats()
+            
+            self.card1_value.configure(text=str(stats["total_students"]))
+            self.card2_value.configure(text=str(stats["total_buses"]))
+            self.card3_value.configure(text=str(stats["total_routes"]))
+            
+        except Exception as e:
+            print(f"Error loading stats: {e}")
+            self.card1_value.configure(text="0")
+            self.card2_value.configure(text="0")
+            self.card3_value.configure(text="0")
+            
+    def create_widgets(self):
+        # Title
+        self.title_label = ctk.CTkLabel(
+            self,
+            text="School Transport Management System",
+            font=("Arial", 30, "bold")
+        )
+        self.title_label.pack(pady=(40, 10))
+        
+        # Welcome Label
+        self.welcome_label = ctk.CTkLabel(
+            self,
+            text="Welcome, Admin! Here's your system overview:",
+            font=("Arial", 20)
+        )
+        self.welcome_label.pack(pady=(0, 30))
+        
+        # Summary Cards Container
+        self.summary_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.summary_frame.pack(pady=20, padx=40, fill="x")
+        self.summary_frame.grid_columnconfigure((0, 1, 2), weight=1)
+
+        # Card 1: Total Students
+        self.card1 = ctk.CTkFrame(self.summary_frame, corner_radius=15)
+        self.card1.grid(row=0, column=0, padx=15, pady=10, sticky="nsew")
+        self.card1_title = ctk.CTkLabel(self.card1, text="Total Students", font=("Arial", 16))
+        self.card1_title.pack(pady=(20, 5))
+        self.card1_value = ctk.CTkLabel(self.card1, text="0", font=("Arial", 36, "bold"), text_color="#1f538d")
+        self.card1_value.pack(pady=(0, 20))
+
+        # Card 2: Active Buses
+        self.card2 = ctk.CTkFrame(self.summary_frame, corner_radius=15)
+        self.card2.grid(row=0, column=1, padx=15, pady=10, sticky="nsew")
+        self.card2_title = ctk.CTkLabel(self.card2, text="Active Buses", font=("Arial", 16))
+        self.card2_title.pack(pady=(20, 5))
+        self.card2_value = ctk.CTkLabel(self.card2, text="0", font=("Arial", 36, "bold"), text_color="#1f538d")
+        self.card2_value.pack(pady=(0, 20))
+
+        # Card 3: Total Routes
+        self.card3 = ctk.CTkFrame(self.summary_frame, corner_radius=15)
+        self.card3.grid(row=0, column=2, padx=15, pady=10, sticky="nsew")
+        self.card3_title = ctk.CTkLabel(self.card3, text="Total Routes", font=("Arial", 16))
+        self.card3_title.pack(pady=(20, 5))
+        self.card3_value = ctk.CTkLabel(self.card3, text="0", font=("Arial", 36, "bold"), text_color="#1f538d")
+        self.card3_value.pack(pady=(0, 20))
+        
+        # Quick Actions Title
+        self.quick_actions_label = ctk.CTkLabel(
+            self,
+            text="Quick Actions",
+            font=("Arial", 20, "bold")
+        )
+        self.quick_actions_label.pack(pady=(30, 10))
+
+        # Quick Actions Container
+        self.quick_actions_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.quick_actions_frame.pack(pady=10, padx=40)
+
+        # Shortcut Buttons
+        self.btn_add_student = ctk.CTkButton(self.quick_actions_frame, text="Add New Student", command=self.app_controller.open_student_management)
+        self.btn_add_student.grid(row=0, column=0, padx=10, pady=10)
+
+        self.btn_view_students = ctk.CTkButton(self.quick_actions_frame, text="View Students", command=self.app_controller.open_student_records)
+        self.btn_view_students.grid(row=0, column=1, padx=10, pady=10)
+
+        self.btn_add_bus = ctk.CTkButton(self.quick_actions_frame, text="Manage Buses", command=self.app_controller.open_bus_management)
+        self.btn_add_bus.grid(row=0, column=2, padx=10, pady=10)
+
+        self.btn_view_routes = ctk.CTkButton(self.quick_actions_frame, text="View Routes", command=self.app_controller.open_route_records)
+        self.btn_view_routes.grid(row=0, column=3, padx=10, pady=10)
+
 class AdminDashboard:
     
     def __init__(self, master=None):
@@ -24,7 +117,7 @@ class AdminDashboard:
         self.window.resizable(False, False)
         
         self.create_widgets()
-        self.load_dashboard_stats()
+        self.show_frame(DashboardHome)
         
     def on_close(self):
         if self.master:
@@ -32,30 +125,17 @@ class AdminDashboard:
         else:
             self.window.destroy()
             
-    def load_dashboard_stats(self):
-        try:
-            conn = database.connect_database()
-            cursor = conn.cursor()
+    def show_frame(self, frame_class):
+        # Destroy current content in content_frame
+        for widget in self.content_frame.winfo_children():
+            widget.destroy()
             
-            cursor.execute("SELECT COUNT(*) FROM student")
-            total_students = cursor.fetchone()[0]
+        if frame_class == DashboardHome:
+            frame = DashboardHome(self.content_frame, self)
+        else:
+            frame = frame_class(self.content_frame)
             
-            cursor.execute("SELECT COUNT(*) FROM bus")
-            total_buses = cursor.fetchone()[0]
-            
-            cursor.execute("SELECT COUNT(*) FROM route")
-            total_routes = cursor.fetchone()[0]
-            
-            self.card1_value.configure(text=str(total_students))
-            self.card2_value.configure(text=str(total_buses))
-            self.card3_value.configure(text=str(total_routes))
-            
-            conn.close()
-        except Exception as e:
-            print(f"Error loading stats: {e}")
-            self.card1_value.configure(text="0")
-            self.card2_value.configure(text="0")
-            self.card3_value.configure(text="0")
+        frame.pack(fill="both", expand=True)
             
     def create_widgets(self):
         
@@ -88,20 +168,24 @@ class AdminDashboard:
         )
         self.sidebar_title.pack(pady=(0, 20))
         
-        # Main Frame
-        self.main_frame= ctk.CTkFrame(
+        # Main Container
+        self.main_container = ctk.CTkFrame(
             self.window,
             corner_radius=0
         )
-        self.main_frame.pack(
+        self.main_container.pack(
             side="right",
             fill="both",
             expand=True
         )
         
+        # Top Bar (for toggle button)
+        self.top_bar = ctk.CTkFrame(self.main_container, height=50, corner_radius=0, fg_color="transparent")
+        self.top_bar.pack(side="top", fill="x")
+        
         # Toggle Sidebar Button
         self.toggle_button = ctk.CTkButton(
-            self.main_frame,
+            self.top_bar,
             text="☰",
             width=40,
             height=40,
@@ -112,81 +196,17 @@ class AdminDashboard:
             hover_color=("gray70", "gray30")
         )
         self.toggle_button.pack(anchor="nw", padx=10, pady=10)
-        # Title
-        self.title_label = ctk.CTkLabel(
-            self.main_frame,
-            text="School Transport Management System",
-            font=("Arial", 30, "bold")
-        )
-        self.title_label.pack(pady=(40, 10))
         
-        # Welcome Label
-        self.welcome_label = ctk.CTkLabel(
-            self.main_frame,
-            text="Welcome, Admin! Here's your system overview:",
-            font=("Arial", 20)
-        )
-        self.welcome_label.pack(pady=(0, 30))
-        
-        # Summary Cards Container
-        self.summary_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.summary_frame.pack(pady=20, padx=40, fill="x")
-        self.summary_frame.grid_columnconfigure((0, 1, 2), weight=1)
-
-        # Card 1: Total Students
-        self.card1 = ctk.CTkFrame(self.summary_frame, corner_radius=15)
-        self.card1.grid(row=0, column=0, padx=15, pady=10, sticky="nsew")
-        self.card1_title = ctk.CTkLabel(self.card1, text="Total Students", font=("Arial", 16))
-        self.card1_title.pack(pady=(20, 5))
-        self.card1_value = ctk.CTkLabel(self.card1, text="1,250", font=("Arial", 36, "bold"), text_color="#1f538d")
-        self.card1_value.pack(pady=(0, 20))
-
-        # Card 2: Active Buses
-        self.card2 = ctk.CTkFrame(self.summary_frame, corner_radius=15)
-        self.card2.grid(row=0, column=1, padx=15, pady=10, sticky="nsew")
-        self.card2_title = ctk.CTkLabel(self.card2, text="Active Buses", font=("Arial", 16))
-        self.card2_title.pack(pady=(20, 5))
-        self.card2_value = ctk.CTkLabel(self.card2, text="42", font=("Arial", 36, "bold"), text_color="#1f538d")
-        self.card2_value.pack(pady=(0, 20))
-
-        # Card 3: Total Routes
-        self.card3 = ctk.CTkFrame(self.summary_frame, corner_radius=15)
-        self.card3.grid(row=0, column=2, padx=15, pady=10, sticky="nsew")
-        self.card3_title = ctk.CTkLabel(self.card3, text="Total Routes", font=("Arial", 16))
-        self.card3_title.pack(pady=(20, 5))
-        self.card3_value = ctk.CTkLabel(self.card3, text="18", font=("Arial", 36, "bold"), text_color="#1f538d")
-        self.card3_value.pack(pady=(0, 20))
-        
-        # Quick Actions Title
-        self.quick_actions_label = ctk.CTkLabel(
-            self.main_frame,
-            text="Quick Actions",
-            font=("Arial", 20, "bold")
-        )
-        self.quick_actions_label.pack(pady=(30, 10))
-
-        # Quick Actions Container
-        self.quick_actions_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.quick_actions_frame.pack(pady=10, padx=40)
-
-        # Shortcut Buttons
-        self.btn_add_student = ctk.CTkButton(self.quick_actions_frame, text="Add New Student", command=self.open_student_management)
-        self.btn_add_student.grid(row=0, column=0, padx=10, pady=10)
-
-        self.btn_view_students = ctk.CTkButton(self.quick_actions_frame, text="View Students", command=self.open_student_records)
-        self.btn_view_students.grid(row=0, column=1, padx=10, pady=10)
-
-        self.btn_add_bus = ctk.CTkButton(self.quick_actions_frame, text="Manage Buses", command=self.open_bus_management)
-        self.btn_add_bus.grid(row=0, column=2, padx=10, pady=10)
-
-        self.btn_view_routes = ctk.CTkButton(self.quick_actions_frame, text="View Routes", command=self.open_route_records)
-        self.btn_view_routes.grid(row=0, column=3, padx=10, pady=10)
+        # Content Frame
+        self.content_frame = ctk.CTkFrame(self.main_container, corner_radius=0, fg_color="transparent")
+        self.content_frame.pack(side="top", fill="both", expand=True)
         
         # Dashboard Button
         self.dashboard_button = ctk.CTkButton(
             self.sidebar_frame,
             text="Dashboard",
-            width=170
+            width=170,
+            command=lambda: self.show_frame(DashboardHome)
         )
         self.dashboard_button.pack(pady=10)
 
@@ -262,39 +282,31 @@ class AdminDashboard:
         self.logout_button.pack(pady=10)
         
     def open_student_management(self):
-        student=StudentManagement(master=self.window)
-        student.run()
+        self.show_frame(StudentManagement)
         
     def open_student_records(self):
-        records=StudentRecords(master=self.window)
-        records.run()
+        self.show_frame(StudentRecords)
         
     def open_parent_management(self):
-        parent=ParentManagement(master=self.window)
-        parent.run()
+        self.show_frame(ParentManagement)
         
     def open_parent_records(self):
-        records=ParentRecords(master=self.window)
-        records.run()
+        self.show_frame(ParentRecords)
         
     def open_bus_management(self):
-        bus_mgmt = BusManagement(master=self.window)
-        bus_mgmt.run()
+        self.show_frame(BusManagement)
         
     def open_route_management(self):
-        route_mgmt = RouteManagement(master=self.window)
-        route_mgmt.run()
+        self.show_frame(RouteManagement)
         
     def open_route_records(self):
-        route_recs = RouteRecords(master=self.window)
-        route_recs.run()
+        self.show_frame(RouteRecords)
+        
     def toggle_sidebar(self):
         if self.sidebar_frame.winfo_ismapped():
             self.sidebar_frame.pack_forget()
-            self.toggle_button.pack(anchor="nw", padx=10, pady=10, before=self.title_label)
         else:
-            self.toggle_button.pack_forget()
-            self.sidebar_frame.pack(side="left", fill="y", before=self.main_frame)
+            self.sidebar_frame.pack(side="left", fill="y", before=self.main_container)
 
     def logout(self):
         self.window.destroy()
