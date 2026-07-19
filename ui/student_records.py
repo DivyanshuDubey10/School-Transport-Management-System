@@ -1,248 +1,163 @@
-import customtkinter as ctk
-from tkinter import ttk
-from tkinter import messagebox
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, 
+                               QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QDialog, QFormLayout)
+from PyQt6.QtCore import Qt
 import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from database import connect_database
 
-class StudentRecords(ctk.CTkFrame):
-    
-    def __init__(self, master):
-        super().__init__(master, fg_color="transparent")
-        
+class StudentRecords(QWidget):
+    def __init__(self, master=None):
+        super().__init__()
         self.create_widgets()
         self.load_students()
         
-
-        
-    def select_student(self, event):
-        selected = self.students_table.focus()
-        if not selected:
-            return
-
-        values = self.students_table.item(selected, "values")
-
-        self.selected_student_id = values[0]
-        self.selected_student = values
-
-        print("Selected Student ID:", self.selected_student_id)   
-                 
     def create_widgets(self):
-        
-        self.title = ctk.CTkLabel(
-            self,
-            text="Student Records",
-            font=("Arial", 28, "bold")
-        )
-        self.title.pack(pady=20)
-        
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+
+        # Title
+        title_label = QLabel("Student Records")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold;")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(title_label)
+
         # Search Frame
-        self.search_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.search_frame.pack(pady=(0, 10))
-        
-        self.search_entry = ctk.CTkEntry(self.search_frame, placeholder_text="Search by Name or Class...", width=300)
-        self.search_entry.pack(side="left", padx=10)
-        
-        self.search_button = ctk.CTkButton(self.search_frame, text="Search", width=100, command=self.load_students)
-        self.search_button.pack(side="left")
-        
-        style = ttk.Style()
-        style.configure("Treeview", font=("Arial", 14), rowheight=35)
-        style.configure("Treeview.Heading", font=("Arial", 16, "bold"))
-        
-        self.students_table = ttk.Treeview(
-            self,
-            columns=(
-                "ID",
-                "Name",
-                "Class",
-                "Parent",
-                "Phone",
-                "Address",
-                "Bus",
-                "Route",
-                "Fee"
-            ),
-            show="headings",
-            height=18
-        )
-        
-        self.students_table.bind(
-            "<<TreeviewSelect>>",
-            self.select_student
-        )
-        self.students_table.heading("ID", text="ID")
-        self.students_table.heading("Name", text="Student Name")
-        self.students_table.heading("Class", text="Class")
-        self.students_table.heading("Parent", text="Parent ID")
-        self.students_table.heading("Phone", text="Phone")
-        self.students_table.heading("Address", text="Address")
-        self.students_table.heading("Bus", text="Bus ID")
-        self.students_table.heading("Route", text="Route ID")
-        self.students_table.heading("Fee", text="Fee Status")
-        
-        self.students_table.column("ID", width=80)
-        self.students_table.column("Name", width=220)
-        self.students_table.column("Class", width=100)
-        self.students_table.column("Parent", width=100)
-        self.students_table.column("Phone", width=150)
-        self.students_table.column("Address", width=300)
-        self.students_table.column("Bus", width=100)
-        self.students_table.column("Route", width=100)
-        self.students_table.column("Fee", width=150)
-        
-        self.students_table.pack(padx=20, pady=20, fill="both", expand=True)
-        self.update_button = ctk.CTkButton(
-            self,
-            text="Update Student",
-            command=self.open_update_window
-        )
-        self.update_button.pack(pady=10)
-        
-        self.delete_button = ctk.CTkButton(
-            self,
-            text="Delete Student",
-            command = self.delete_student
-        )
-        self.delete_button.pack(pady=10)
-        
-    def delete_student(self):
-        
-        if not hasattr(self, "selected_student_id"):
-                messagebox.showerror(
-                    "Error",
-                    "Please select a student first."
-                )
-                return
+        search_layout = QHBoxLayout()
+        self.search_entry = QLineEdit()
+        self.search_entry.setPlaceholderText("Search by Name or Class...")
+        self.search_entry.setFixedWidth(300)
+        search_layout.addWidget(self.search_entry, alignment=Qt.AlignmentFlag.AlignRight)
 
-        confirm = messagebox.askyesno(
-            "Confirm Delete",
-            "Are you sure you want to delete this student?"
-        )
+        search_button = QPushButton("Search")
+        search_button.setFixedWidth(100)
+        search_button.clicked.connect(self.load_students)
+        search_layout.addWidget(search_button, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        if not confirm:
+        main_layout.addLayout(search_layout)
+
+        # Table
+        self.students_table = QTableWidget()
+        self.students_table.setColumnCount(10)
+        self.students_table.setHorizontalHeaderLabels(["ID", "Name", "Class", "Parent", "Phone", "Address", "Bus", "Route", "Fee Paid", "Fee Balance"])
+        self.students_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.students_table.horizontalHeader().setStretchLastSection(True)
+        self.students_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.students_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.students_table.itemSelectionChanged.connect(self.select_student)
+        main_layout.addWidget(self.students_table)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.update_button = QPushButton("Update Student")
+        self.update_button.clicked.connect(self.open_update_window)
+        button_layout.addWidget(self.update_button)
+
+        self.delete_button = QPushButton("Delete Student")
+        self.delete_button.clicked.connect(self.delete_student)
+        button_layout.addWidget(self.delete_button)
+
+        main_layout.addLayout(button_layout)
+
+    def select_student(self):
+        selected_items = self.students_table.selectedItems()
+        if not selected_items:
             return
         
-        from dal import db_dal
-
-        try:
-            success = db_dal.delete_student(self.selected_student_id)
-            if success:
-                messagebox.showinfo("Success", "Student deleted successfully!")
-            else:
-                messagebox.showerror("Error", "Could not delete student.")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to delete student: {e}")
-
-        self.load_students()
-                
-    def open_update_window(self):
-
-        if not hasattr(self, "selected_student_id"):
-            messagebox.showerror(
-                "Error",
-                "Please select a student first."
-            )
-            return
-
-        self.update_window = ctk.CTkToplevel(self)
-        self.update_window.title("Update Student")
-        self.update_window.geometry("500x500")
-        self.update_window.resizable(False, False)
-
-        title = ctk.CTkLabel(
-            self.update_window,
-            text="Update Student",
-            font=("Arial", 24, "bold")
-        )
-        title.pack(pady=20)
-
-        # Student Name
-        ctk.CTkLabel(self.update_window, text="Student Name").pack()
-        self.name_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.name_entry.pack(pady=5)
-        self.name_entry.insert(0, self.selected_student[1])
-
-        # Student Class
-        ctk.CTkLabel(self.update_window, text="Student Class").pack()
-        self.class_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.class_entry.pack(pady=5)
-        self.class_entry.insert(0, self.selected_student[2])
-
-        # Parent ID
-        ctk.CTkLabel(self.update_window, text="Parent ID").pack()
-        self.parent_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.parent_entry.pack(pady=5)
-        self.parent_entry.insert(0, self.selected_student[3])
-
-        # Route ID
-        ctk.CTkLabel(self.update_window, text="Route ID").pack()
-        self.route_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.route_entry.pack(pady=5)
-        self.route_entry.insert(0, self.selected_student[7])
-
-        # Fee Status
-        ctk.CTkLabel(self.update_window, text="Fee Status").pack()
-        self.fee_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.fee_entry.pack(pady=5)
-        self.fee_entry.insert(0, self.selected_student[8])
-
-        # Save Button
-        self.save_button = ctk.CTkButton(
-            self.update_window,
-            text="Save Changes",
-            command = self.update_student
-        )
-        self.save_button.pack(pady=20)
-        
-    def update_student(self):
-        
-        student_name = self.name_entry.get()
-        student_class = self.class_entry.get()
-        parent_id = self.parent_entry.get()
-        route_id = self.route_entry.get()
-        fee_status = self.fee_entry.get()
-        
-        from dal import db_dal
-
-        try:
-            success = db_dal.update_student(
-                self.selected_student_id,
-                student_name,
-                student_class,
-                parent_id,
-                route_id,
-                fee_status
-            )
-            
-            if success:
-                messagebox.showinfo("Success", "Student updated successfully!")
-                self.update_window.destroy()
-            else:
-                messagebox.showerror("Error", "Could not update student.")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to update student: {e}")
-
-        self.load_students()
-        
+        row = selected_items[0].row()
+        self.selected_student = [self.students_table.item(row, col).text() for col in range(10)]
+        self.selected_student_id = self.selected_student[0]
 
     def load_students(self):
+        search_query = self.search_entry.text().strip()
         
-        for row in self.students_table.get_children():
-            self.students_table.delete(row)
-
-        search_query = ""
-        if hasattr(self, 'search_entry'):
-            search_query = self.search_entry.get().strip()
-
         from dal import db_dal
         students = db_dal.get_all_students(search_query=search_query)
 
-        for student in students:
-            self.students_table.insert(
-                "",
-                "end",
-                values=student
-            )
+        self.students_table.setRowCount(0)
+        for row_idx, row_data in enumerate(students):
+            self.students_table.insertRow(row_idx)
+            for col_idx, item in enumerate(row_data):
+                self.students_table.setItem(row_idx, col_idx, QTableWidgetItem(str(item)))
+
+    def delete_student(self):
+        if not hasattr(self, "selected_student_id"):
+            QMessageBox.critical(self, "Error", "Please select a student first.")
+            return
+
+        reply = QMessageBox.question(self, 'Confirm Delete', 'Are you sure you want to delete this student?', 
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+
+        if reply == QMessageBox.StandardButton.Yes:
+            from dal import db_dal
+            try:
+                success = db_dal.delete_student(self.selected_student_id)
+                if success:
+                    QMessageBox.information(self, "Success", "Student deleted successfully!")
+                else:
+                    QMessageBox.critical(self, "Error", "Could not delete student.")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to delete student: {e}")
+
+            self.load_students()
+
+    def open_update_window(self):
+        if not hasattr(self, "selected_student_id"):
+            QMessageBox.critical(self, "Error", "Please select a student first.")
+            return
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Update Student")
+        dialog.setFixedSize(400, 300)
+        
+        layout = QFormLayout(dialog)
+        
+        name_entry = QLineEdit(self.selected_student[1])
+        class_entry = QLineEdit(self.selected_student[2])
+        parent_entry = QLineEdit(self.selected_student[3])
+        route_entry = QLineEdit(self.selected_student[7])
+        fee_paid_entry = QLineEdit(self.selected_student[8])
+        fee_balance_entry = QLineEdit(self.selected_student[9])
+        
+        layout.addRow("Student Name:", name_entry)
+        layout.addRow("Student Class:", class_entry)
+        layout.addRow("Parent ID:", parent_entry)
+        layout.addRow("Route ID:", route_entry)
+        layout.addRow("Fee Paid:", fee_paid_entry)
+        layout.addRow("Fee Balance:", fee_balance_entry)
+
+        save_btn = QPushButton("Save Changes")
+        def save_changes():
+            from dal import db_dal
+            try:
+                fee_paid = float(fee_paid_entry.text().strip()) if fee_paid_entry.text().strip() else 0.0
+                fee_balance = float(fee_balance_entry.text().strip()) if fee_balance_entry.text().strip() else 0.0
+            except ValueError:
+                QMessageBox.critical(dialog, "Error", "Fee Paid and Fee Balance must be valid numbers.")
+                return
+
+            try:
+                success = db_dal.update_student(
+                    self.selected_student_id,
+                    name_entry.text().strip(),
+                    class_entry.text().strip(),
+                    parent_entry.text().strip(),
+                    route_entry.text().strip(),
+                    fee_paid,
+                    fee_balance
+                )
+                if success:
+                    QMessageBox.information(dialog, "Success", "Student updated successfully!")
+                    dialog.accept()
+                    self.load_students()
+                else:
+                    QMessageBox.critical(dialog, "Error", "Could not update student.")
+            except Exception as e:
+                QMessageBox.critical(dialog, "Error", f"Failed to update student: {e}")
+                
+        save_btn.clicked.connect(save_changes)
+        layout.addWidget(save_btn)
+        
+        dialog.exec()

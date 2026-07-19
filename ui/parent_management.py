@@ -1,157 +1,106 @@
-import customtkinter as ctk
-from tkinter import messagebox
-import sqlite3
-from database import connect_database
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox)
+from PyQt6.QtCore import Qt
+import sys
+import os
 
-class ParentManagement(ctk.CTkFrame):
-    
-    def __init__(self, master):
-        super().__init__(master, fg_color="transparent")
-        
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+class ParentManagement(QWidget):
+    def __init__(self, master=None):
+        super().__init__()
         self.create_widgets()
     
     def create_widgets(self):
-        self.title = ctk.CTkLabel(
-            self,
-            text="Parent Management",
-            font=("Arial", 28, "bold")
-        )
-        self.title.pack(pady=20)
-        
-        self.parent_name = ctk.CTkLabel(
-            self,
-            text = "Parent Name",
-            font = ("Arial", 16)
-        )
-        self.parent_name.pack(pady=10)
-        
-        self.parent_name_entry = ctk.CTkEntry(
-            self,
-            width=300,
-            placeholder_text="Enter Parent Name"
-        )
-        self.parent_name_entry.pack(pady=10)
-        
-        self.username_label = ctk.CTkLabel(
-            self,
-            text="Username",
-        )
-        self.username_label.pack()
-        
-        self.username_entry = ctk.CTkEntry(
-            self,
-            width=300,
-            placeholder_text="Enter Username"
-        )
-        self.username_entry.pack(pady=10)
-        
-        self.password_label = ctk.CTkLabel(
-            self,
-            text="Password"
-        )
-        self.password_label.pack()
-        
-        self.password_entry = ctk.CTkEntry(
-            self,
-            width=300,
-            placeholder_text="Enter Password",
-            show="*"
-        )
-        self.password_entry.pack(pady=10)
-        
-        self.phone_label = ctk.CTkLabel(
-            self,
-            text="Phone Number"
-        )
-        self.phone_label.pack()
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(15)
 
-        self.phone_entry = ctk.CTkEntry(
-            self,
-            width=300,
-            placeholder_text="Enter Phone Number"
-        )
-        self.phone_entry.pack(pady=10)
-        
-        self.address_label = ctk.CTkLabel(
-            self,
-            text="Address"
-        )
-        self.address_label.pack()
+        title_label = QLabel("Parent Management")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold;")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(title_label)
 
-        self.address_entry = ctk.CTkEntry(
-            self,
-            width=300,
-            placeholder_text="Enter Address"
-        )
-        self.address_entry.pack(pady=10)
-        
-        self.pickup_label = ctk.CTkLabel(
-            self,
-            text="Pickup Point"
-        )
-        self.pickup_label.pack()
+        form_layout = QVBoxLayout()
+        form_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
-        self.pickup_entry = ctk.CTkEntry(
-            self,
-            width=300,
-            placeholder_text="Enter Pickup Point"
-        )
-        self.pickup_entry.pack(pady=10)
+        # Name
+        self.parent_name_entry = QLineEdit()
+        self.parent_name_entry.setPlaceholderText("Enter Parent Name")
+        self.parent_name_entry.setFixedWidth(300)
+        form_layout.addWidget(QLabel("Parent Name"), alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.parent_name_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # Username
+        self.username_entry = QLineEdit()
+        self.username_entry.setPlaceholderText("Enter Username")
+        self.username_entry.setFixedWidth(300)
+        form_layout.addWidget(QLabel("Username"), alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.username_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # Password
+        self.password_entry = QLineEdit()
+        self.password_entry.setPlaceholderText("Enter Password")
+        self.password_entry.setEchoMode(QLineEdit.EchoMode.Password)
+        self.password_entry.setFixedWidth(300)
+        form_layout.addWidget(QLabel("Password"), alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.password_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # Phone
+        self.phone_entry = QLineEdit()
+        self.phone_entry.setPlaceholderText("Enter Phone Number")
+        self.phone_entry.setFixedWidth(300)
+        form_layout.addWidget(QLabel("Phone Number"), alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.phone_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # Address
+        self.address_entry = QLineEdit()
+        self.address_entry.setPlaceholderText("Enter Address")
+        self.address_entry.setFixedWidth(300)
+        form_layout.addWidget(QLabel("Address"), alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.address_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # Pickup
+        self.pickup_entry = QLineEdit()
+        self.pickup_entry.setPlaceholderText("Enter Pickup Point")
+        self.pickup_entry.setFixedWidth(300)
+        form_layout.addWidget(QLabel("Pickup Point"), alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.pickup_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # Save Button
+        save_button = QPushButton("Save Parent")
+        save_button.setFixedWidth(150)
+        save_button.clicked.connect(self.save_parent)
+        form_layout.addWidget(save_button, alignment=Qt.AlignmentFlag.AlignCenter)
         
-        self.save_button = ctk.CTkButton(
-            self,
-            text="Save Parent",
-            command=self.save_parent
-        )
-        self.save_button.pack(pady=20)
-        
+        main_layout.addLayout(form_layout)
+        main_layout.addStretch()
+
     def save_parent(self):
-        parent_name = self.parent_name_entry.get()
-        username = self.username_entry.get()
-        password = self.password_entry.get()
-        phone = self.phone_entry.get()
-        address = self.address_entry.get()
-        pickup_point = self.pickup_entry.get()
-        
-        if not parent_name:
-            messagebox.showerror("Error", "Parent Name is required.")
-            return
-        
-        if not username:
-            messagebox.showerror("Error", "Username is required.")
-            return
-        
-        if not password:
-            messagebox.showerror("Password", "Password is required.")
-            return
+        parent_name = self.parent_name_entry.text().strip()
+        username = self.username_entry.text().strip()
+        password = self.password_entry.text().strip()
+        phone = self.phone_entry.text().strip()
+        address = self.address_entry.text().strip()
+        pickup_point = self.pickup_entry.text().strip()
 
-        if not phone:
-            messagebox.showerror("Error", "Phone Number is required.")
-            return
-
-        if not address:
-            messagebox.showerror("Error", "Address is required.")
+        if not all([parent_name, username, password, phone, address, pickup_point]):
+            QMessageBox.critical(self, "Error", "All fields are required.")
             return
             
-        if not pickup_point:
-            messagebox.showerror("Error", "Pickup Point is required.")
-            return
-            
+        import security
+        hashed_pw = security.hash_password(password)
+        
         from dal import db_dal
         
         try:
-            success = db_dal.add_parent(parent_name, phone, address, pickup_point, username, password)
+            success = db_dal.add_parent(parent_name, phone, address, pickup_point, username, hashed_pw)
             if success:
-                messagebox.showinfo(
-                     "Success", "Parent information saved successfully."
-                )
-                
-                self.parent_name_entry.delete(0, 'end')
-                self.username_entry.delete(0, 'end')
-                self.password_entry.delete(0, 'end')
-                self.phone_entry.delete(0, 'end')
-                self.address_entry.delete(0, 'end')
-                self.pickup_entry.delete(0, 'end')
+                QMessageBox.information(self, "Success", "Parent information saved successfully.")
+                self.parent_name_entry.clear()
+                self.username_entry.clear()
+                self.password_entry.clear()
+                self.phone_entry.clear()
+                self.address_entry.clear()
+                self.pickup_entry.clear()
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {e}")
-
+            QMessageBox.critical(self, "Error", f"An error occurred: {e}")

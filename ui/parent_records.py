@@ -1,216 +1,156 @@
-from tkinter import ttk
-import customtkinter as ctk
-from tkinter import messagebox
-from database import connect_database
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, 
+                               QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QDialog, QFormLayout)
+from PyQt6.QtCore import Qt
+import sys
+import os
 
-class ParentRecords(ctk.CTkFrame):
-    
-    def __init__(self, master):
-        super().__init__(master, fg_color="transparent")
-        
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+class ParentRecords(QWidget):
+    def __init__(self, master=None):
+        super().__init__()
         self.create_widgets()
         self.load_parents()
         
     def create_widgets(self):
-        self.title = ctk.CTkLabel(
-            self,
-            text="Parents Records",
-            font=("Arial", 28,"bold")
-        )
-        self.title.pack(pady="20") 
-        
-        # Search Frame
-        self.search_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.search_frame.pack(pady=(0, 10))
-        
-        self.search_entry = ctk.CTkEntry(self.search_frame, placeholder_text="Search by Name, Username or Phone...", width=300)
-        self.search_entry.pack(side="left", padx=10)
-        
-        self.search_button = ctk.CTkButton(self.search_frame, text="Search", width=100, command=self.load_parents)
-        self.search_button.pack(side="left")
-        
-        style = ttk.Style()
-        style.configure("Treeview", font=("Arial", 14), rowheight=35)
-        style.configure("Treeview.Heading", font=("Arial", 16, "bold"))
-        
-        self.parents_table = ttk.Treeview(
-            self,
-            columns=(
-                "ID",
-                "Name",
-                "Phone",
-                "Address",
-                "Pickup Point",
-                "Username"
-            ),
-            show="headings",
-            height=18
-        )
-        
-        self.parents_table.pack(
-            padx=20,
-            pady=20,
-            fill="both",
-            expand=True
-        )
-        
-        self.parents_table.bind(
-            "<<TreeviewSelect>>",
-            self.select_parent
-        )
-        self.parents_table.heading("ID", text="ID")
-        self.parents_table.heading("Name", text="Parent Name")
-        self.parents_table.heading("Phone", text="Phone")
-        self.parents_table.heading("Address", text="Address")
-        self.parents_table.heading("Pickup Point", text="Pickup Point")
-        self.parents_table.heading("Username", text="Username")
-        
-        self.parents_table.column("ID", width=100)
-        self.parents_table.column("Name", width=200)
-        self.parents_table.column("Phone", width=150)
-        self.parents_table.column("Address", width=250)
-        self.parents_table.column("Pickup Point", width=200)
-        self.parents_table.column("Username", width=150)
-        
-        self.update_button = ctk.CTkButton(
-            self,
-            text="Update Parent",
-            command=self.open_update_window
-        )
-        self.update_button.pack(pady=10)
-        
-        self.delete_button = ctk.CTkButton(
-            self,
-            text="Delete Parent",
-            command=self.delete_parent
-        )
-        self.delete_button.pack(pady=10)
-        
-    def select_parent(self, event):
-        selected = self.parents_table.focus()
-        if not selected:
-            return
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
 
-        values = self.parents_table.item(selected, "values")
-        self.selected_parent_id = values[0]
-        self.selected_parent = values
-        print("Selected Parent ID:", self.selected_parent_id)
+        # Title
+        title_label = QLabel("Parent Records")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold;")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(title_label)
+
+        # Search Frame
+        search_layout = QHBoxLayout()
+        self.search_entry = QLineEdit()
+        self.search_entry.setPlaceholderText("Search by Name, Username or Phone...")
+        self.search_entry.setFixedWidth(300)
+        search_layout.addWidget(self.search_entry, alignment=Qt.AlignmentFlag.AlignRight)
+
+        search_button = QPushButton("Search")
+        search_button.setFixedWidth(100)
+        search_button.clicked.connect(self.load_parents)
+        search_layout.addWidget(search_button, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        main_layout.addLayout(search_layout)
+
+        # Table
+        self.parents_table = QTableWidget()
+        self.parents_table.setColumnCount(6)
+        self.parents_table.setHorizontalHeaderLabels(["ID", "Name", "Phone", "Address", "Pickup Point", "Username"])
+        self.parents_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.parents_table.horizontalHeader().setStretchLastSection(True)
+        self.parents_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.parents_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.parents_table.itemSelectionChanged.connect(self.select_parent)
+        main_layout.addWidget(self.parents_table)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.update_button = QPushButton("Update Parent")
+        self.update_button.clicked.connect(self.open_update_window)
+        button_layout.addWidget(self.update_button)
+
+        self.delete_button = QPushButton("Delete Parent")
+        self.delete_button.clicked.connect(self.delete_parent)
+        button_layout.addWidget(self.delete_button)
+
+        main_layout.addLayout(button_layout)
+
+    def select_parent(self):
+        selected_items = self.parents_table.selectedItems()
+        if not selected_items:
+            return
+        
+        row = selected_items[0].row()
+        self.selected_parent = [self.parents_table.item(row, col).text() for col in range(6)]
+        self.selected_parent_id = self.selected_parent[0]
+
+    def load_parents(self):
+        search_query = self.search_entry.text().strip()
+        
+        from dal import db_dal
+        parents = db_dal.get_all_parents(search_query=search_query)
+
+        self.parents_table.setRowCount(0)
+        for row_idx, row_data in enumerate(parents):
+            self.parents_table.insertRow(row_idx)
+            # Row data has 7 columns from DB: parent_id, parent_name, phone, address, pickup_point, username, password
+            # We only want to display the first 6
+            display_data = row_data[:6]
+            for col_idx, item in enumerate(display_data):
+                self.parents_table.setItem(row_idx, col_idx, QTableWidgetItem(str(item)))
 
     def delete_parent(self):
         if not hasattr(self, "selected_parent_id"):
-            messagebox.showerror("Error", "Please select a parent first.")
+            QMessageBox.critical(self, "Error", "Please select a parent first.")
             return
 
-        confirm = messagebox.askyesno(
-            "Confirm Delete",
-            "Are you sure you want to delete this parent?"
-        )
+        reply = QMessageBox.question(self, 'Confirm Delete', 'Are you sure you want to delete this parent?', 
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
 
-        if not confirm:
-            return
+        if reply == QMessageBox.StandardButton.Yes:
+            from dal import db_dal
+            try:
+                success = db_dal.delete_parent(self.selected_parent_id)
+                if success:
+                    QMessageBox.information(self, "Success", "Parent deleted successfully!")
+                else:
+                    QMessageBox.critical(self, "Error", "Could not delete parent.")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to delete parent: {e}")
 
-        from dal import db_dal
-        
-        success = db_dal.delete_parent(self.selected_parent_id)
-        if not success:
-            messagebox.showerror("Error", "Could not delete parent.")
-            return
-
-        messagebox.showinfo("Success", "Parent deleted successfully!")
-        self.load_parents()
+            self.load_parents()
 
     def open_update_window(self):
         if not hasattr(self, "selected_parent_id"):
-            messagebox.showerror("Error", "Please select a parent first.")
+            QMessageBox.critical(self, "Error", "Please select a parent first.")
             return
 
-        self.update_window = ctk.CTkToplevel(self)
-        self.update_window.title("Update Parent")
-        self.update_window.geometry("500x600")
-        self.update_window.resizable(False, False)
-
-        title = ctk.CTkLabel(
-            self.update_window,
-            text="Update Parent",
-            font=("Arial", 24, "bold")
-        )
-        title.pack(pady=20)
-
-        # Name
-        ctk.CTkLabel(self.update_window, text="Parent Name").pack()
-        self.name_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.name_entry.pack(pady=5)
-        self.name_entry.insert(0, self.selected_parent[1])
-
-        # Phone
-        ctk.CTkLabel(self.update_window, text="Phone").pack()
-        self.phone_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.phone_entry.pack(pady=5)
-        self.phone_entry.insert(0, self.selected_parent[2])
-
-        # Address
-        ctk.CTkLabel(self.update_window, text="Address").pack()
-        self.address_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.address_entry.pack(pady=5)
-        self.address_entry.insert(0, self.selected_parent[3])
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Update Parent")
+        dialog.setFixedSize(400, 300)
         
-        # Pickup Point
-        ctk.CTkLabel(self.update_window, text="Pickup Point").pack()
-        self.pickup_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.pickup_entry.pack(pady=5)
-        self.pickup_entry.insert(0, self.selected_parent[4])
-
-        # Username
-        ctk.CTkLabel(self.update_window, text="Username").pack()
-        self.username_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.username_entry.pack(pady=5)
-        self.username_entry.insert(0, self.selected_parent[5])
-
-        # Save Button
-        self.save_button = ctk.CTkButton(
-            self.update_window,
-            text="Save Changes",
-            command=self.update_parent
-        )
-        self.save_button.pack(pady=20)
-
-    def update_parent(self):
-        parent_name = self.name_entry.get()
-        phone = self.phone_entry.get()
-        address = self.address_entry.get()
-        pickup_point = self.pickup_entry.get()
-        username = self.username_entry.get()
-
-        if not all([parent_name, phone, address, pickup_point, username]):
-            messagebox.showerror("Error", "All fields are required.")
-            return
-
-        from dal import db_dal
+        layout = QFormLayout(dialog)
         
-        success = db_dal.update_parent(self.selected_parent_id, parent_name, phone, address, pickup_point, username)
-        if not success:
-            messagebox.showerror("Error", "Could not update parent.")
-            return
+        name_entry = QLineEdit(self.selected_parent[1])
+        phone_entry = QLineEdit(self.selected_parent[2])
+        address_entry = QLineEdit(self.selected_parent[3])
+        pickup_entry = QLineEdit(self.selected_parent[4])
+        username_entry = QLineEdit(self.selected_parent[5])
+        
+        layout.addRow("Parent Name:", name_entry)
+        layout.addRow("Phone:", phone_entry)
+        layout.addRow("Address:", address_entry)
+        layout.addRow("Pickup Point:", pickup_entry)
+        layout.addRow("Username:", username_entry)
 
-        messagebox.showinfo("Success", "Parent updated successfully!")
-        self.update_window.destroy()
-        self.load_parents()
+        save_btn = QPushButton("Save Changes")
+        def save_changes():
+            from dal import db_dal
+            try:
+                success = db_dal.update_parent(
+                    self.selected_parent_id,
+                    name_entry.text().strip(),
+                    phone_entry.text().strip(),
+                    address_entry.text().strip(),
+                    pickup_entry.text().strip(),
+                    username_entry.text().strip()
+                )
+                if success:
+                    QMessageBox.information(dialog, "Success", "Parent updated successfully!")
+                    dialog.accept()
+                    self.load_parents()
+                else:
+                    QMessageBox.critical(dialog, "Error", "Could not update parent.")
+            except Exception as e:
+                QMessageBox.critical(dialog, "Error", f"Failed to update parent: {e}")
+                
+        save_btn.clicked.connect(save_changes)
+        layout.addWidget(save_btn)
         
-    def load_parents(self):
-        for row in self.parents_table.get_children():
-            self.parents_table.delete(row)
-            
-        search_query = ""
-        if hasattr(self, 'search_entry'):
-            search_query = self.search_entry.get().strip()
-            
-        from dal import db_dal
-        parents = db_dal.get_all_parents(search_query=search_query)
-        
-        for parent in parents:
-            self.parents_table.insert(
-                "",
-                "end",
-                values=parent
-            )
-        
+        dialog.exec()

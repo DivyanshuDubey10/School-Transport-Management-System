@@ -1,14 +1,13 @@
-import customtkinter as ctk
-from tkinter import messagebox
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QComboBox, QMessageBox)
+from PyQt6.QtCore import Qt
 import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-class BusManagement(ctk.CTkFrame):
-    
-    def __init__(self, master):
-        super().__init__(master, fg_color="transparent")
+class BusManagement(QWidget):
+    def __init__(self, master=None):
+        super().__init__()
         self.fetch_routes()
         self.create_widgets()
         
@@ -19,124 +18,90 @@ class BusManagement(ctk.CTkFrame):
         if not self.route_options: self.route_options = [""]
     
     def create_widgets(self):
-        self.title = ctk.CTkLabel(
-            self,
-            text="Add New Bus",
-            font=("Arial", 28, "bold")
-        )
-        self.title.pack(pady=20)
-        
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(15)
+
+        title_label = QLabel("Add New Bus")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold;")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(title_label)
+
+        form_layout = QVBoxLayout()
+        form_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+
         # Bus Number
-        self.bus_number_label = ctk.CTkLabel(
-            self,
-            text="Bus Number",
-            font=("Arial", 16)
-        )
-        self.bus_number_label.pack(pady=(10, 5))
-        
-        self.bus_number_entry = ctk.CTkEntry(
-            self,
-            width=300,
-            placeholder_text="Enter Bus Number"
-        )
-        self.bus_number_entry.pack(pady=(0, 10))
-        
+        self.bus_number_entry = QLineEdit()
+        self.bus_number_entry.setPlaceholderText("Enter Bus Number")
+        self.bus_number_entry.setFixedWidth(300)
+        form_layout.addWidget(QLabel("Bus Number"), alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.bus_number_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+
         # Driver Name
-        self.driver_name_label = ctk.CTkLabel(
-            self,
-            text="Driver Name",
-            font=("Arial", 16)
-        )
-        self.driver_name_label.pack(pady=(10, 5))
-        
-        self.driver_name_entry = ctk.CTkEntry(
-            self,
-            width=300,
-            placeholder_text="Enter Driver Name"
-        )
-        self.driver_name_entry.pack(pady=(0, 10))
-        
+        self.driver_name_entry = QLineEdit()
+        self.driver_name_entry.setPlaceholderText("Enter Driver Name")
+        self.driver_name_entry.setFixedWidth(300)
+        form_layout.addWidget(QLabel("Driver Name"), alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.driver_name_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+
         # Driver Phone
-        self.driver_phone_label = ctk.CTkLabel(
-            self,
-            text="Driver Phone",
-            font=("Arial", 16)
-        )
-        self.driver_phone_label.pack(pady=(10, 5))
-        
-        self.driver_phone_entry = ctk.CTkEntry(
-            self,
-            width=300,
-            placeholder_text="Enter Driver Phone"
-        )
-        self.driver_phone_entry.pack(pady=(0, 10))
-        
+        self.driver_phone_entry = QLineEdit()
+        self.driver_phone_entry.setPlaceholderText("Enter Driver Phone")
+        self.driver_phone_entry.setFixedWidth(300)
+        form_layout.addWidget(QLabel("Driver Phone"), alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.driver_phone_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+
         # Capacity
-        self.capacity_label = ctk.CTkLabel(
-            self,
-            text="Capacity",
-            font=("Arial", 16)
-        )
-        self.capacity_label.pack(pady=(10, 5))
-        
-        self.capacity_entry = ctk.CTkEntry(
-            self,
-            width=300,
-            placeholder_text="Enter Bus Capacity"
-        )
-        self.capacity_entry.pack(pady=(0, 10))
-        
+        self.capacity_entry = QLineEdit()
+        self.capacity_entry.setPlaceholderText("Enter Bus Capacity")
+        self.capacity_entry.setFixedWidth(300)
+        form_layout.addWidget(QLabel("Capacity"), alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.capacity_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+
         # Route Assignment
-        self.route_label = ctk.CTkLabel(
-            self,
-            text="Assign Route",
-            font=("Arial", 16)
-        )
-        self.route_label.pack(pady=(10, 5))
-        
-        self.route_dropdown = ctk.CTkComboBox(
-            self, width=300, values=self.route_options
-        )
-        self.route_dropdown.pack(pady=(0, 20))
-        self.route_dropdown.set("Select Route" if not self.route_options[0] == "" else "No Routes Available")
-        
+        self.route_dropdown = QComboBox()
+        self.route_dropdown.addItems(self.route_options)
+        self.route_dropdown.setFixedWidth(300)
+        form_layout.addWidget(QLabel("Assign Route"), alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.route_dropdown, alignment=Qt.AlignmentFlag.AlignCenter)
+
         # Save Button
-        self.save_button = ctk.CTkButton(
-            self,
-            text="Save Bus",
-            command=self.save_bus
-        )
-        self.save_button.pack(pady=10)
-        
+        save_button = QPushButton("Save Bus")
+        save_button.setFixedWidth(150)
+        save_button.clicked.connect(self.save_bus)
+        form_layout.addWidget(save_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        main_layout.addLayout(form_layout)
+        main_layout.addStretch()
 
     def save_bus(self):
-        bus_number = self.bus_number_entry.get()
-        driver_name = self.driver_name_entry.get()
-        driver_phone = self.driver_phone_entry.get()
-        capacity = self.capacity_entry.get()
-        route_selection = self.route_dropdown.get()
+        bus_number = self.bus_number_entry.text().strip()
+        driver_name = self.driver_name_entry.text().strip()
+        driver_phone = self.driver_phone_entry.text().strip()
+        capacity_str = self.capacity_entry.text().strip()
+        route_selection = self.route_dropdown.currentText()
         route_id = route_selection.split(" - ")[0] if " - " in route_selection else ""
         
         if not bus_number:
-            messagebox.showerror("Error", "Bus Number is required.")
+            QMessageBox.critical(self, "Error", "Bus Number is required.")
             return
             
         if not driver_name:
-            messagebox.showerror("Error", "Driver Name is required.")
+            QMessageBox.critical(self, "Error", "Driver Name is required.")
             return
             
         if not driver_phone:
-            messagebox.showerror("Error", "Driver Phone is required.")
+            QMessageBox.critical(self, "Error", "Driver Phone is required.")
             return
             
-        if not capacity:
-            messagebox.showerror("Error", "Capacity is required.")
+        if not capacity_str:
+            QMessageBox.critical(self, "Error", "Capacity is required.")
             return
             
         try:
-            capacity = int(capacity)
+            capacity = int(capacity_str)
         except ValueError:
-            messagebox.showerror("Error", "Capacity must be a valid number.")
+            QMessageBox.critical(self, "Error", "Capacity must be a valid number.")
             return
 
         from dal import db_dal
@@ -144,13 +109,11 @@ class BusManagement(ctk.CTkFrame):
         try:
             success = db_dal.add_bus(bus_number, driver_name, driver_phone, capacity, route_id if route_id else None)
             if success:
-                messagebox.showinfo("Success", "Bus saved successfully.")
+                QMessageBox.information(self, "Success", "Bus saved successfully.")
                 
-                # Clear entries
-                self.bus_number_entry.delete(0, "end")
-                self.driver_name_entry.delete(0, "end")
-                self.driver_phone_entry.delete(0, "end")
-                self.capacity_entry.delete(0, "end")
+                self.bus_number_entry.clear()
+                self.driver_name_entry.clear()
+                self.driver_phone_entry.clear()
+                self.capacity_entry.clear()
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {e}")
-
+            QMessageBox.critical(self, "Error", f"An error occurred: {e}")

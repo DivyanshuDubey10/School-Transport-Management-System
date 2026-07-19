@@ -56,9 +56,9 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            # PRD: Select Child Name, Class, Fee Status, Bus Number, Driver Name, Driver Contact, Route, and Pickup Point.
+            # PRD: Select Child Name, Class, Fee Paid, Fee Balance, Bus Number, Driver Name, Driver Contact, Route, and Pickup Point.
             cursor.execute('''
-                SELECT s.student_name, s.student_class, s.fee_status, b.bus_number, 
+                SELECT s.student_name, s.student_class, s.fee_paid, s.fee_balance, b.bus_number, 
                        b.driver_name, b.driver_phone, r.route_name, p.pickup_point
                 FROM student s
                 JOIN parent p ON s.parent_id = p.parent_id
@@ -95,7 +95,7 @@ class DAL:
             cursor = conn.cursor()
             query = '''
                 SELECT s.student_id, s.student_name, s.student_class, 
-                       s.parent_id, p.phone, p.address, b.bus_id, s.route_id, s.fee_status 
+                       s.parent_id, p.phone, p.address, b.bus_id, s.route_id, s.fee_paid, s.fee_balance 
                 FROM student s 
                 JOIN parent p ON s.parent_id = p.parent_id 
                 LEFT JOIN bus b ON s.route_id = b.route_id
@@ -110,17 +110,17 @@ class DAL:
         finally:
             conn.close()
             
-    def add_student(self, student_name: str, student_class: str, parent_id: int, route_id: int, fee_status: str) -> bool:
+    def add_student(self, student_name: str, student_class: str, parent_id: int, route_id: int, fee_paid: float, fee_balance: float) -> bool:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
                 """
                 INSERT INTO student
-                (student_name, student_class, parent_id, route_id, fee_status)
-                VALUES (?, ?, ?, ?, ?)
+                (student_name, student_class, parent_id, route_id, fee_status, fee_paid, fee_balance)
+                VALUES (?, ?, ?, ?, 'Active', ?, ?)
                 """,
-                (student_name, student_class, parent_id, route_id, fee_status)
+                (student_name, student_class, parent_id, route_id, fee_paid, fee_balance)
             )
             conn.commit()
             return True
@@ -159,17 +159,17 @@ class DAL:
         finally:
             conn.close()
 
-    def update_student(self, student_id: int, name: str, class_name: str, parent_id: int, route_id: int, fee_status: str) -> bool:
+    def update_student(self, student_id: int, name: str, class_name: str, parent_id: int, route_id: int, fee_paid: float, fee_balance: float) -> bool:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
                 """
                 UPDATE student
-                SET student_name = ?, student_class = ?, parent_id = ?, route_id = ?, fee_status = ?
+                SET student_name = ?, student_class = ?, parent_id = ?, route_id = ?, fee_paid = ?, fee_balance = ?
                 WHERE student_id = ?
                 """,
-                (name, class_name, parent_id, route_id, fee_status, student_id)
+                (name, class_name, parent_id, route_id, fee_paid, fee_balance, student_id)
             )
             conn.commit()
             return True

@@ -1,319 +1,246 @@
-import customtkinter as ctk
-from ui.student_management import StudentManagement
-from ui.student_records import StudentRecords
-from ui.parent_management import ParentManagement
-from ui.parent_records import ParentRecords
-from ui.route_management import RouteManagement
-from ui.bus_management import BusManagement
-from ui.route_records import RouteRecords
-import database
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame, QGridLayout, QScrollArea
+from PyQt6.QtCore import Qt
 
-class DashboardHome(ctk.CTkFrame):
-    def __init__(self, master, app_controller):
-        super().__init__(master, fg_color="transparent")
+class DashboardHome(QWidget):
+    def __init__(self, app_controller):
+        super().__init__()
         self.app_controller = app_controller
         self.create_widgets()
         self.load_dashboard_stats()
-        
+
     def load_dashboard_stats(self):
         try:
             from dal import db_dal
             stats = db_dal.get_dashboard_stats()
             
-            self.card1_value.configure(text=str(stats["total_students"]))
-            self.card2_value.configure(text=str(stats["total_buses"]))
-            self.card3_value.configure(text=str(stats["total_routes"]))
+            self.card1_value.setText(str(stats["total_students"]))
+            self.card2_value.setText(str(stats["total_buses"]))
+            self.card3_value.setText(str(stats["total_routes"]))
             
         except Exception as e:
             print(f"Error loading stats: {e}")
-            self.card1_value.configure(text="0")
-            self.card2_value.configure(text="0")
-            self.card3_value.configure(text="0")
-            
+            self.card1_value.setText("0")
+            self.card2_value.setText("0")
+            self.card3_value.setText("0")
+
     def create_widgets(self):
+        main_layout = QVBoxLayout(self)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        
         # Title
-        self.title_label = ctk.CTkLabel(
-            self,
-            text="School Transport Management System",
-            font=("Arial", 30, "bold")
-        )
-        self.title_label.pack(pady=(40, 10))
+        self.title_label = QLabel("School Transport Management System")
+        self.title_label.setObjectName("titleLabel")
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(self.title_label)
         
-        # Welcome Label
-        self.welcome_label = ctk.CTkLabel(
-            self,
-            text="Welcome, Admin! Here's your system overview:",
-            font=("Arial", 20)
-        )
-        self.welcome_label.pack(pady=(0, 30))
-        
-        # Summary Cards Container
-        self.summary_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.summary_frame.pack(pady=20, padx=40, fill="x")
-        self.summary_frame.grid_columnconfigure((0, 1, 2), weight=1)
+        # Welcome
+        self.welcome_label = QLabel("Welcome, Admin! Here's your system overview:")
+        self.welcome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(self.welcome_label)
 
-        # Card 1: Total Students
-        self.card1 = ctk.CTkFrame(self.summary_frame, corner_radius=15)
-        self.card1.grid(row=0, column=0, padx=15, pady=10, sticky="nsew")
-        self.card1_title = ctk.CTkLabel(self.card1, text="Total Students", font=("Arial", 16))
-        self.card1_title.pack(pady=(20, 5))
-        self.card1_value = ctk.CTkLabel(self.card1, text="0", font=("Arial", 36, "bold"), text_color="#1f538d")
-        self.card1_value.pack(pady=(0, 20))
+        # Summary Grid
+        self.summary_frame = QFrame()
+        grid = QGridLayout(self.summary_frame)
 
-        # Card 2: Active Buses
-        self.card2 = ctk.CTkFrame(self.summary_frame, corner_radius=15)
-        self.card2.grid(row=0, column=1, padx=15, pady=10, sticky="nsew")
-        self.card2_title = ctk.CTkLabel(self.card2, text="Active Buses", font=("Arial", 16))
-        self.card2_title.pack(pady=(20, 5))
-        self.card2_value = ctk.CTkLabel(self.card2, text="0", font=("Arial", 36, "bold"), text_color="#1f538d")
-        self.card2_value.pack(pady=(0, 20))
+        # Card 1
+        card1 = QFrame()
+        card1.setStyleSheet("background-color: #333333; border-radius: 10px; padding: 20px;")
+        card1_layout = QVBoxLayout(card1)
+        card1_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        card1_title = QLabel("Total Students")
+        self.card1_value = QLabel("0")
+        self.card1_value.setStyleSheet("font-size: 36px; font-weight: bold; color: #1f538d;")
+        card1_layout.addWidget(card1_title)
+        card1_layout.addWidget(self.card1_value)
+        grid.addWidget(card1, 0, 0)
 
-        # Card 3: Total Routes
-        self.card3 = ctk.CTkFrame(self.summary_frame, corner_radius=15)
-        self.card3.grid(row=0, column=2, padx=15, pady=10, sticky="nsew")
-        self.card3_title = ctk.CTkLabel(self.card3, text="Total Routes", font=("Arial", 16))
-        self.card3_title.pack(pady=(20, 5))
-        self.card3_value = ctk.CTkLabel(self.card3, text="0", font=("Arial", 36, "bold"), text_color="#1f538d")
-        self.card3_value.pack(pady=(0, 20))
-        
-        # Quick Actions Title
-        self.quick_actions_label = ctk.CTkLabel(
-            self,
-            text="Quick Actions",
-            font=("Arial", 20, "bold")
-        )
-        self.quick_actions_label.pack(pady=(30, 10))
+        # Card 2
+        card2 = QFrame()
+        card2.setStyleSheet("background-color: #333333; border-radius: 10px; padding: 20px;")
+        card2_layout = QVBoxLayout(card2)
+        card2_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        card2_title = QLabel("Active Buses")
+        self.card2_value = QLabel("0")
+        self.card2_value.setStyleSheet("font-size: 36px; font-weight: bold; color: #1f538d;")
+        card2_layout.addWidget(card2_title)
+        card2_layout.addWidget(self.card2_value)
+        grid.addWidget(card2, 0, 1)
 
-        # Quick Actions Container
-        self.quick_actions_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.quick_actions_frame.pack(pady=10, padx=40)
+        # Card 3
+        card3 = QFrame()
+        card3.setStyleSheet("background-color: #333333; border-radius: 10px; padding: 20px;")
+        card3_layout = QVBoxLayout(card3)
+        card3_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        card3_title = QLabel("Total Routes")
+        self.card3_value = QLabel("0")
+        self.card3_value.setStyleSheet("font-size: 36px; font-weight: bold; color: #1f538d;")
+        card3_layout.addWidget(card3_title)
+        card3_layout.addWidget(self.card3_value)
+        grid.addWidget(card3, 0, 2)
 
-        # Shortcut Buttons
-        self.btn_add_student = ctk.CTkButton(self.quick_actions_frame, text="Add New Student", command=self.app_controller.open_student_management)
-        self.btn_add_student.grid(row=0, column=0, padx=10, pady=10)
+        main_layout.addWidget(self.summary_frame)
 
-        self.btn_view_students = ctk.CTkButton(self.quick_actions_frame, text="View Students", command=self.app_controller.open_student_records)
-        self.btn_view_students.grid(row=0, column=1, padx=10, pady=10)
+        # Quick Actions
+        qa_label = QLabel("Quick Actions")
+        qa_label.setStyleSheet("font-size: 20px; font-weight: bold;")
+        qa_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(qa_label)
 
-        self.btn_add_bus = ctk.CTkButton(self.quick_actions_frame, text="Manage Buses", command=self.app_controller.open_bus_management)
-        self.btn_add_bus.grid(row=0, column=2, padx=10, pady=10)
+        qa_frame = QFrame()
+        qa_layout = QHBoxLayout(qa_frame)
+        qa_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.btn_view_routes = ctk.CTkButton(self.quick_actions_frame, text="View Routes", command=self.app_controller.open_route_records)
-        self.btn_view_routes.grid(row=0, column=3, padx=10, pady=10)
+        btn_add_student = QPushButton("Add New Student")
+        btn_add_student.clicked.connect(self.app_controller.open_student_management)
+        qa_layout.addWidget(btn_add_student)
 
-class AdminDashboard:
-    
-    def __init__(self, master=None):
-        self.master = master
-        if master is None:
-            self.window = ctk.CTk()
-        else:
-            self.window = ctk.CTkToplevel(master)
-            # If we close the admin dashboard, we should quit the app
-            self.window.protocol("WM_DELETE_WINDOW", self.on_close)
+        btn_view_students = QPushButton("View Students")
+        btn_view_students.clicked.connect(self.app_controller.open_student_records)
+        qa_layout.addWidget(btn_view_students)
 
-        self.window.title("Admin Dashboard")
-        self.window.geometry("900x600")
-        self.window.resizable(False, False)
-        
+        btn_manage_buses = QPushButton("Manage Buses")
+        btn_manage_buses.clicked.connect(self.app_controller.open_bus_management)
+        qa_layout.addWidget(btn_manage_buses)
+
+        btn_view_routes = QPushButton("View Routes")
+        btn_view_routes.clicked.connect(self.app_controller.open_route_records)
+        qa_layout.addWidget(btn_view_routes)
+
+        main_layout.addWidget(qa_frame)
+        main_layout.addStretch()
+
+
+class AdminDashboard(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Admin Dashboard")
+        self.setFixedSize(900, 600)
         self.create_widgets()
         self.show_frame(DashboardHome)
         
-    def on_close(self):
-        if self.master:
-            self.master.destroy()
-        else:
-            self.window.destroy()
-            
     def show_frame(self, frame_class):
-        # Destroy current content in content_frame
-        for widget in self.content_frame.winfo_children():
-            widget.destroy()
-            
+        # Remove existing widgets in content layout
+        while self.content_layout.count():
+            child = self.content_layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
         if frame_class == DashboardHome:
-            frame = DashboardHome(self.content_frame, self)
+            frame = DashboardHome(self)
         else:
-            frame = frame_class(self.content_frame)
-            
-        frame.pack(fill="both", expand=True)
-            
+            frame = frame_class(self)
+        
+        self.content_layout.addWidget(frame)
+
     def create_widgets(self):
-        
-        # Sidebar (Hidden by default)
-        self.sidebar_frame = ctk.CTkFrame(
-            self.window, 
-            width=200, 
-            corner_radius=0
-        )
-        
-        # Close Sidebar Button
-        self.close_sidebar_btn = ctk.CTkButton(
-            self.sidebar_frame,
-            text="×",
-            width=30,
-            height=30,
-            command=self.toggle_sidebar,
-            font=("Arial", 20, "bold"),
-            fg_color="transparent",
-            text_color=("black", "white"),
-            hover_color=("gray70", "gray30")
-        )
-        self.close_sidebar_btn.pack(anchor="ne", padx=5, pady=5)
+        self.main_layout = QHBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
 
-        # Sidebar Title
-        self.sidebar_title = ctk.CTkLabel(
-            self.sidebar_frame,
-            text="STMS",
-            font=("Arial", 24, "bold")
-        )
-        self.sidebar_title.pack(pady=(0, 20))
+        # Sidebar
+        self.sidebar_frame = QFrame()
+        self.sidebar_frame.setFixedWidth(200)
+        self.sidebar_frame.setStyleSheet("background-color: #222222;")
+        self.sidebar_layout = QVBoxLayout(self.sidebar_frame)
         
-        # Main Container
-        self.main_container = ctk.CTkFrame(
-            self.window,
-            corner_radius=0
-        )
-        self.main_container.pack(
-            side="right",
-            fill="both",
-            expand=True
-        )
+        # Sidebar Close Button
+        self.close_sidebar_btn = QPushButton("×")
+        self.close_sidebar_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: transparent; color: white;")
+        self.close_sidebar_btn.clicked.connect(self.toggle_sidebar)
+        self.sidebar_layout.addWidget(self.close_sidebar_btn, alignment=Qt.AlignmentFlag.AlignRight)
+
+        # Title
+        self.sidebar_title = QLabel("STMS")
+        self.sidebar_title.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
+        self.sidebar_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.sidebar_layout.addWidget(self.sidebar_title)
         
-        # Top Bar (for toggle button)
-        self.top_bar = ctk.CTkFrame(self.main_container, height=50, corner_radius=0, fg_color="transparent")
-        self.top_bar.pack(side="top", fill="x")
+        # Sidebar Buttons
+        self.add_sidebar_button("Dashboard", lambda: self.show_frame(DashboardHome))
+        self.add_sidebar_button("Student Management", self.open_student_management)
+        self.add_sidebar_button("Student Records", self.open_student_records)
+        self.add_sidebar_button("Parent Management", self.open_parent_management)
+        self.add_sidebar_button("Parent Records", self.open_parent_records)
+        self.add_sidebar_button("Bus Management", self.open_bus_management)
+        self.add_sidebar_button("Route Management", self.open_route_management)
+        self.add_sidebar_button("Route Records", self.open_route_records)
         
-        # Toggle Sidebar Button
-        self.toggle_button = ctk.CTkButton(
-            self.top_bar,
-            text="☰",
-            width=40,
-            height=40,
-            command=self.toggle_sidebar,
-            font=("Arial", 24),
-            fg_color="transparent",
-            text_color=("black", "white"),
-            hover_color=("gray70", "gray30")
-        )
-        self.toggle_button.pack(anchor="nw", padx=10, pady=10)
+        self.sidebar_layout.addStretch()
+
+        self.add_sidebar_button("Logout", self.logout)
+
+        self.main_layout.addWidget(self.sidebar_frame)
+
+        # Main Content Area
+        self.right_container = QFrame()
+        self.right_layout = QVBoxLayout(self.right_container)
+        self.right_layout.setContentsMargins(0, 0, 0, 0)
+        self.right_layout.setSpacing(0)
+
+        # Top bar
+        self.top_bar = QFrame()
+        self.top_bar.setFixedHeight(50)
+        self.top_bar_layout = QHBoxLayout(self.top_bar)
+        self.top_bar_layout.setContentsMargins(10, 0, 0, 0)
+
+        self.toggle_btn = QPushButton("☰")
+        self.toggle_btn.setFixedSize(40, 40)
+        self.toggle_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: transparent; color: white;")
+        self.toggle_btn.clicked.connect(self.toggle_sidebar)
+        self.top_bar_layout.addWidget(self.toggle_btn, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         
+        self.right_layout.addWidget(self.top_bar)
+
         # Content Frame
-        self.content_frame = ctk.CTkFrame(self.main_container, corner_radius=0, fg_color="transparent")
-        self.content_frame.pack(side="top", fill="both", expand=True)
-        
-        # Dashboard Button
-        self.dashboard_button = ctk.CTkButton(
-            self.sidebar_frame,
-            text="Dashboard",
-            width=170,
-            command=lambda: self.show_frame(DashboardHome)
-        )
-        self.dashboard_button.pack(pady=10)
+        self.content_frame = QFrame()
+        self.content_layout = QVBoxLayout(self.content_frame)
+        self.right_layout.addWidget(self.content_frame)
 
-        # Student Management Button
-        self.student_button = ctk.CTkButton(
-            self.sidebar_frame,
-            text="Student Management",
-            width=170,
-            command=self.open_student_management
-        )
-        self.student_button.pack(pady=10)
-        
-        # Student Records Button
-        self.student_records_button = ctk.CTkButton(
-            self.sidebar_frame,
-            text="Student Records",
-            width=170,
-            command=self.open_student_records
-        )
-        self.student_records_button.pack(pady=10, padx=20)
+        self.main_layout.addWidget(self.right_container)
 
-        # Parent Management Button
-        self.parent_button = ctk.CTkButton(
-            self.sidebar_frame,
-            text="Parent Management",
-            width=170,
-            command=self.open_parent_management
-        )
-        self.parent_button.pack(pady=10)
-        
-        # Student Record Button
-        self.parent_record_button = ctk.CTkButton(
-            self.sidebar_frame,
-            text="Parent Records",
-            width=170,
-            command=self.open_parent_records
-        )
-        self.parent_record_button.pack(pady="10")
+    def add_sidebar_button(self, text, command):
+        btn = QPushButton(text)
+        btn.clicked.connect(command)
+        btn.setMinimumHeight(40)
+        btn.setStyleSheet("text-align: left; padding-left: 15px; border-radius: 0px;")
+        self.sidebar_layout.addWidget(btn)
 
-        # Bus Management Button
-        self.bus_button = ctk.CTkButton(
-            self.sidebar_frame,
-            text="Bus Management",
-            width=170,
-            command=self.open_bus_management
-        )
-        self.bus_button.pack(pady=10)
+    def toggle_sidebar(self):
+        if self.sidebar_frame.isVisible():
+            self.sidebar_frame.hide()
+        else:
+            self.sidebar_frame.show()
 
-        # Route Management Button
-        self.route_button = ctk.CTkButton(
-            self.sidebar_frame,
-            text="Route Management",
-            width=170,
-            command=self.open_route_management
-        )
-        self.route_button.pack(pady=10)
-        
-        # Route Records Button
-        self.route_records_button = ctk.CTkButton(
-            self.sidebar_frame,
-            text="Route Records",
-            width=170,
-            command=self.open_route_records
-        )
-        self.route_records_button.pack(pady=10)
-        # Logout Button
-        self.logout_button = ctk.CTkButton(
-            self.sidebar_frame,
-            text="Logout",
-            width=170,
-            command=self.logout
-        )
-        self.logout_button.pack(pady=10)
-        
     def open_student_management(self):
+        from ui.student_management import StudentManagement
         self.show_frame(StudentManagement)
         
     def open_student_records(self):
+        from ui.student_records import StudentRecords
         self.show_frame(StudentRecords)
         
     def open_parent_management(self):
+        from ui.parent_management import ParentManagement
         self.show_frame(ParentManagement)
         
     def open_parent_records(self):
+        from ui.parent_records import ParentRecords
         self.show_frame(ParentRecords)
         
     def open_bus_management(self):
+        from ui.bus_management import BusManagement
         self.show_frame(BusManagement)
         
     def open_route_management(self):
+        from ui.route_management import RouteManagement
         self.show_frame(RouteManagement)
         
     def open_route_records(self):
+        from ui.route_records import RouteRecords
         self.show_frame(RouteRecords)
-        
-    def toggle_sidebar(self):
-        if self.sidebar_frame.winfo_ismapped():
-            self.sidebar_frame.pack_forget()
-        else:
-            self.sidebar_frame.pack(side="left", fill="y", before=self.main_container)
 
     def logout(self):
-        self.window.destroy()
-        if self.master:
-            self.master.deiconify()
-
-    def run(self):
-        if not isinstance(self.window, ctk.CTkToplevel):
-            self.window.mainloop()
-        
+        from ui.login import LoginWindow
+        self.login_window = LoginWindow()
+        self.login_window.show()
+        self.close()

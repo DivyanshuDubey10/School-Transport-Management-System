@@ -1,187 +1,143 @@
-import customtkinter as ctk
-from tkinter import ttk
-from tkinter import messagebox
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, 
+                               QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QDialog, QFormLayout)
+from PyQt6.QtCore import Qt
 import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from database import connect_database
 
-class RouteRecords(ctk.CTkFrame):
-    
-    def __init__(self, master):
-        super().__init__(master, fg_color="transparent")
-        
+class RouteRecords(QWidget):
+    def __init__(self, master=None):
+        super().__init__()
         self.create_widgets()
         self.load_routes()
         
     def create_widgets(self):
-        self.title = ctk.CTkLabel(
-            self,
-            text="Route Records",
-            font=("Arial", 28, "bold") 
-        )
-        self.title.pack(pady=20)
-        
-        # Search Frame
-        self.search_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.search_frame.pack(pady=(0, 10))
-        
-        self.search_entry = ctk.CTkEntry(self.search_frame, placeholder_text="Search by Route Name...", width=300)
-        self.search_entry.pack(side="left", padx=10)
-        
-        self.search_button = ctk.CTkButton(self.search_frame, text="Search", width=100, command=self.load_routes)
-        self.search_button.pack(side="left")
-        
-        style = ttk.Style()
-        style.configure("Treeview", font=("Arial", 14), rowheight=35)
-        style.configure("Treeview.Heading", font=("Arial", 16, "bold"))
-        
-        self.routes_table = ttk.Treeview(
-            self,
-            columns=(
-                "ID",
-                "Route Name"
-            ),
-            show="headings",
-            height=15
-        )
-        
-        self.routes_table.pack(
-            padx=20,
-            pady=20,
-            fill="both",
-            expand=True
-        )
-        
-        self.routes_table.bind(
-            "<<TreeviewSelect>>",
-            self.select_route
-        )
-        self.routes_table.heading("ID", text="ID")
-        self.routes_table.heading("Route Name", text="Route Name")
-        
-        self.routes_table.column("ID", width=100)
-        self.routes_table.column("Route Name", width=500)
-        
-        self.update_button = ctk.CTkButton(
-            self,
-            text="Update Route",
-            command=self.open_update_window
-        )
-        self.update_button.pack(pady=10)
-        
-        self.delete_button = ctk.CTkButton(
-            self,
-            text="Delete Route",
-            command=self.delete_route
-        )
-        self.delete_button.pack(pady=10)
-        
-    def select_route(self, event):
-        selected = self.routes_table.focus()
-        if not selected:
-            return
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
 
-        values = self.routes_table.item(selected, "values")
-        self.selected_route_id = values[0]
-        self.selected_route = values
-        print("Selected Route ID:", self.selected_route_id)
+        # Title
+        title_label = QLabel("Route Records")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold;")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(title_label)
+
+        # Search Frame
+        search_layout = QHBoxLayout()
+        self.search_entry = QLineEdit()
+        self.search_entry.setPlaceholderText("Search by Route Name...")
+        self.search_entry.setFixedWidth(300)
+        search_layout.addWidget(self.search_entry, alignment=Qt.AlignmentFlag.AlignRight)
+
+        search_button = QPushButton("Search")
+        search_button.setFixedWidth(100)
+        search_button.clicked.connect(self.load_routes)
+        search_layout.addWidget(search_button, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        main_layout.addLayout(search_layout)
+
+        # Table
+        self.routes_table = QTableWidget()
+        self.routes_table.setColumnCount(2)
+        self.routes_table.setHorizontalHeaderLabels(["ID", "Route Name"])
+        self.routes_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.routes_table.horizontalHeader().setStretchLastSection(True)
+        self.routes_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.routes_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.routes_table.itemSelectionChanged.connect(self.select_route)
+        main_layout.addWidget(self.routes_table)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.update_button = QPushButton("Update Route")
+        self.update_button.clicked.connect(self.open_update_window)
+        button_layout.addWidget(self.update_button)
+
+        self.delete_button = QPushButton("Delete Route")
+        self.delete_button.clicked.connect(self.delete_route)
+        button_layout.addWidget(self.delete_button)
+
+        main_layout.addLayout(button_layout)
+
+    def select_route(self):
+        selected_items = self.routes_table.selectedItems()
+        if not selected_items:
+            return
+        
+        row = selected_items[0].row()
+        self.selected_route = [self.routes_table.item(row, col).text() for col in range(2)]
+        self.selected_route_id = self.selected_route[0]
+
+    def load_routes(self):
+        search_query = self.search_entry.text().strip()
+        
+        from dal import db_dal
+        routes = db_dal.get_all_routes(search_query=search_query)
+
+        self.routes_table.setRowCount(0)
+        for row_idx, row_data in enumerate(routes):
+            self.routes_table.insertRow(row_idx)
+            for col_idx, item in enumerate(row_data):
+                self.routes_table.setItem(row_idx, col_idx, QTableWidgetItem(str(item)))
 
     def delete_route(self):
         if not hasattr(self, "selected_route_id"):
-            messagebox.showerror("Error", "Please select a route first.")
+            QMessageBox.critical(self, "Error", "Please select a route first.")
             return
 
-        confirm = messagebox.askyesno(
-            "Confirm Delete",
-            "Are you sure you want to delete this route?\n(Ensure no buses or students are assigned to this route first!)"
-        )
+        reply = QMessageBox.question(self, 'Confirm Delete', 
+                                     'Are you sure you want to delete this route?\n(Ensure no buses or students are assigned to this route first!)', 
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
 
-        if not confirm:
-            return
+        if reply == QMessageBox.StandardButton.Yes:
+            from dal import db_dal
+            try:
+                success = db_dal.delete_route(self.selected_route_id)
+                if success:
+                    QMessageBox.information(self, "Success", "Route deleted successfully!")
+                else:
+                    QMessageBox.critical(self, "Error", "Could not delete route.")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Could not delete route: {e}")
 
-        from dal import db_dal
-        
-        try:
-            success = db_dal.delete_route(self.selected_route_id)
-            if success:
-                messagebox.showinfo("Success", "Route deleted successfully!")
-            else:
-                messagebox.showerror("Error", "Could not delete route.")
-        except Exception as e:
-            messagebox.showerror("Error", f"Could not delete route: {e}")
-            
-        self.load_routes()
+            self.load_routes()
 
     def open_update_window(self):
         if not hasattr(self, "selected_route_id"):
-            messagebox.showerror("Error", "Please select a route first.")
+            QMessageBox.critical(self, "Error", "Please select a route first.")
             return
 
-        self.update_window = ctk.CTkToplevel(self)
-        self.update_window.title("Update Route")
-        self.update_window.geometry("500x500")
-        self.update_window.resizable(False, False)
-
-        title = ctk.CTkLabel(
-            self.update_window,
-            text="Update Route",
-            font=("Arial", 24, "bold")
-        )
-        title.pack(pady=20)
-
-        # Route Name
-        ctk.CTkLabel(self.update_window, text="Route Name").pack()
-        self.name_entry = ctk.CTkEntry(self.update_window, width=300)
-        self.name_entry.pack(pady=5)
-        self.name_entry.insert(0, self.selected_route[1])
-
-
-        # Save Button
-        self.save_button = ctk.CTkButton(
-            self.update_window,
-            text="Save Changes",
-            command=self.update_route
-        )
-        self.save_button.pack(pady=20)
-
-    def update_route(self):
-        route_name = self.name_entry.get()
-
-        if not route_name:
-            messagebox.showerror("Error", "All fields are required.")
-            return
-
-        from dal import db_dal
-
-        try:
-            success = db_dal.update_route(self.selected_route_id, route_name)
-            if success:
-                messagebox.showinfo("Success", "Route updated successfully!")
-                self.update_window.destroy()
-            else:
-                messagebox.showerror("Error", "Failed to update route.")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to update route: {e}")
-            
-        self.load_routes()
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Update Route")
+        dialog.setFixedSize(400, 150)
         
-    def load_routes(self):
-        for row in self.routes_table.get_children():
-            self.routes_table.delete(row)
-            
-        search_query = ""
-        if hasattr(self, 'search_entry'):
-            search_query = self.search_entry.get().strip()
-            
-        from dal import db_dal
-        routes = db_dal.get_all_routes(search_query=search_query)
+        layout = QFormLayout(dialog)
         
-        for route in routes:
-            self.routes_table.insert(
-                "",
-                "end",
-                values=route
-            )
+        name_entry = QLineEdit(self.selected_route[1])
+        layout.addRow("Route Name:", name_entry)
+
+        save_btn = QPushButton("Save Changes")
+        def save_changes():
+            route_name = name_entry.text().strip()
+            if not route_name:
+                QMessageBox.critical(dialog, "Error", "All fields are required.")
+                return
+
+            from dal import db_dal
+            try:
+                success = db_dal.update_route(self.selected_route_id, route_name)
+                if success:
+                    QMessageBox.information(dialog, "Success", "Route updated successfully!")
+                    dialog.accept()
+                    self.load_routes()
+                else:
+                    QMessageBox.critical(dialog, "Error", "Failed to update route.")
+            except Exception as e:
+                QMessageBox.critical(dialog, "Error", f"Failed to update route: {e}")
+                
+        save_btn.clicked.connect(save_changes)
+        layout.addWidget(save_btn)
         
+        dialog.exec()

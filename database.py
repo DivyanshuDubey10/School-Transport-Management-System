@@ -65,6 +65,8 @@ def initialize_database():
                         parent_id INTEGER NOT NULL,
                         route_id INTEGER NOT NULL,
                         fee_status TEXT NOT NULL,
+                        fee_paid REAL DEFAULT 0.0,
+                        fee_balance REAL DEFAULT 0.0,
                         FOREIGN KEY (parent_id) REFERENCES parent(parent_id)
                         FOREIGN KEY (route_id) REFERENCES route(route_id)
                     );
