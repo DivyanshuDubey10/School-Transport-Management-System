@@ -11,68 +11,78 @@ class ParentManagement(QWidget):
         self.create_widgets()
     
     def create_widgets(self):
+        from PyQt6.QtWidgets import QGridLayout, QFrame
+        
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
+        main_layout.setSpacing(20)
 
-        title_label = QLabel("Parent Management")
-        title_label.setStyleSheet("font-size: 28px; font-weight: bold;")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Title
+        title_label = QLabel("👨‍👩‍👧‍👦 Parent Management")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #89B4FA;")
         main_layout.addWidget(title_label)
 
-        form_layout = QVBoxLayout()
-        form_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        # Main Container to center the form
+        center_layout = QHBoxLayout()
+        
+        # Form Container (Card)
+        form_frame = QFrame()
+        form_frame.setObjectName("cardFrame")
+        form_frame.setMinimumWidth(650)
+        
+        form_layout = QGridLayout(form_frame)
+        form_layout.setContentsMargins(30, 30, 30, 30)
+        form_layout.setSpacing(20)
 
-        # Name
+        form_title = QLabel("Add New Parent")
+        form_title.setStyleSheet("font-size: 18px; font-weight: bold; color: #FFFFFF;")
+        form_layout.addWidget(form_title, 0, 0, 1, 4)
+
+        # Row 1: Name and Phone
         self.parent_name_entry = QLineEdit()
         self.parent_name_entry.setPlaceholderText("Enter Parent Name")
-        self.parent_name_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Parent Name"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.parent_name_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Parent Name:"), 1, 0)
+        form_layout.addWidget(self.parent_name_entry, 1, 1)
 
-        # Username
+        self.phone_entry = QLineEdit()
+        self.phone_entry.setPlaceholderText("Enter Phone Number")
+        form_layout.addWidget(QLabel("Phone Number:"), 1, 2)
+        form_layout.addWidget(self.phone_entry, 1, 3)
+
+        # Row 2: Username and Password
         self.username_entry = QLineEdit()
         self.username_entry.setPlaceholderText("Enter Username")
-        self.username_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Username"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.username_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Username:"), 2, 0)
+        form_layout.addWidget(self.username_entry, 2, 1)
 
-        # Password
         self.password_entry = QLineEdit()
         self.password_entry.setPlaceholderText("Enter Password")
         self.password_entry.setEchoMode(QLineEdit.EchoMode.Password)
-        self.password_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Password"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.password_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Password:"), 2, 2)
+        form_layout.addWidget(self.password_entry, 2, 3)
 
-        # Phone
-        self.phone_entry = QLineEdit()
-        self.phone_entry.setPlaceholderText("Enter Phone Number")
-        self.phone_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Phone Number"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.phone_entry, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        # Address
+        # Row 3: Address and Pickup Point
         self.address_entry = QLineEdit()
         self.address_entry.setPlaceholderText("Enter Address")
-        self.address_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Address"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.address_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Address:"), 3, 0)
+        form_layout.addWidget(self.address_entry, 3, 1)
 
-        # Pickup
         self.pickup_entry = QLineEdit()
         self.pickup_entry.setPlaceholderText("Enter Pickup Point")
-        self.pickup_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Pickup Point"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.pickup_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Pickup Point:"), 3, 2)
+        form_layout.addWidget(self.pickup_entry, 3, 3)
 
         # Save Button
-        save_button = QPushButton("Save Parent")
-        save_button.setFixedWidth(150)
-        save_button.clicked.connect(self.save_parent)
-        form_layout.addWidget(save_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.save_button = QPushButton("💾 Save Parent")
+        self.save_button.setFixedWidth(200)
+        self.save_button.clicked.connect(self.save_parent)
+        form_layout.addWidget(self.save_button, 4, 0, 1, 4, Qt.AlignmentFlag.AlignCenter)
         
-        main_layout.addLayout(form_layout)
+        center_layout.addStretch()
+        center_layout.addWidget(form_frame)
+        center_layout.addStretch()
+        
+        main_layout.addLayout(center_layout)
         main_layout.addStretch()
 
     def save_parent(self):

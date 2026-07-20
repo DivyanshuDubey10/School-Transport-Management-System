@@ -140,20 +140,25 @@ class AdminDashboard(QWidget):
         # Sidebar
         self.sidebar_frame = QFrame()
         self.sidebar_frame.setFixedWidth(200)
-        self.sidebar_frame.setStyleSheet("background-color: #222222;")
+        self.sidebar_frame.setStyleSheet("background-color: #1E1E1E;")
         self.sidebar_layout = QVBoxLayout(self.sidebar_frame)
+        self.sidebar_layout.setContentsMargins(10, 10, 10, 10)
         
-        # Sidebar Close Button
-        self.close_sidebar_btn = QPushButton("×")
-        self.close_sidebar_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: transparent; color: white;")
-        self.close_sidebar_btn.clicked.connect(self.toggle_sidebar)
-        self.sidebar_layout.addWidget(self.close_sidebar_btn, alignment=Qt.AlignmentFlag.AlignRight)
-
-        # Title
+        # Sidebar Top Layout (Hamburger + Title)
+        sidebar_top_layout = QHBoxLayout()
+        self.sidebar_toggle_btn = QPushButton("☰")
+        self.sidebar_toggle_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: transparent; color: white; border: none;")
+        self.sidebar_toggle_btn.clicked.connect(self.toggle_sidebar)
+        self.sidebar_toggle_btn.setFixedSize(30, 40)
+        
         self.sidebar_title = QLabel("STMS")
         self.sidebar_title.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
-        self.sidebar_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.sidebar_layout.addWidget(self.sidebar_title)
+        
+        sidebar_top_layout.addWidget(self.sidebar_toggle_btn)
+        sidebar_top_layout.addWidget(self.sidebar_title)
+        sidebar_top_layout.addStretch()
+        
+        self.sidebar_layout.addLayout(sidebar_top_layout)
         
         # Sidebar Buttons
         self.add_sidebar_button("Dashboard", lambda: self.show_frame(DashboardHome))
@@ -185,8 +190,9 @@ class AdminDashboard(QWidget):
 
         self.toggle_btn = QPushButton("☰")
         self.toggle_btn.setFixedSize(40, 40)
-        self.toggle_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: transparent; color: white;")
+        self.toggle_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: transparent; color: white; border: none;")
         self.toggle_btn.clicked.connect(self.toggle_sidebar)
+        self.toggle_btn.hide() # Hidden by default since sidebar is visible
         self.top_bar_layout.addWidget(self.toggle_btn, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         
         self.right_layout.addWidget(self.top_bar)
@@ -200,16 +206,18 @@ class AdminDashboard(QWidget):
 
     def add_sidebar_button(self, text, command):
         btn = QPushButton(text)
+        btn.setObjectName("sidebarBtn")
         btn.clicked.connect(command)
         btn.setMinimumHeight(40)
-        btn.setStyleSheet("text-align: left; padding-left: 15px; border-radius: 0px;")
         self.sidebar_layout.addWidget(btn)
 
     def toggle_sidebar(self):
         if self.sidebar_frame.isVisible():
             self.sidebar_frame.hide()
+            self.toggle_btn.show()
         else:
             self.sidebar_frame.show()
+            self.toggle_btn.hide()
 
     def open_student_management(self):
         from ui.student_management import StudentManagement

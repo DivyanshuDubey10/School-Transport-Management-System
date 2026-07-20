@@ -18,60 +18,72 @@ class BusManagement(QWidget):
         if not self.route_options: self.route_options = [""]
     
     def create_widgets(self):
+        from PyQt6.QtWidgets import QGridLayout, QFrame
+        
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
+        main_layout.setSpacing(20)
 
-        title_label = QLabel("Add New Bus")
-        title_label.setStyleSheet("font-size: 28px; font-weight: bold;")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Title
+        title_label = QLabel("🚌 Bus Management")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #89B4FA;")
         main_layout.addWidget(title_label)
 
-        form_layout = QVBoxLayout()
-        form_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        # Main Container to center the form
+        center_layout = QHBoxLayout()
+        
+        # Form Container (Card)
+        form_frame = QFrame()
+        form_frame.setObjectName("cardFrame")
+        form_frame.setMinimumWidth(650)
+        
+        form_layout = QGridLayout(form_frame)
+        form_layout.setContentsMargins(30, 30, 30, 30)
+        form_layout.setSpacing(20)
 
-        # Bus Number
+        form_title = QLabel("Add New Bus")
+        form_title.setStyleSheet("font-size: 18px; font-weight: bold; color: #FFFFFF;")
+        form_layout.addWidget(form_title, 0, 0, 1, 4)
+
+        # Row 1: Bus Number & Capacity
         self.bus_number_entry = QLineEdit()
         self.bus_number_entry.setPlaceholderText("Enter Bus Number")
-        self.bus_number_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Bus Number"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.bus_number_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Bus Number:"), 1, 0)
+        form_layout.addWidget(self.bus_number_entry, 1, 1)
 
-        # Driver Name
-        self.driver_name_entry = QLineEdit()
-        self.driver_name_entry.setPlaceholderText("Enter Driver Name")
-        self.driver_name_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Driver Name"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.driver_name_entry, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        # Driver Phone
-        self.driver_phone_entry = QLineEdit()
-        self.driver_phone_entry.setPlaceholderText("Enter Driver Phone")
-        self.driver_phone_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Driver Phone"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.driver_phone_entry, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        # Capacity
         self.capacity_entry = QLineEdit()
         self.capacity_entry.setPlaceholderText("Enter Bus Capacity")
-        self.capacity_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Capacity"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.capacity_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Capacity:"), 1, 2)
+        form_layout.addWidget(self.capacity_entry, 1, 3)
 
-        # Route Assignment
+        # Row 2: Driver Name & Phone
+        self.driver_name_entry = QLineEdit()
+        self.driver_name_entry.setPlaceholderText("Enter Driver Name")
+        form_layout.addWidget(QLabel("Driver Name:"), 2, 0)
+        form_layout.addWidget(self.driver_name_entry, 2, 1)
+
+        self.driver_phone_entry = QLineEdit()
+        self.driver_phone_entry.setPlaceholderText("Enter Driver Phone")
+        form_layout.addWidget(QLabel("Driver Phone:"), 2, 2)
+        form_layout.addWidget(self.driver_phone_entry, 2, 3)
+
+        # Row 3: Route Assignment
         self.route_dropdown = QComboBox()
         self.route_dropdown.addItems(self.route_options)
-        self.route_dropdown.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Assign Route"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.route_dropdown, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Assign Route:"), 3, 0)
+        form_layout.addWidget(self.route_dropdown, 3, 1, 1, 3)
 
         # Save Button
-        save_button = QPushButton("Save Bus")
-        save_button.setFixedWidth(150)
-        save_button.clicked.connect(self.save_bus)
-        form_layout.addWidget(save_button, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        main_layout.addLayout(form_layout)
+        self.save_button = QPushButton("💾 Save Bus")
+        self.save_button.setFixedWidth(200)
+        self.save_button.clicked.connect(self.save_bus)
+        form_layout.addWidget(self.save_button, 4, 0, 1, 4, Qt.AlignmentFlag.AlignCenter)
+        
+        center_layout.addStretch()
+        center_layout.addWidget(form_frame)
+        center_layout.addStretch()
+        
+        main_layout.addLayout(center_layout)
         main_layout.addStretch()
 
     def save_bus(self):

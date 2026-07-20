@@ -27,77 +27,80 @@ class StudentManagement(QWidget):
         if not self.route_options: self.route_options = [""]
 
     def create_widgets(self):
+        from PyQt6.QtWidgets import QGridLayout, QFrame
+        
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
+        main_layout.setSpacing(20)
 
         # Title
-        title_label = QLabel("Student Management")
-        title_label.setStyleSheet("font-size: 28px; font-weight: bold;")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_label = QLabel("🎓 Student Management")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #89B4FA;")
         main_layout.addWidget(title_label)
 
-        # Form Layout
-        form_layout = QVBoxLayout()
-        form_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        # Form Container (Card)
+        form_frame = QFrame()
+        form_frame.setObjectName("cardFrame")
+        
+        form_layout = QGridLayout(form_frame)
+        form_layout.setContentsMargins(30, 30, 30, 30)
+        form_layout.setSpacing(20)
 
-        # Student Name
+        form_title = QLabel("Add New Student")
+        form_title.setStyleSheet("font-size: 18px; font-weight: bold; color: #FFFFFF;")
+        form_layout.addWidget(form_title, 0, 0, 1, 4)
+
+        # Row 1: Name and Class
         self.student_name_entry = QLineEdit()
         self.student_name_entry.setPlaceholderText("Enter Student Name")
-        self.student_name_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Student Name"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.student_name_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Student Name:"), 1, 0)
+        form_layout.addWidget(self.student_name_entry, 1, 1)
 
-        # Student Class
         self.student_class_entry = QLineEdit()
         self.student_class_entry.setPlaceholderText("Enter Student Class")
-        self.student_class_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Student Class"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.student_class_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Student Class:"), 1, 2)
+        form_layout.addWidget(self.student_class_entry, 1, 3)
 
-        # Parent
+        # Row 2: Parent and Route Dropdowns
         self.parent_id_entry = QComboBox()
         self.parent_id_entry.addItems(self.parent_options)
-        self.parent_id_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Parent"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.parent_id_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Parent:"), 2, 0)
+        form_layout.addWidget(self.parent_id_entry, 2, 1)
 
-        # Route
         self.route_id_entry = QComboBox()
         self.route_id_entry.addItems(self.route_options)
-        self.route_id_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Route"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.route_id_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(QLabel("Route:"), 2, 2)
+        form_layout.addWidget(self.route_id_entry, 2, 3)
 
-        # Fee Paid
+        # Row 3: Fees
         self.fee_paid_entry = QLineEdit()
-        self.fee_paid_entry.setPlaceholderText("Enter Fee Paid Amount")
-        self.fee_paid_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Fee Paid"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.fee_paid_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.fee_paid_entry.setPlaceholderText("0.00")
+        form_layout.addWidget(QLabel("Fee Paid ($):"), 3, 0)
+        form_layout.addWidget(self.fee_paid_entry, 3, 1)
 
-        # Fee Balance
         self.fee_balance_entry = QLineEdit()
-        self.fee_balance_entry.setPlaceholderText("Enter Fee Balance Amount")
-        self.fee_balance_entry.setFixedWidth(300)
-        form_layout.addWidget(QLabel("Fee Balance"), alignment=Qt.AlignmentFlag.AlignCenter)
-        form_layout.addWidget(self.fee_balance_entry, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.fee_balance_entry.setPlaceholderText("0.00")
+        form_layout.addWidget(QLabel("Fee Balance ($):"), 3, 2)
+        form_layout.addWidget(self.fee_balance_entry, 3, 3)
 
         # Save Button
-        self.save_button = QPushButton("Save Student")
-        self.save_button.setFixedWidth(150)
+        self.save_button = QPushButton("💾 Save Student")
+        self.save_button.setFixedWidth(200)
         self.save_button.clicked.connect(self.save_student)
-        form_layout.addWidget(self.save_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.save_button, 4, 0, 1, 4, Qt.AlignmentFlag.AlignCenter)
         
-        main_layout.addLayout(form_layout)
+        main_layout.addWidget(form_frame)
 
-        # Student List Title
-        list_label = QLabel("Student Records")
-        list_label.setStyleSheet("font-size: 20px; font-weight: bold;")
-        list_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Table Section
+        list_label = QLabel("📋 Student Records")
+        list_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #89B4FA;")
         main_layout.addWidget(list_label)
 
-        # Table
+        table_frame = QFrame()
+        table_frame.setObjectName("cardFrame")
+        table_layout = QVBoxLayout(table_frame)
+        table_layout.setContentsMargins(10, 10, 10, 10)
+
         self.students_table = QTableWidget()
         self.students_table.setColumnCount(10)
         self.students_table.setHorizontalHeaderLabels(["ID", "Name", "Class", "Parent", "Phone", "Address", "Bus", "Route", "Fee Paid", "Fee Balance"])
@@ -105,8 +108,11 @@ class StudentManagement(QWidget):
         self.students_table.horizontalHeader().setStretchLastSection(True)
         self.students_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.students_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.students_table.setStyleSheet("border: none; background-color: transparent;")
         
-        main_layout.addWidget(self.students_table)
+        table_layout.addWidget(self.students_table)
+        main_layout.addWidget(table_frame)
+        
         self.load_students()
 
     def load_students(self):
