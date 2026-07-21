@@ -127,13 +127,13 @@ class ParentDashboard(QWidget):
         fee_layout.setContentsMargins(0, 0, 0, 0)
         fee_layout.setSpacing(5)
         
-        fee_paid_label = QLabel(f"💰 Fee Paid: ${fee_paid}")
+        fee_paid_label = QLabel(f"💰 Fee Paid: ₹{fee_paid}")
         fee_paid_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #A6E3A1;")
         fee_layout.addWidget(fee_paid_label, alignment=Qt.AlignmentFlag.AlignRight)
 
         fee_balance_val = float(fee_balance)
         fee_balance_color = "#F38BA8" if fee_balance_val > 0 else "#A6E3A1"
-        fee_balance_text = f"Balance Due: ${fee_balance}" if fee_balance_val > 0 else "Fully Paid"
+        fee_balance_text = f"Balance Due: ₹{fee_balance}" if fee_balance_val > 0 else "Fully Paid"
         fee_balance_label = QLabel(f"📊 {fee_balance_text}")
         fee_balance_label.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {fee_balance_color};")
         fee_layout.addWidget(fee_balance_label, alignment=Qt.AlignmentFlag.AlignRight)

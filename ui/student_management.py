@@ -75,12 +75,12 @@ class StudentManagement(QWidget):
         # Row 3: Fees
         self.fee_paid_entry = QLineEdit()
         self.fee_paid_entry.setPlaceholderText("0.00")
-        form_layout.addWidget(QLabel("Fee Paid ($):"), 3, 0)
+        form_layout.addWidget(QLabel("Fee Paid (₹):"), 3, 0)
         form_layout.addWidget(self.fee_paid_entry, 3, 1)
 
         self.fee_balance_entry = QLineEdit()
         self.fee_balance_entry.setPlaceholderText("0.00")
-        form_layout.addWidget(QLabel("Fee Balance ($):"), 3, 2)
+        form_layout.addWidget(QLabel("Fee Balance (₹):"), 3, 2)
         form_layout.addWidget(self.fee_balance_entry, 3, 3)
 
         # Save Button
