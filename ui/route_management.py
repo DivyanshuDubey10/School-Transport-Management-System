@@ -18,7 +18,7 @@ class RouteManagement(QWidget):
         main_layout.setSpacing(20)
 
         # Title
-        title_label = QLabel("📍 Route Management")
+        title_label = QLabel("Route Management")
         title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #89B4FA;")
         main_layout.addWidget(title_label)
 
@@ -45,7 +45,7 @@ class RouteManagement(QWidget):
         form_layout.addWidget(self.route_name_entry, 1, 1)
 
         # Save Button
-        self.save_button = QPushButton("💾 Save Route")
+        self.save_button = QPushButton("Save Route")
         self.save_button.setFixedWidth(200)
         self.save_button.clicked.connect(self.save_route)
         form_layout.addWidget(self.save_button, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)

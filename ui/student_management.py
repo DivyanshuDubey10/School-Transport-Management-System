@@ -34,7 +34,7 @@ class StudentManagement(QWidget):
         main_layout.setSpacing(20)
 
         # Title
-        title_label = QLabel("🎓 Student Management")
+        title_label = QLabel("Student Management")
         title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #89B4FA;")
         main_layout.addWidget(title_label)
 
@@ -83,18 +83,44 @@ class StudentManagement(QWidget):
         form_layout.addWidget(QLabel("Fee Balance (₹):"), 3, 2)
         form_layout.addWidget(self.fee_balance_entry, 3, 3)
 
-        # Save Button
-        self.save_button = QPushButton("💾 Save Student")
-        self.save_button.setFixedWidth(200)
+        # Action Buttons Layout
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(15)
+        
+        self.save_button = QPushButton("Save Student")
+        self.save_button.setFixedWidth(180)
         self.save_button.clicked.connect(self.save_student)
-        form_layout.addWidget(self.save_button, 4, 0, 1, 4, Qt.AlignmentFlag.AlignCenter)
+        buttons_layout.addWidget(self.save_button)
+        
+        self.clear_button = QPushButton("Clear Form")
+        self.clear_button.setFixedWidth(160)
+        self.clear_button.clicked.connect(self.clear_form)
+        buttons_layout.addWidget(self.clear_button)
+
+        self.refresh_btn = QPushButton("Refresh Dropdowns")
+        self.refresh_btn.setFixedWidth(180)
+        self.refresh_btn.clicked.connect(self.refresh_dropdowns_and_notify)
+        buttons_layout.addWidget(self.refresh_btn)
+        
+        form_layout.addLayout(buttons_layout, 4, 0, 1, 4, Qt.AlignmentFlag.AlignCenter)
         
         main_layout.addWidget(form_frame)
 
-        # Table Section
-        list_label = QLabel("📋 Student Records")
+        # Table Section Header & Search
+        table_header_layout = QHBoxLayout()
+        list_label = QLabel("Student Records")
         list_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #89B4FA;")
-        main_layout.addWidget(list_label)
+        table_header_layout.addWidget(list_label)
+        
+        table_header_layout.addStretch()
+        
+        self.search_entry = QLineEdit()
+        self.search_entry.setPlaceholderText("Search by Name or Class...")
+        self.search_entry.setFixedWidth(280)
+        self.search_entry.textChanged.connect(self.load_students)
+        table_header_layout.addWidget(self.search_entry)
+        
+        main_layout.addLayout(table_header_layout)
 
         table_frame = QFrame()
         table_frame.setObjectName("cardFrame")
@@ -115,9 +141,29 @@ class StudentManagement(QWidget):
         
         self.load_students()
 
+    def clear_form(self):
+        self.student_name_entry.clear()
+        self.student_class_entry.clear()
+        self.fee_paid_entry.clear()
+        self.fee_balance_entry.clear()
+        if self.parent_id_entry.count() > 0:
+            self.parent_id_entry.setCurrentIndex(0)
+        if self.route_id_entry.count() > 0:
+            self.route_id_entry.setCurrentIndex(0)
+        self.student_name_entry.setFocus()
+
+    def refresh_dropdowns_and_notify(self):
+        self.fetch_dropdown_data()
+        self.parent_id_entry.clear()
+        self.parent_id_entry.addItems(self.parent_options)
+        self.route_id_entry.clear()
+        self.route_id_entry.addItems(self.route_options)
+        QMessageBox.information(self, "Refreshed", "Parent and Route dropdowns updated successfully!")
+
     def load_students(self):
         from dal import db_dal
-        students = db_dal.get_all_students()
+        search_query = self.search_entry.text().strip() if hasattr(self, 'search_entry') else ""
+        students = db_dal.get_all_students(search_query=search_query)
         
         self.students_table.setRowCount(0)
         for row_idx, row_data in enumerate(students):
@@ -168,9 +214,4 @@ class StudentManagement(QWidget):
             self.load_students()
             QMessageBox.information(self, "Success", "Student added successfully!")
 
-        self.student_name_entry.clear()
-        self.student_class_entry.clear()
-        self.fee_paid_entry.clear()
-        self.fee_balance_entry.clear()
-        self.parent_id_entry.setCurrentIndex(0)
-        self.route_id_entry.setCurrentIndex(0)
+        self.clear_form()

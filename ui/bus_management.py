@@ -25,7 +25,7 @@ class BusManagement(QWidget):
         main_layout.setSpacing(20)
 
         # Title
-        title_label = QLabel("🚌 Bus Management")
+        title_label = QLabel("Bus Management")
         title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #89B4FA;")
         main_layout.addWidget(title_label)
 
@@ -74,7 +74,7 @@ class BusManagement(QWidget):
         form_layout.addWidget(self.route_dropdown, 3, 1, 1, 3)
 
         # Save Button
-        self.save_button = QPushButton("💾 Save Bus")
+        self.save_button = QPushButton("Save Bus")
         self.save_button.setFixedWidth(200)
         self.save_button.clicked.connect(self.save_bus)
         form_layout.addWidget(self.save_button, 4, 0, 1, 4, Qt.AlignmentFlag.AlignCenter)

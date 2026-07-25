@@ -18,7 +18,7 @@ class ParentManagement(QWidget):
         main_layout.setSpacing(20)
 
         # Title
-        title_label = QLabel("👨‍👩‍👧‍👦 Parent Management")
+        title_label = QLabel("Parent Management")
         title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #89B4FA;")
         main_layout.addWidget(title_label)
 
@@ -73,7 +73,7 @@ class ParentManagement(QWidget):
         form_layout.addWidget(self.pickup_entry, 3, 3)
 
         # Save Button
-        self.save_button = QPushButton("💾 Save Parent")
+        self.save_button = QPushButton("Save Parent")
         self.save_button.setFixedWidth(200)
         self.save_button.clicked.connect(self.save_parent)
         form_layout.addWidget(self.save_button, 4, 0, 1, 4, Qt.AlignmentFlag.AlignCenter)

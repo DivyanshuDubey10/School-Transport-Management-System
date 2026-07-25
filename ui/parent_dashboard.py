@@ -43,12 +43,12 @@ class ParentDashboard(QWidget):
         
         header_layout.addStretch()
 
-        self.refresh_button = QPushButton("🔄 Refresh")
+        self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setFixedWidth(120)
         self.refresh_button.clicked.connect(self.refresh_data)
         header_layout.addWidget(self.refresh_button)
 
-        self.logout_button = QPushButton("🚪 Logout")
+        self.logout_button = QPushButton("Logout")
         self.logout_button.setFixedWidth(100)
         self.logout_button.clicked.connect(self.logout)
         header_layout.addWidget(self.logout_button)
@@ -116,7 +116,7 @@ class ParentDashboard(QWidget):
         card_layout.setSpacing(15)
 
         # Child Header
-        header_label = QLabel(f"👤 {s_name} (Class {s_class})")
+        header_label = QLabel(f"{s_name} (Class {s_class})")
         header_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #89B4FA; border: none;")
         card_layout.addWidget(header_label, 0, 0, Qt.AlignmentFlag.AlignLeft)
         
@@ -127,14 +127,14 @@ class ParentDashboard(QWidget):
         fee_layout.setContentsMargins(0, 0, 0, 0)
         fee_layout.setSpacing(5)
         
-        fee_paid_label = QLabel(f"💰 Fee Paid: ₹{fee_paid}")
+        fee_paid_label = QLabel(f"Fee Paid: ₹{fee_paid}")
         fee_paid_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #A6E3A1;")
         fee_layout.addWidget(fee_paid_label, alignment=Qt.AlignmentFlag.AlignRight)
 
         fee_balance_val = float(fee_balance)
         fee_balance_color = "#F38BA8" if fee_balance_val > 0 else "#A6E3A1"
         fee_balance_text = f"Balance Due: ₹{fee_balance}" if fee_balance_val > 0 else "Fully Paid"
-        fee_balance_label = QLabel(f"📊 {fee_balance_text}")
+        fee_balance_label = QLabel(f"{fee_balance_text}")
         fee_balance_label.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {fee_balance_color};")
         fee_layout.addWidget(fee_balance_label, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -147,7 +147,7 @@ class ParentDashboard(QWidget):
         bus_layout.setContentsMargins(0, 0, 0, 0)
         bus_layout.setSpacing(5)
         
-        bus_title = QLabel("🚌 Bus Details")
+        bus_title = QLabel("Bus Details")
         bus_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #FFFFFF;")
         bus_layout.addWidget(bus_title)
         
@@ -163,7 +163,7 @@ class ParentDashboard(QWidget):
         route_layout.setContentsMargins(0, 0, 0, 0)
         route_layout.setSpacing(5)
 
-        route_title = QLabel("📍 Route Details")
+        route_title = QLabel("Route Details")
         route_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #FFFFFF;")
         route_layout.addWidget(route_title)
         
