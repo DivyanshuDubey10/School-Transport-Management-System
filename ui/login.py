@@ -16,9 +16,9 @@ class LoginWindow(QWidget):
 
         # Login Frame
         self.login_frame = QFrame()
-        self.login_frame.setFixedSize(500, 450)
+        self.login_frame.setFixedSize(480, 440)
         self.login_frame.setObjectName("loginFrame")
-        self.login_frame.setStyleSheet("QFrame#loginFrame { background-color: #333333; border-radius: 10px; border: 1px solid #444444; }")
+        self.login_frame.setStyleSheet("QFrame#loginFrame { background-color: #1E293B; border-radius: 16px; border: 1px solid #334155; }")
         
         frame_layout = QVBoxLayout(self.login_frame)
         frame_layout.setContentsMargins(40, 40, 40, 40)

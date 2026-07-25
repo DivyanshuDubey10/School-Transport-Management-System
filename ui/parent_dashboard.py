@@ -12,7 +12,8 @@ class ParentDashboard(QWidget):
         self.parent_id = parent_id
         
         self.setWindowTitle("Parent Dashboard")
-        self.setFixedSize(900, 600)
+        self.setMinimumSize(900, 600)
+        self.resize(1000, 650)
         
         self.fetch_data()
         self.create_widgets()
@@ -56,7 +57,7 @@ class ParentDashboard(QWidget):
         main_layout.addLayout(header_layout)
 
         title2_label = QLabel("Your Children's Transport Details")
-        title2_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #FFFFFF;")
+        title2_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #F8FAFC;")
         title2_label.setContentsMargins(0, 10, 0, 10)
         main_layout.addWidget(title2_label)
 
@@ -85,7 +86,7 @@ class ParentDashboard(QWidget):
 
         if not self.children_records:
             no_record_label = QLabel("No records found for your children.")
-            no_record_label.setStyleSheet("font-size: 16px; color: #A6ADC8;")
+            no_record_label.setStyleSheet("font-size: 16px; color: #94A3B8;")
             no_record_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             
             empty_frame = QFrame()
@@ -117,7 +118,7 @@ class ParentDashboard(QWidget):
 
         # Child Header
         header_label = QLabel(f"{s_name} (Class {s_class})")
-        header_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #89B4FA; border: none;")
+        header_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #38BDF8; border: none;")
         card_layout.addWidget(header_label, 0, 0, Qt.AlignmentFlag.AlignLeft)
         
         # Fee Details
@@ -128,11 +129,11 @@ class ParentDashboard(QWidget):
         fee_layout.setSpacing(5)
         
         fee_paid_label = QLabel(f"Fee Paid: ₹{fee_paid}")
-        fee_paid_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #A6E3A1;")
+        fee_paid_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #10B981;")
         fee_layout.addWidget(fee_paid_label, alignment=Qt.AlignmentFlag.AlignRight)
 
         fee_balance_val = float(fee_balance)
-        fee_balance_color = "#F38BA8" if fee_balance_val > 0 else "#A6E3A1"
+        fee_balance_color = "#EF4444" if fee_balance_val > 0 else "#10B981"
         fee_balance_text = f"Balance Due: ₹{fee_balance}" if fee_balance_val > 0 else "Fully Paid"
         fee_balance_label = QLabel(f"{fee_balance_text}")
         fee_balance_label.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {fee_balance_color};")
@@ -148,7 +149,7 @@ class ParentDashboard(QWidget):
         bus_layout.setSpacing(5)
         
         bus_title = QLabel("Bus Details")
-        bus_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #FFFFFF;")
+        bus_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #38BDF8;")
         bus_layout.addWidget(bus_title)
         
         bus_layout.addWidget(QLabel(f"Number: {bus_no if bus_no else 'N/A'}"))
@@ -164,7 +165,7 @@ class ParentDashboard(QWidget):
         route_layout.setSpacing(5)
 
         route_title = QLabel("Route Details")
-        route_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #FFFFFF;")
+        route_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #38BDF8;")
         route_layout.addWidget(route_title)
         
         route_layout.addWidget(QLabel(f"Route: {r_name if r_name else 'N/A'}"))

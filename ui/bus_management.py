@@ -26,64 +26,76 @@ class BusManagement(QWidget):
 
         # Title
         title_label = QLabel("Bus Management")
-        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #89B4FA;")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #38BDF8;")
         main_layout.addWidget(title_label)
 
-        # Main Container to center the form
-        center_layout = QHBoxLayout()
-        
         # Form Container (Card)
         form_frame = QFrame()
         form_frame.setObjectName("cardFrame")
-        form_frame.setMinimumWidth(650)
+        form_frame.setFixedWidth(660)
         
         form_layout = QGridLayout(form_frame)
-        form_layout.setContentsMargins(30, 30, 30, 30)
-        form_layout.setSpacing(20)
+        form_layout.setContentsMargins(32, 32, 32, 32)
+        form_layout.setHorizontalSpacing(24)
+        form_layout.setVerticalSpacing(20)
+        form_layout.setColumnStretch(0, 1)
+        form_layout.setColumnStretch(1, 1)
 
         form_title = QLabel("Add New Bus")
-        form_title.setStyleSheet("font-size: 18px; font-weight: bold; color: #FFFFFF;")
-        form_layout.addWidget(form_title, 0, 0, 1, 4)
+        form_title.setStyleSheet("font-size: 20px; font-weight: bold; color: #F8FAFC; margin-bottom: 10px;")
+        form_layout.addWidget(form_title, 0, 0, 1, 2)
+
+        def create_field(label_text, widget):
+            field_layout = QVBoxLayout()
+            field_layout.setSpacing(6)
+            field_layout.setContentsMargins(0, 0, 0, 0)
+            lbl = QLabel(label_text)
+            lbl.setStyleSheet("font-size: 13px; font-weight: 600; color: #94A3B8;")
+            field_layout.addWidget(lbl)
+            field_layout.addWidget(widget)
+            return field_layout
 
         # Row 1: Bus Number & Capacity
         self.bus_number_entry = QLineEdit()
         self.bus_number_entry.setPlaceholderText("Enter Bus Number")
-        form_layout.addWidget(QLabel("Bus Number:"), 1, 0)
-        form_layout.addWidget(self.bus_number_entry, 1, 1)
+        form_layout.addLayout(create_field("Bus Number", self.bus_number_entry), 1, 0)
 
         self.capacity_entry = QLineEdit()
         self.capacity_entry.setPlaceholderText("Enter Bus Capacity")
-        form_layout.addWidget(QLabel("Capacity:"), 1, 2)
-        form_layout.addWidget(self.capacity_entry, 1, 3)
+        form_layout.addLayout(create_field("Capacity", self.capacity_entry), 1, 1)
 
         # Row 2: Driver Name & Phone
         self.driver_name_entry = QLineEdit()
         self.driver_name_entry.setPlaceholderText("Enter Driver Name")
-        form_layout.addWidget(QLabel("Driver Name:"), 2, 0)
-        form_layout.addWidget(self.driver_name_entry, 2, 1)
+        form_layout.addLayout(create_field("Driver Name", self.driver_name_entry), 2, 0)
 
         self.driver_phone_entry = QLineEdit()
         self.driver_phone_entry.setPlaceholderText("Enter Driver Phone")
-        form_layout.addWidget(QLabel("Driver Phone:"), 2, 2)
-        form_layout.addWidget(self.driver_phone_entry, 2, 3)
+        form_layout.addLayout(create_field("Driver Phone", self.driver_phone_entry), 2, 1)
 
-        # Row 3: Route Assignment
+        # Row 3: Route Assignment (spanning both columns for a full-width clean look)
         self.route_dropdown = QComboBox()
         self.route_dropdown.addItems(self.route_options)
-        form_layout.addWidget(QLabel("Assign Route:"), 3, 0)
-        form_layout.addWidget(self.route_dropdown, 3, 1, 1, 3)
+        form_layout.addLayout(create_field("Assign Route", self.route_dropdown), 3, 0, 1, 2)
 
         # Save Button
         self.save_button = QPushButton("Save Bus")
         self.save_button.setFixedWidth(200)
         self.save_button.clicked.connect(self.save_bus)
-        form_layout.addWidget(self.save_button, 4, 0, 1, 4, Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.save_button, 4, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
         
-        center_layout.addStretch()
-        center_layout.addWidget(form_frame)
-        center_layout.addStretch()
+        # Center Layout for Form (Horizontal and Vertical)
+        h_center_layout = QHBoxLayout()
+        h_center_layout.addStretch()
+        h_center_layout.addWidget(form_frame)
+        h_center_layout.addStretch()
+
+        v_center_layout = QVBoxLayout()
+        v_center_layout.addStretch()
+        v_center_layout.addLayout(h_center_layout)
+        v_center_layout.addStretch()
         
-        main_layout.addLayout(center_layout)
+        main_layout.addLayout(v_center_layout)
         main_layout.addStretch()
 
     def save_bus(self):

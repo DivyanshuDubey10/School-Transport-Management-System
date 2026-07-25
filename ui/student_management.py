@@ -35,57 +35,66 @@ class StudentManagement(QWidget):
 
         # Title
         title_label = QLabel("Student Management")
-        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #89B4FA;")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #38BDF8;")
         main_layout.addWidget(title_label)
 
         # Form Container (Card)
         form_frame = QFrame()
         form_frame.setObjectName("cardFrame")
+        form_frame.setFixedWidth(660)
         
         form_layout = QGridLayout(form_frame)
-        form_layout.setContentsMargins(30, 30, 30, 30)
-        form_layout.setSpacing(20)
+        form_layout.setContentsMargins(32, 32, 32, 32)
+        form_layout.setHorizontalSpacing(24)
+        form_layout.setVerticalSpacing(20)
+        form_layout.setColumnStretch(0, 1)
+        form_layout.setColumnStretch(1, 1)
 
         form_title = QLabel("Add New Student")
-        form_title.setStyleSheet("font-size: 18px; font-weight: bold; color: #FFFFFF;")
-        form_layout.addWidget(form_title, 0, 0, 1, 4)
+        form_title.setStyleSheet("font-size: 20px; font-weight: bold; color: #F8FAFC; margin-bottom: 10px;")
+        form_layout.addWidget(form_title, 0, 0, 1, 2)
+
+        def create_field(label_text, widget):
+            field_layout = QVBoxLayout()
+            field_layout.setSpacing(6)
+            field_layout.setContentsMargins(0, 0, 0, 0)
+            lbl = QLabel(label_text)
+            lbl.setStyleSheet("font-size: 13px; font-weight: 600; color: #94A3B8;")
+            field_layout.addWidget(lbl)
+            field_layout.addWidget(widget)
+            return field_layout
 
         # Row 1: Name and Class
         self.student_name_entry = QLineEdit()
         self.student_name_entry.setPlaceholderText("Enter Student Name")
-        form_layout.addWidget(QLabel("Student Name:"), 1, 0)
-        form_layout.addWidget(self.student_name_entry, 1, 1)
+        form_layout.addLayout(create_field("Student Name", self.student_name_entry), 1, 0)
 
         self.student_class_entry = QLineEdit()
         self.student_class_entry.setPlaceholderText("Enter Student Class")
-        form_layout.addWidget(QLabel("Student Class:"), 1, 2)
-        form_layout.addWidget(self.student_class_entry, 1, 3)
+        form_layout.addLayout(create_field("Student Class", self.student_class_entry), 1, 1)
 
         # Row 2: Parent and Route Dropdowns
         self.parent_id_entry = QComboBox()
         self.parent_id_entry.addItems(self.parent_options)
-        form_layout.addWidget(QLabel("Parent:"), 2, 0)
-        form_layout.addWidget(self.parent_id_entry, 2, 1)
+        form_layout.addLayout(create_field("Parent", self.parent_id_entry), 2, 0)
 
         self.route_id_entry = QComboBox()
         self.route_id_entry.addItems(self.route_options)
-        form_layout.addWidget(QLabel("Route:"), 2, 2)
-        form_layout.addWidget(self.route_id_entry, 2, 3)
+        form_layout.addLayout(create_field("Route", self.route_id_entry), 2, 1)
 
         # Row 3: Fees
         self.fee_paid_entry = QLineEdit()
         self.fee_paid_entry.setPlaceholderText("0.00")
-        form_layout.addWidget(QLabel("Fee Paid (₹):"), 3, 0)
-        form_layout.addWidget(self.fee_paid_entry, 3, 1)
+        form_layout.addLayout(create_field("Fee Paid (₹)", self.fee_paid_entry), 3, 0)
 
         self.fee_balance_entry = QLineEdit()
         self.fee_balance_entry.setPlaceholderText("0.00")
-        form_layout.addWidget(QLabel("Fee Balance (₹):"), 3, 2)
-        form_layout.addWidget(self.fee_balance_entry, 3, 3)
+        form_layout.addLayout(create_field("Fee Balance (₹)", self.fee_balance_entry), 3, 1)
 
         # Action Buttons Layout
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(15)
+        buttons_layout.setContentsMargins(0, 15, 0, 0)
         
         self.save_button = QPushButton("Save Student")
         self.save_button.setFixedWidth(180)
@@ -96,50 +105,22 @@ class StudentManagement(QWidget):
         self.clear_button.setFixedWidth(160)
         self.clear_button.clicked.connect(self.clear_form)
         buttons_layout.addWidget(self.clear_button)
+        
+        form_layout.addLayout(buttons_layout, 4, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+        
+        # Center Layout for Form (Horizontal and Vertical)
+        h_center_layout = QHBoxLayout()
+        h_center_layout.addStretch()
+        h_center_layout.addWidget(form_frame)
+        h_center_layout.addStretch()
 
-        self.refresh_btn = QPushButton("Refresh Dropdowns")
-        self.refresh_btn.setFixedWidth(180)
-        self.refresh_btn.clicked.connect(self.refresh_dropdowns_and_notify)
-        buttons_layout.addWidget(self.refresh_btn)
+        v_center_layout = QVBoxLayout()
+        v_center_layout.addStretch()
+        v_center_layout.addLayout(h_center_layout)
+        v_center_layout.addStretch()
         
-        form_layout.addLayout(buttons_layout, 4, 0, 1, 4, Qt.AlignmentFlag.AlignCenter)
-        
-        main_layout.addWidget(form_frame)
-
-        # Table Section Header & Search
-        table_header_layout = QHBoxLayout()
-        list_label = QLabel("Student Records")
-        list_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #89B4FA;")
-        table_header_layout.addWidget(list_label)
-        
-        table_header_layout.addStretch()
-        
-        self.search_entry = QLineEdit()
-        self.search_entry.setPlaceholderText("Search by Name or Class...")
-        self.search_entry.setFixedWidth(280)
-        self.search_entry.textChanged.connect(self.load_students)
-        table_header_layout.addWidget(self.search_entry)
-        
-        main_layout.addLayout(table_header_layout)
-
-        table_frame = QFrame()
-        table_frame.setObjectName("cardFrame")
-        table_layout = QVBoxLayout(table_frame)
-        table_layout.setContentsMargins(10, 10, 10, 10)
-
-        self.students_table = QTableWidget()
-        self.students_table.setColumnCount(10)
-        self.students_table.setHorizontalHeaderLabels(["ID", "Name", "Class", "Parent", "Phone", "Address", "Bus", "Route", "Fee Paid", "Fee Balance"])
-        self.students_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        self.students_table.horizontalHeader().setStretchLastSection(True)
-        self.students_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.students_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.students_table.setStyleSheet("border: none; background-color: transparent;")
-        
-        table_layout.addWidget(self.students_table)
-        main_layout.addWidget(table_frame)
-        
-        self.load_students()
+        main_layout.addLayout(v_center_layout)
+        main_layout.addStretch()
 
     def clear_form(self):
         self.student_name_entry.clear()
@@ -152,24 +133,8 @@ class StudentManagement(QWidget):
             self.route_id_entry.setCurrentIndex(0)
         self.student_name_entry.setFocus()
 
-    def refresh_dropdowns_and_notify(self):
-        self.fetch_dropdown_data()
-        self.parent_id_entry.clear()
-        self.parent_id_entry.addItems(self.parent_options)
-        self.route_id_entry.clear()
-        self.route_id_entry.addItems(self.route_options)
-        QMessageBox.information(self, "Refreshed", "Parent and Route dropdowns updated successfully!")
 
-    def load_students(self):
-        from dal import db_dal
-        search_query = self.search_entry.text().strip() if hasattr(self, 'search_entry') else ""
-        students = db_dal.get_all_students(search_query=search_query)
-        
-        self.students_table.setRowCount(0)
-        for row_idx, row_data in enumerate(students):
-            self.students_table.insertRow(row_idx)
-            for col_idx, item in enumerate(row_data):
-                self.students_table.setItem(row_idx, col_idx, QTableWidgetItem(str(item)))
+
 
     def save_student(self):
         student_name = self.student_name_entry.text().strip()
@@ -211,7 +176,6 @@ class StudentManagement(QWidget):
 
         success = db_dal.add_student(student_name, student_class, parent_id, route_id, fee_paid, fee_balance)
         if success:
-            self.load_students()
             QMessageBox.information(self, "Success", "Student added successfully!")
 
         self.clear_form()

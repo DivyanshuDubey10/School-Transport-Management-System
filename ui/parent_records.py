@@ -18,7 +18,7 @@ class ParentRecords(QWidget):
 
         # Title
         title_label = QLabel("Parent Records")
-        title_label.setStyleSheet("font-size: 28px; font-weight: bold;")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #38BDF8;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(title_label)
 
@@ -40,8 +40,16 @@ class ParentRecords(QWidget):
         self.parents_table = QTableWidget()
         self.parents_table.setColumnCount(6)
         self.parents_table.setHorizontalHeaderLabels(["ID", "Name", "Phone", "Address", "Pickup Point", "Username"])
-        self.parents_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        self.parents_table.horizontalHeader().setStretchLastSection(True)
+        header = self.parents_table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setMinimumSectionSize(90)
+        self.parents_table.setColumnWidth(0, 60)   # ID
+        self.parents_table.setColumnWidth(1, 160)  # Name
+        self.parents_table.setColumnWidth(2, 130)  # Phone
+        self.parents_table.setColumnWidth(3, 220)  # Address
+        self.parents_table.setColumnWidth(4, 180)  # Pickup Point
+        self.parents_table.setColumnWidth(5, 140)  # Username
+        header.setStretchLastSection(True)
         self.parents_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.parents_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.parents_table.itemSelectionChanged.connect(self.select_parent)

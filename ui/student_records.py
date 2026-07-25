@@ -18,7 +18,7 @@ class StudentRecords(QWidget):
 
         # Title
         title_label = QLabel("Student Records")
-        title_label.setStyleSheet("font-size: 28px; font-weight: bold;")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #38BDF8;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(title_label)
 
@@ -40,8 +40,20 @@ class StudentRecords(QWidget):
         self.students_table = QTableWidget()
         self.students_table.setColumnCount(10)
         self.students_table.setHorizontalHeaderLabels(["ID", "Name", "Class", "Parent", "Phone", "Address", "Bus", "Route", "Fee Paid", "Fee Balance"])
-        self.students_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        self.students_table.horizontalHeader().setStretchLastSection(True)
+        header = self.students_table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setMinimumSectionSize(95)
+        self.students_table.setColumnWidth(0, 60)   # ID
+        self.students_table.setColumnWidth(1, 150)  # Name
+        self.students_table.setColumnWidth(2, 80)   # Class
+        self.students_table.setColumnWidth(3, 140)  # Parent
+        self.students_table.setColumnWidth(4, 130)  # Phone
+        self.students_table.setColumnWidth(5, 180)  # Address
+        self.students_table.setColumnWidth(6, 80)   # Bus
+        self.students_table.setColumnWidth(7, 80)   # Route
+        self.students_table.setColumnWidth(8, 110)  # Fee Paid
+        self.students_table.setColumnWidth(9, 120)  # Fee Balance
+        header.setStretchLastSection(True)
         self.students_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.students_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.students_table.itemSelectionChanged.connect(self.select_student)

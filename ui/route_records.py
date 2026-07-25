@@ -18,7 +18,7 @@ class RouteRecords(QWidget):
 
         # Title
         title_label = QLabel("Route Records")
-        title_label.setStyleSheet("font-size: 28px; font-weight: bold;")
+        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #38BDF8;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(title_label)
 
@@ -40,8 +40,12 @@ class RouteRecords(QWidget):
         self.routes_table = QTableWidget()
         self.routes_table.setColumnCount(2)
         self.routes_table.setHorizontalHeaderLabels(["ID", "Route Name"])
-        self.routes_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        self.routes_table.horizontalHeader().setStretchLastSection(True)
+        header = self.routes_table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setMinimumSectionSize(80)
+        self.routes_table.setColumnWidth(0, 80)    # ID
+        self.routes_table.setColumnWidth(1, 400)   # Route Name
+        header.setStretchLastSection(True)
         self.routes_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.routes_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.routes_table.itemSelectionChanged.connect(self.select_route)

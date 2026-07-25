@@ -44,36 +44,42 @@ class DashboardHome(QWidget):
 
         # Card 1
         card1 = QFrame()
-        card1.setStyleSheet("background-color: #333333; border-radius: 10px; padding: 20px;")
+        card1.setObjectName("cardFrame")
         card1_layout = QVBoxLayout(card1)
+        card1_layout.setContentsMargins(20, 24, 20, 24)
         card1_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        card1_title = QLabel("Total Students")
+        card1_title = QLabel("TOTAL STUDENTS")
+        card1_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #94A3B8; border: none;")
         self.card1_value = QLabel("0")
-        self.card1_value.setStyleSheet("font-size: 36px; font-weight: bold; color: #1f538d;")
+        self.card1_value.setStyleSheet("font-size: 38px; font-weight: 800; color: #38BDF8; border: none;")
         card1_layout.addWidget(card1_title)
         card1_layout.addWidget(self.card1_value)
         grid.addWidget(card1, 0, 0)
 
         # Card 2
         card2 = QFrame()
-        card2.setStyleSheet("background-color: #333333; border-radius: 10px; padding: 20px;")
+        card2.setObjectName("cardFrame")
         card2_layout = QVBoxLayout(card2)
+        card2_layout.setContentsMargins(20, 24, 20, 24)
         card2_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        card2_title = QLabel("Active Buses")
+        card2_title = QLabel("ACTIVE BUSES")
+        card2_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #94A3B8; border: none;")
         self.card2_value = QLabel("0")
-        self.card2_value.setStyleSheet("font-size: 36px; font-weight: bold; color: #1f538d;")
+        self.card2_value.setStyleSheet("font-size: 38px; font-weight: 800; color: #38BDF8; border: none;")
         card2_layout.addWidget(card2_title)
         card2_layout.addWidget(self.card2_value)
         grid.addWidget(card2, 0, 1)
 
         # Card 3
         card3 = QFrame()
-        card3.setStyleSheet("background-color: #333333; border-radius: 10px; padding: 20px;")
+        card3.setObjectName("cardFrame")
         card3_layout = QVBoxLayout(card3)
+        card3_layout.setContentsMargins(20, 24, 20, 24)
         card3_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        card3_title = QLabel("Total Routes")
+        card3_title = QLabel("TOTAL ROUTES")
+        card3_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #94A3B8; border: none;")
         self.card3_value = QLabel("0")
-        self.card3_value.setStyleSheet("font-size: 36px; font-weight: bold; color: #1f538d;")
+        self.card3_value.setStyleSheet("font-size: 38px; font-weight: 800; color: #38BDF8; border: none;")
         card3_layout.addWidget(card3_title)
         card3_layout.addWidget(self.card3_value)
         grid.addWidget(card3, 0, 2)
@@ -82,7 +88,7 @@ class DashboardHome(QWidget):
 
         # Quick Actions
         qa_label = QLabel("Quick Actions")
-        qa_label.setStyleSheet("font-size: 20px; font-weight: bold;")
+        qa_label.setStyleSheet("font-size: 20px; font-weight: 800; color: #F8FAFC; margin-top: 15px;")
         qa_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(qa_label)
 
@@ -114,7 +120,8 @@ class AdminDashboard(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Admin Dashboard")
-        self.setFixedSize(900, 600)
+        self.setMinimumSize(1000, 650)
+        self.resize(1100, 700)
         self.create_widgets()
         self.show_frame(DashboardHome)
         
@@ -139,20 +146,21 @@ class AdminDashboard(QWidget):
 
         # Sidebar
         self.sidebar_frame = QFrame()
-        self.sidebar_frame.setFixedWidth(200)
-        self.sidebar_frame.setStyleSheet("background-color: #1E1E1E;")
+        self.sidebar_frame.setFixedWidth(220)
+        self.sidebar_frame.setObjectName("sidebarFrame")
         self.sidebar_layout = QVBoxLayout(self.sidebar_frame)
-        self.sidebar_layout.setContentsMargins(10, 10, 10, 10)
+        self.sidebar_layout.setContentsMargins(12, 20, 12, 20)
+        self.sidebar_layout.setSpacing(6)
         
         # Sidebar Top Layout (Hamburger + Title)
         sidebar_top_layout = QHBoxLayout()
         self.sidebar_toggle_btn = QPushButton("☰")
-        self.sidebar_toggle_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: transparent; color: white; border: none;")
+        self.sidebar_toggle_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: transparent; color: #F8FAFC; border: none;")
         self.sidebar_toggle_btn.clicked.connect(self.toggle_sidebar)
         self.sidebar_toggle_btn.setFixedSize(30, 40)
         
         self.sidebar_title = QLabel("STMS")
-        self.sidebar_title.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
+        self.sidebar_title.setStyleSheet("font-size: 24px; font-weight: 800; color: #38BDF8; letter-spacing: -1px; border: none;")
         
         sidebar_top_layout.addWidget(self.sidebar_toggle_btn)
         sidebar_top_layout.addWidget(self.sidebar_title)
@@ -190,7 +198,7 @@ class AdminDashboard(QWidget):
 
         self.toggle_btn = QPushButton("☰")
         self.toggle_btn.setFixedSize(40, 40)
-        self.toggle_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: transparent; color: white; border: none;")
+        self.toggle_btn.setStyleSheet("font-size: 20px; font-weight: bold; background: transparent; color: #F8FAFC; border: none;")
         self.toggle_btn.clicked.connect(self.toggle_sidebar)
         self.toggle_btn.hide() # Hidden by default since sidebar is visible
         self.top_bar_layout.addWidget(self.toggle_btn, alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
