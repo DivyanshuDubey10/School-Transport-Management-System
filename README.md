@@ -76,11 +76,7 @@ School-Transport-Management-System/
 │   ├── parent_management.py
 │   ├── parent_records.py
 │   ├── bus_management.py
-│   ├── bus_records.py
-│   ├── driver_management.py
-│   ├── driver_records.py
-│   ├── route_management.py
-│   └── route_records.py
+│   └── bus_records.py
 │
 ├── assets/
 │   └── screenshots/

@@ -8,14 +8,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 class BusManagement(QWidget):
     def __init__(self, master=None):
         super().__init__()
-        self.fetch_routes()
+        self.fetch_points()
         self.create_widgets()
         
-    def fetch_routes(self):
+    def fetch_points(self):
         from dal import db_dal
-        routes = db_dal.get_all_routes()
-        self.route_options = [f"{row[0]} - {row[1]}" for row in routes]
-        if not self.route_options: self.route_options = [""]
+        self.point_options = db_dal.get_all_pickup_points()
+        if not self.point_options: self.point_options = ["Main Campus", "North Station", "South Station", "East Gate", "West End"]
     
     def create_widgets(self):
         from PyQt6.QtWidgets import QGridLayout, QFrame
@@ -26,7 +25,7 @@ class BusManagement(QWidget):
 
         # Title
         title_label = QLabel("Bus Management")
-        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #38BDF8;")
+        title_label.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
         main_layout.addWidget(title_label)
 
         # Form Container (Card)
@@ -42,7 +41,7 @@ class BusManagement(QWidget):
         form_layout.setColumnStretch(1, 1)
 
         form_title = QLabel("Add New Bus")
-        form_title.setStyleSheet("font-size: 20px; font-weight: bold; color: #F8FAFC; margin-bottom: 10px;")
+        form_title.setStyleSheet("font-size: 15pt; font-weight: bold; color: #F8FAFC; margin-bottom: 10px;")
         form_layout.addWidget(form_title, 0, 0, 1, 2)
 
         def create_field(label_text, widget):
@@ -50,7 +49,7 @@ class BusManagement(QWidget):
             field_layout.setSpacing(6)
             field_layout.setContentsMargins(0, 0, 0, 0)
             lbl = QLabel(label_text)
-            lbl.setStyleSheet("font-size: 13px; font-weight: 600; color: #94A3B8;")
+            lbl.setStyleSheet("font-size: 10pt; font-weight: 600; color: #94A3B8;")
             field_layout.addWidget(lbl)
             field_layout.addWidget(widget)
             return field_layout
@@ -73,10 +72,18 @@ class BusManagement(QWidget):
         self.driver_phone_entry.setPlaceholderText("Enter Driver Phone")
         form_layout.addLayout(create_field("Driver Phone", self.driver_phone_entry), 2, 1)
 
-        # Row 3: Route Assignment (spanning both columns for a full-width clean look)
-        self.route_dropdown = QComboBox()
-        self.route_dropdown.addItems(self.route_options)
-        form_layout.addLayout(create_field("Assign Route", self.route_dropdown), 3, 0, 1, 2)
+        # Row 3: Route Starting and Ending Points (Editable Dropdowns)
+        self.start_point_dropdown = QComboBox()
+        self.start_point_dropdown.setEditable(True)
+        self.start_point_dropdown.addItems(self.point_options)
+        self.start_point_dropdown.setPlaceholderText("Select or type starting point")
+        form_layout.addLayout(create_field("Route Starting Point", self.start_point_dropdown), 3, 0)
+
+        self.end_point_dropdown = QComboBox()
+        self.end_point_dropdown.setEditable(True)
+        self.end_point_dropdown.addItems(self.point_options)
+        self.end_point_dropdown.setPlaceholderText("Select or type ending point")
+        form_layout.addLayout(create_field("Route Ending Point", self.end_point_dropdown), 3, 1)
 
         # Save Button
         self.save_button = QPushButton("Save Bus")
@@ -103,8 +110,8 @@ class BusManagement(QWidget):
         driver_name = self.driver_name_entry.text().strip()
         driver_phone = self.driver_phone_entry.text().strip()
         capacity_str = self.capacity_entry.text().strip()
-        route_selection = self.route_dropdown.currentText()
-        route_id = route_selection.split(" - ")[0] if " - " in route_selection else ""
+        start_point = self.start_point_dropdown.currentText().strip()
+        end_point = self.end_point_dropdown.currentText().strip()
         
         if not bus_number:
             QMessageBox.critical(self, "Error", "Bus Number is required.")
@@ -122,22 +129,39 @@ class BusManagement(QWidget):
             QMessageBox.critical(self, "Error", "Capacity is required.")
             return
             
+        if not start_point:
+            QMessageBox.critical(self, "Error", "Route Starting Point is required.")
+            return
+            
+        if not end_point:
+            QMessageBox.critical(self, "Error", "Route Ending Point is required.")
+            return
+
+        if start_point.lower() == end_point.lower():
+            QMessageBox.critical(self, "Error", "Starting Point and Ending Point cannot be the same.")
+            return
+
         try:
             capacity = int(capacity_str)
         except ValueError:
             QMessageBox.critical(self, "Error", "Capacity must be a valid number.")
             return
 
+        route_name = f"{start_point} to {end_point}"
+
         from dal import db_dal
         
         try:
-            success = db_dal.add_bus(bus_number, driver_name, driver_phone, capacity, route_id if route_id else None)
+            route_id = db_dal.get_or_create_route(route_name)
+            success = db_dal.add_bus(bus_number, driver_name, driver_phone, capacity, route_id)
             if success:
-                QMessageBox.information(self, "Success", "Bus saved successfully.")
+                QMessageBox.information(self, "Success", "Bus and route assigned successfully.")
                 
                 self.bus_number_entry.clear()
                 self.driver_name_entry.clear()
                 self.driver_phone_entry.clear()
                 self.capacity_entry.clear()
+                self.start_point_dropdown.setCurrentIndex(0)
+                self.end_point_dropdown.setCurrentIndex(0)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred: {e}")

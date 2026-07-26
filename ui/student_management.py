@@ -35,7 +35,7 @@ class StudentManagement(QWidget):
 
         # Title
         title_label = QLabel("Student Management")
-        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #38BDF8;")
+        title_label.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
         main_layout.addWidget(title_label)
 
         # Form Container (Card)
@@ -51,7 +51,7 @@ class StudentManagement(QWidget):
         form_layout.setColumnStretch(1, 1)
 
         form_title = QLabel("Add New Student")
-        form_title.setStyleSheet("font-size: 20px; font-weight: bold; color: #F8FAFC; margin-bottom: 10px;")
+        form_title.setStyleSheet("font-size: 15pt; font-weight: bold; color: #F8FAFC; margin-bottom: 10px;")
         form_layout.addWidget(form_title, 0, 0, 1, 2)
 
         def create_field(label_text, widget):
@@ -59,7 +59,7 @@ class StudentManagement(QWidget):
             field_layout.setSpacing(6)
             field_layout.setContentsMargins(0, 0, 0, 0)
             lbl = QLabel(label_text)
-            lbl.setStyleSheet("font-size: 13px; font-weight: 600; color: #94A3B8;")
+            lbl.setStyleSheet("font-size: 10pt; font-weight: 600; color: #94A3B8;")
             field_layout.addWidget(lbl)
             field_layout.addWidget(widget)
             return field_layout

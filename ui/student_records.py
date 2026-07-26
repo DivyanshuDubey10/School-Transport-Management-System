@@ -18,7 +18,7 @@ class StudentRecords(QWidget):
 
         # Title
         title_label = QLabel("Student Records")
-        title_label.setStyleSheet("font-size: 28px; font-weight: bold; color: #38BDF8;")
+        title_label.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(title_label)
 

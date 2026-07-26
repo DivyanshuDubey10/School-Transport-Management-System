@@ -237,12 +237,45 @@ class DAL:
             conn.close()
 
     # --- Bus Management ---
-    def get_all_buses(self) -> List[Tuple]:
+    def get_all_buses(self, search_query: str = "") -> List[Tuple]:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT b.bus_id, b.bus_number, b.driver_name, b.driver_phone, b.capacity, b.route_id, r.route_name FROM bus b LEFT JOIN route r ON b.route_id = r.route_id")
+            query = "SELECT b.bus_id, b.bus_number, b.driver_name, b.driver_phone, b.capacity, b.route_id, r.route_name FROM bus b LEFT JOIN route r ON b.route_id = r.route_id"
+            if search_query:
+                query += " WHERE b.bus_number LIKE ? OR b.driver_name LIKE ? OR r.route_name LIKE ?"
+                cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
+            else:
+                cursor.execute(query)
             return cursor.fetchall()
+        finally:
+            conn.close()
+
+    def get_all_pickup_points(self) -> List[str]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT DISTINCT pickup_point FROM parent WHERE pickup_point IS NOT NULL AND pickup_point != ''")
+            points = [row[0] for row in cursor.fetchall()]
+            default_points = ["Main Campus", "North Station", "South Station", "East Gate", "West End", "City Center"]
+            for p in default_points:
+                if p not in points:
+                    points.append(p)
+            return sorted(points)
+        finally:
+            conn.close()
+
+    def get_or_create_route(self, route_name: str) -> int:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT route_id FROM route WHERE route_name = ?", (route_name,))
+            res = cursor.fetchone()
+            if res:
+                return res[0]
+            cursor.execute("INSERT INTO route (route_name) VALUES (?)", (route_name,))
+            conn.commit()
+            return cursor.lastrowid
         finally:
             conn.close()
 
