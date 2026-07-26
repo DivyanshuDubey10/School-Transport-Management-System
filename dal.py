@@ -1,5 +1,6 @@
 import sqlite3
 import database
+import security
 from typing import List, Dict, Any, Optional, Tuple
 
 class DAL:
@@ -27,6 +28,76 @@ class DAL:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM parent WHERE username = ?", (username,))
             return cursor.fetchone()
+        finally:
+            conn.close()
+
+    def get_admin_by_id(self, admin_id: int = 1) -> Optional[Tuple]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM admin WHERE admin_id = ?", (admin_id,))
+            return cursor.fetchone()
+        finally:
+            conn.close()
+
+    def get_parent_by_id(self, parent_id: int) -> Optional[Tuple]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM parent WHERE parent_id = ?", (parent_id,))
+            return cursor.fetchone()
+        finally:
+            conn.close()
+
+    def update_admin_profile(self, admin_id: int, username: str, full_name: str, password: Optional[str] = None) -> bool:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            if password and password.strip():
+                hashed_pw = security.hash_password(password.strip())
+                cursor.execute(
+                    "UPDATE admin SET USERNAME = ?, full_name = ?, password = ? WHERE admin_id = ?",
+                    (username, full_name, hashed_pw, admin_id)
+                )
+            else:
+                cursor.execute(
+                    "UPDATE admin SET USERNAME = ?, full_name = ? WHERE admin_id = ?",
+                    (username, full_name, admin_id)
+                )
+            conn.commit()
+            return True
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
+    def update_parent_profile(self, parent_id: int, name: str, phone: str, address: str, pickup_point: str, username: str, password: Optional[str] = None) -> bool:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            if password and password.strip():
+                hashed_pw = security.hash_password(password.strip())
+                cursor.execute(
+                    """
+                    UPDATE parent
+                    SET parent_name = ?, phone = ?, address = ?, pickup_point = ?, username = ?, password = ?
+                    WHERE parent_id = ?
+                    """,
+                    (name, phone, address, pickup_point, username, hashed_pw, parent_id)
+                )
+            else:
+                cursor.execute(
+                    """
+                    UPDATE parent
+                    SET parent_name = ?, phone = ?, address = ?, pickup_point = ?, username = ?
+                    WHERE parent_id = ?
+                    """,
+                    (name, phone, address, pickup_point, username, parent_id)
+                )
+            conn.commit()
+            return True
+        except Exception:
+            return False
         finally:
             conn.close()
             

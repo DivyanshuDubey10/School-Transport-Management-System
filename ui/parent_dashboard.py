@@ -486,16 +486,16 @@ class ParentDashboard(QWidget):
         user_card_layout.setContentsMargins(12, 10, 12, 10)
         user_card_layout.setSpacing(10)
         
-        user_avatar = create_initials_avatar(self.parent_name, size=38, bg_color="#38BDF8", text_color="#0F172A")
-        user_card_layout.addWidget(user_avatar)
+        self.user_avatar = create_initials_avatar(self.parent_name, size=38, bg_color="#38BDF8", text_color="#0F172A")
+        user_card_layout.addWidget(self.user_avatar)
         
         user_text = QVBoxLayout()
         user_text.setSpacing(2)
-        lbl_uname = QLabel(self.parent_name[:14] + ("..." if len(self.parent_name) > 14 else ""))
-        lbl_uname.setStyleSheet("font-size: 10pt; font-weight: bold; color: #F8FAFC; border: none;")
+        self.lbl_uname = QLabel(self.parent_name[:14] + ("..." if len(self.parent_name) > 14 else ""))
+        self.lbl_uname.setStyleSheet("font-size: 10pt; font-weight: bold; color: #F8FAFC; border: none;")
         lbl_urole = QLabel("Parent Account")
         lbl_urole.setStyleSheet("font-size: 8.5pt; color: #94A3B8; border: none;")
-        user_text.addWidget(lbl_uname)
+        user_text.addWidget(self.lbl_uname)
         user_text.addWidget(lbl_urole)
         user_card_layout.addLayout(user_text)
         user_card_layout.addStretch()
@@ -518,8 +518,10 @@ class ParentDashboard(QWidget):
         cat_mgmt.setStyleSheet("font-size: 8pt; font-weight: 800; color: #64748B; letter-spacing: 1px; margin-left: 4px; border: none;")
         self.sidebar_layout.addWidget(cat_mgmt)
 
+        self.btn_profile = self.add_sidebar_button("Profile & Security", self.open_profile_view)
+        self.btn_settings = self.add_sidebar_button("System Settings", self.open_settings_view)
         self.btn_refresh = self.add_sidebar_button("Refresh Data", self.refresh_dashboard)
-        self.sidebar_layout.addWidget(self.btn_refresh)
+        self.btn_logout_sidebar = self.add_sidebar_button("Logout", self.logout)
         
         self.sidebar_layout.addStretch()
 
@@ -625,14 +627,43 @@ class ParentDashboard(QWidget):
                 self.header_breadcrumb.setText("Parent Portal  /  My Children")
             elif frame_class == ParentBusSchedule:
                 self.header_breadcrumb.setText("Parent Portal  /  Bus Schedules")
+            elif hasattr(frame_class, '__name__') and frame_class.__name__ == "ProfileView":
+                self.header_breadcrumb.setText("Parent Portal  /  Personal Profile & Security")
+            elif hasattr(frame_class, '__name__') and frame_class.__name__ == "SettingsView":
+                self.header_breadcrumb.setText("Parent Portal  /  System Settings & Preferences")
 
         while self.content_layout.count():
             child = self.content_layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
 
-        frame = frame_class(self)
+        if hasattr(frame_class, '__name__') and frame_class.__name__ == "ProfileView":
+            frame = frame_class('parent', user_id=self.parent_id, dashboard_ref=self)
+        elif hasattr(frame_class, '__name__') and frame_class.__name__ == "SettingsView":
+            frame = frame_class('parent', dashboard_ref=self)
+        else:
+            frame = frame_class(self)
         self.content_layout.addWidget(frame)
+
+    def open_profile_view(self):
+        from ui.profile_view import ProfileView
+        self.show_frame(ProfileView, self.btn_profile)
+
+    def open_settings_view(self):
+        from ui.settings_view import SettingsView
+        self.show_frame(SettingsView, self.btn_settings)
+
+    def update_user_display(self):
+        from dal import db_dal
+        parent_data = db_dal.get_parent_by_id(self.parent_id)
+        if parent_data:
+            self.parent_name = str(parent_data[1])
+            self.lbl_uname.setText(self.parent_name[:14] + ("..." if len(self.parent_name) > 14 else ""))
+            new_avatar = create_initials_avatar(self.parent_name, size=38, bg_color="#38BDF8", text_color="#0F172A")
+            self.user_avatar.deleteLater()
+            self.user_avatar = new_avatar
+            self.user_avatar.setParent(self.lbl_uname.parentWidget())
+            self.lbl_uname.parentWidget().layout().insertWidget(0, self.user_avatar)
 
     def refresh_dashboard(self):
         self.fetch_data()

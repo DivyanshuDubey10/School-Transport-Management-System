@@ -158,7 +158,9 @@ class AdminDashboard(QWidget):
                 "ParentManagement": "Admin Portal  /  Parent Account Registration",
                 "ParentRecords": "Admin Portal  /  Parent Accounts Directory",
                 "BusManagement": "Admin Portal  /  Bus Fleet & Route Assignment",
-                "BusRecords": "Admin Portal  /  Bus Fleet Records"
+                "BusRecords": "Admin Portal  /  Bus Fleet Records",
+                "ProfileView": "Admin Portal  /  Personal Profile & Security",
+                "SettingsView": "Admin Portal  /  System Settings & Preferences"
             }
             name = frame_class.__name__ if hasattr(frame_class, '__name__') else str(frame_class)
             self.header_breadcrumb.setText(title_map.get(frame_class, f"Admin Portal  /  {name}"))
@@ -170,6 +172,10 @@ class AdminDashboard(QWidget):
 
         if frame_class == DashboardHome:
             frame = DashboardHome(self)
+        elif hasattr(frame_class, '__name__') and frame_class.__name__ == "ProfileView":
+            frame = frame_class('admin', user_id=1, dashboard_ref=self)
+        elif hasattr(frame_class, '__name__') and frame_class.__name__ == "SettingsView":
+            frame = frame_class('admin', dashboard_ref=self)
         else:
             frame = frame_class(self)
         
@@ -224,16 +230,16 @@ class AdminDashboard(QWidget):
         user_card_layout.setContentsMargins(12, 10, 12, 10)
         user_card_layout.setSpacing(10)
         
-        user_avatar = create_initials_avatar("SuperAdmin", size=38, bg_color="#2563EB", text_color="#FFFFFF")
-        user_card_layout.addWidget(user_avatar)
+        self.user_avatar = create_initials_avatar("SuperAdmin", size=38, bg_color="#2563EB", text_color="#FFFFFF")
+        user_card_layout.addWidget(self.user_avatar)
         
         user_text = QVBoxLayout()
         user_text.setSpacing(2)
-        lbl_uname = QLabel("Administrator")
-        lbl_uname.setStyleSheet("font-size: 10pt; font-weight: bold; color: #F8FAFC; border: none;")
+        self.lbl_uname = QLabel("Administrator")
+        self.lbl_uname.setStyleSheet("font-size: 10pt; font-weight: bold; color: #F8FAFC; border: none;")
         lbl_urole = QLabel("SuperAdmin Portal")
         lbl_urole.setStyleSheet("font-size: 8.5pt; color: #38BDF8; border: none;")
-        user_text.addWidget(lbl_uname)
+        user_text.addWidget(self.lbl_uname)
         user_text.addWidget(lbl_urole)
         user_card_layout.addLayout(user_text)
         user_card_layout.addStretch()
@@ -261,6 +267,8 @@ class AdminDashboard(QWidget):
         cat_mgmt.setStyleSheet("font-size: 8pt; font-weight: 800; color: #64748B; letter-spacing: 1px; margin-left: 4px; border: none;")
         self.sidebar_layout.addWidget(cat_mgmt)
 
+        self.btn_profile = self.add_sidebar_button("Profile & Security", self.open_profile_view)
+        self.btn_settings = self.add_sidebar_button("System Settings", self.open_settings_view)
         self.btn_logout = self.add_sidebar_button("Logout", self.logout)
         
         self.sidebar_layout.addStretch()
@@ -339,7 +347,7 @@ class AdminDashboard(QWidget):
         self.sidebar_buttons = []
         
         # Register buttons
-        self.sidebar_buttons = [self.btn_home, self.btn_stu_mgmt, self.btn_stu_rec, self.btn_par_mgmt, self.btn_par_rec, self.btn_bus_mgmt, self.btn_bus_rec, self.btn_logout]
+        self.sidebar_buttons = [self.btn_home, self.btn_stu_mgmt, self.btn_stu_rec, self.btn_par_mgmt, self.btn_par_rec, self.btn_bus_mgmt, self.btn_bus_rec, self.btn_profile, self.btn_settings, self.btn_logout]
 
     def add_sidebar_button(self, text, command):
         btn = QPushButton(text)
@@ -388,6 +396,26 @@ class AdminDashboard(QWidget):
     def open_bus_records(self):
         from ui.bus_records import BusRecords
         self.show_frame(BusRecords, self.btn_bus_rec)
+        
+    def open_profile_view(self):
+        from ui.profile_view import ProfileView
+        self.show_frame(ProfileView, self.btn_profile)
+        
+    def open_settings_view(self):
+        from ui.settings_view import SettingsView
+        self.show_frame(SettingsView, self.btn_settings)
+
+    def update_user_display(self):
+        from dal import db_dal
+        admin_data = db_dal.get_admin_by_id(1)
+        if admin_data:
+            fname = admin_data[3]
+            self.lbl_uname.setText(fname)
+            new_avatar = create_initials_avatar(fname, size=38, bg_color="#2563EB", text_color="#FFFFFF")
+            self.user_avatar.deleteLater()
+            self.user_avatar = new_avatar
+            self.user_avatar.setParent(self.lbl_uname.parentWidget())
+            self.lbl_uname.parentWidget().layout().insertWidget(0, self.user_avatar)
         
     def logout(self):
         from ui.login import LoginWindow
