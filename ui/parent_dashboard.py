@@ -568,16 +568,9 @@ class ParentDashboard(QWidget):
         
         top_bar_layout.addStretch()
 
-        # Right-side action badge icons (Notifications, System Status, Company / Logout)
-        status_online = QLabel("System Online")
-        status_online.setStyleSheet("font-size: 9.5pt; font-weight: bold; color: #10B981; background-color: #064E3B; padding: 4px 10px; border-radius: 12px; border: none;")
-        top_bar_layout.addWidget(status_online)
-        
-        notif_btn = QPushButton("Alerts")
-        notif_btn.setFixedSize(54, 34)
-        notif_btn.setToolTip("No new notifications")
-        notif_btn.setStyleSheet("QPushButton { background-color: #1E293B; border-radius: 6px; font-size: 9.5pt; font-weight: bold; border: 1px solid #334155; color: #94A3B8; } QPushButton:hover { background-color: #334155; color: #F8FAFC; }")
-        top_bar_layout.addWidget(notif_btn)
+        # Right-side action badge icons (Company / Logout)
+        # System Online and Alerts have been removed
+
 
         logout_btn = QPushButton("Logout")
         logout_btn.setCursor(Qt.CursorShape.PointingHandCursor)
