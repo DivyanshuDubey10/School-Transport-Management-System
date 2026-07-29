@@ -142,7 +142,7 @@ class DashboardHome(QWidget):
 class AdminDashboard(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("School Bus Management System — Admin Portal")
+        self.setWindowTitle("NeoYatra — Admin Portal")
         self.setMinimumSize(1100, 680)
         self.resize(1200, 750)
         self.create_widgets()
@@ -208,9 +208,9 @@ class AdminDashboard(QWidget):
         
         brand_text = QVBoxLayout()
         brand_text.setSpacing(0)
-        lbl_brand1 = QLabel("School Bus")
+        lbl_brand1 = QLabel("NeoYatra")
         lbl_brand1.setStyleSheet("font-size: 11pt; font-weight: 800; color: #F8FAFC; border: none;")
-        lbl_brand2 = QLabel("Management System")
+        lbl_brand2 = QLabel("Transport Portal")
         lbl_brand2.setStyleSheet("font-size: 8.5pt; font-weight: 600; color: #38BDF8; border: none;")
         brand_text.addWidget(lbl_brand1)
         brand_text.addWidget(lbl_brand2)

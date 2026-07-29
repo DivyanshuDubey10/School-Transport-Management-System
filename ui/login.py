@@ -6,7 +6,7 @@ from ui.parent_dashboard import ParentDashboard
 class LoginWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("School Transport Management System")
+        self.setWindowTitle("NeoYatra Transport Portal")
         self.setFixedSize(900, 600)
         self.create_widgets()
 
@@ -25,7 +25,7 @@ class LoginWindow(QWidget):
         frame_layout.setSpacing(20)
 
         # Title
-        self.title_label = QLabel("School Transport System")
+        self.title_label = QLabel("NeoYatra")
         self.title_label.setObjectName("titleLabel")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         frame_layout.addWidget(self.title_label)

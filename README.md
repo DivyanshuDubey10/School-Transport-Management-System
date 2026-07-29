@@ -1,6 +1,6 @@
-# School Transport Management System (STMS)
+# NeoYatra Transport Portal
 
-A desktop-based **School Transport Management System (STMS)** developed using **Python**, **PyQt6**, and **SQLite** to simplify school transport administration. The system enables administrators to efficiently manage students, parents, buses, drivers, and routes while providing parents with access to their child's transport information through a dedicated dashboard.
+A desktop-based **NeoYatra Transport Portal** developed using **Python**, **PyQt6**, and **SQLite** to simplify school transport administration. The system enables administrators to efficiently manage students, parents, buses, drivers, and routes while providing parents with access to their child's transport information through a dedicated dashboard.
 
 
 ## Features

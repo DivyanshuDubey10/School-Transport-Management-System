@@ -341,11 +341,11 @@ class ParentBusSchedule(QWidget):
         
         title_box = QVBoxLayout()
         title_box.setSpacing(4)
-        title_label = QLabel("School Bus Fleet & Routes")
-        title_label.setStyleSheet("font-size: 18pt; font-weight: 800; color: #F8FAFC; letter-spacing: -0.5px;")
-        title_box.addWidget(title_label)
-        
-        sub_label = QLabel("Complete schedule of school buses, assigned drivers, contact details, and travel paths.")
+        title_label = QLabel("NeoYatra Fleet & Routes")
+        title_label.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
+        main_layout.addWidget(title_label)
+
+        sub_label = QLabel("Complete schedule of NeoYatra buses, assigned drivers, contact details, and travel paths.")
         sub_label.setStyleSheet("font-size: 10pt; color: #94A3B8;")
         title_box.addWidget(sub_label)
         
@@ -416,8 +416,8 @@ class ParentDashboard(QWidget):
         super().__init__()
         self.parent_id = parent_id
         
-        self.setWindowTitle("School Bus Management System — Parent Portal")
-        self.setMinimumSize(1100, 680)
+        self.setWindowTitle("NeoYatra — Parent Portal")
+        self.setMinimumSize(1200, 800)
         self.resize(1200, 750)
         
         self.fetch_data()
@@ -464,9 +464,9 @@ class ParentDashboard(QWidget):
         
         brand_text = QVBoxLayout()
         brand_text.setSpacing(0)
-        lbl_brand1 = QLabel("School Bus")
+        lbl_brand1 = QLabel("NeoYatra")
         lbl_brand1.setStyleSheet("font-size: 11pt; font-weight: 800; color: #F8FAFC; border: none;")
-        lbl_brand2 = QLabel("Management System")
+        lbl_brand2 = QLabel("Transport Portal")
         lbl_brand2.setStyleSheet("font-size: 8.5pt; font-weight: 600; color: #38BDF8; border: none;")
         brand_text.addWidget(lbl_brand1)
         brand_text.addWidget(lbl_brand2)
