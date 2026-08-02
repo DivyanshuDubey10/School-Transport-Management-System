@@ -266,27 +266,20 @@ class SettingsView(QWidget):
         theme_btn_layout = QHBoxLayout()
         theme_btn_layout.setSpacing(15)
         
-        btn_dark = QPushButton("Dark Obsidian (Default)")
-        btn_dark.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_dark.setFixedHeight(46)
-        btn_dark.setStyleSheet("QPushButton { background-color: #0F172A; color: #38BDF8; border: 2px solid #38BDF8; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #1E293B; }")
-        btn_dark.clicked.connect(lambda: self.apply_theme("dark"))
+        btn_night = QPushButton("Night Mode (Default)")
+        btn_night.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_night.setFixedHeight(46)
+        btn_night.setStyleSheet("QPushButton { background-color: #0F172A; color: #38BDF8; border: 2px solid #38BDF8; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #1E293B; }")
+        btn_night.clicked.connect(lambda: self.apply_theme("night"))
         
-        btn_light = QPushButton("Light Executive Mode")
-        btn_light.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_light.setFixedHeight(46)
-        btn_light.setStyleSheet("QPushButton { background-color: #F8FAFC; color: #0F172A; border: 2px solid #CBD5E1; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #E2E8F0; }")
-        btn_light.clicked.connect(lambda: self.apply_theme("light"))
+        btn_day = QPushButton("Day Mode")
+        btn_day.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_day.setFixedHeight(46)
+        btn_day.setStyleSheet("QPushButton { background-color: #F8FAFC; color: #0F172A; border: 2px solid #CBD5E1; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #E2E8F0; }")
+        btn_day.clicked.connect(lambda: self.apply_theme("day"))
         
-        btn_midnight = QPushButton("Midnight Blue Mode")
-        btn_midnight.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_midnight.setFixedHeight(46)
-        btn_midnight.setStyleSheet("QPushButton { background-color: #0A192F; color: #64FFDA; border: 2px solid #64FFDA; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #112240; }")
-        btn_midnight.clicked.connect(lambda: self.apply_theme("midnight"))
-        
-        theme_btn_layout.addWidget(btn_dark)
-        theme_btn_layout.addWidget(btn_light)
-        theme_btn_layout.addWidget(btn_midnight)
+        theme_btn_layout.addWidget(btn_night)
+        theme_btn_layout.addWidget(btn_day)
         l1.addLayout(theme_btn_layout)
 
         grid_acc = QGridLayout()
@@ -481,27 +474,20 @@ class SettingsView(QWidget):
         theme_btn_layout = QHBoxLayout()
         theme_btn_layout.setSpacing(15)
         
-        btn_dark = QPushButton("Dark Obsidian (Default)")
-        btn_dark.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_dark.setFixedHeight(46)
-        btn_dark.setStyleSheet("QPushButton { background-color: #0F172A; color: #38BDF8; border: 2px solid #38BDF8; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #1E293B; }")
-        btn_dark.clicked.connect(lambda: self.apply_theme("dark"))
+        btn_night = QPushButton("Night Mode (Default)")
+        btn_night.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_night.setFixedHeight(46)
+        btn_night.setStyleSheet("QPushButton { background-color: #0F172A; color: #38BDF8; border: 2px solid #38BDF8; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #1E293B; }")
+        btn_night.clicked.connect(lambda: self.apply_theme("night"))
         
-        btn_light = QPushButton("Light Executive Mode")
-        btn_light.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_light.setFixedHeight(46)
-        btn_light.setStyleSheet("QPushButton { background-color: #F8FAFC; color: #0F172A; border: 2px solid #CBD5E1; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #E2E8F0; }")
-        btn_light.clicked.connect(lambda: self.apply_theme("light"))
+        btn_day = QPushButton("Day Mode")
+        btn_day.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_day.setFixedHeight(46)
+        btn_day.setStyleSheet("QPushButton { background-color: #F8FAFC; color: #0F172A; border: 2px solid #CBD5E1; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #E2E8F0; }")
+        btn_day.clicked.connect(lambda: self.apply_theme("day"))
         
-        btn_midnight = QPushButton("Midnight Blue Mode")
-        btn_midnight.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_midnight.setFixedHeight(46)
-        btn_midnight.setStyleSheet("QPushButton { background-color: #0A192F; color: #64FFDA; border: 2px solid #64FFDA; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #112240; }")
-        btn_midnight.clicked.connect(lambda: self.apply_theme("midnight"))
-        
-        theme_btn_layout.addWidget(btn_dark)
-        theme_btn_layout.addWidget(btn_light)
-        theme_btn_layout.addWidget(btn_midnight)
+        theme_btn_layout.addWidget(btn_night)
+        theme_btn_layout.addWidget(btn_day)
         l1.addLayout(theme_btn_layout)
         layout.addWidget(theme_card)
 
@@ -613,20 +599,17 @@ class SettingsView(QWidget):
         if not app:
             return
             
-        if theme_name == "dark":
+        if theme_name == "night":
             try:
                 if os.path.exists("style.qss"):
                     with open("style.qss", "r") as f:
                         app.setStyleSheet(f.read())
             except Exception as e:
                 print(f"Could not load style.qss: {e}")
-            QMessageBox.information(self, "Theme Applied", "Dark Obsidian Mode (Default) applied successfully!")
-        elif theme_name == "light":
+            QMessageBox.information(self, "Theme Applied", "Night Mode applied successfully!")
+        elif theme_name == "day":
             app.setStyleSheet(LIGHT_THEME_QSS)
-            QMessageBox.information(self, "Theme Applied", "Light Executive Mode applied successfully!")
-        elif theme_name == "midnight":
-            app.setStyleSheet(MIDNIGHT_THEME_QSS)
-            QMessageBox.information(self, "Theme Applied", "Midnight Blue Mode applied successfully!")
+            QMessageBox.information(self, "Theme Applied", "Day Mode applied successfully!")
 
     def save_preferences(self):
         QMessageBox.information(

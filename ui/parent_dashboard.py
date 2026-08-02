@@ -411,6 +411,87 @@ class ParentBusSchedule(QWidget):
             self.buses_table.setItem(row_idx, 3, QTableWidgetItem(f"{route_name}"))
 
 
+class AttendanceView(QWidget):
+    def __init__(self, parent_dashboard):
+        super().__init__()
+        self.parent_dashboard = parent_dashboard
+        self.create_widgets()
+
+    def create_widgets(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(25, 20, 25, 20)
+        
+        title = QLabel("Boarding & Attendance Logs")
+        title.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
+        
+        sub = QLabel("Daily transport boarding and drop-off timestamps.")
+        sub.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        
+        frame = QFrame()
+        frame.setStyleSheet("background-color: #1E293B; border-radius: 10px; border: 1px solid #334155;")
+        flayout = QVBoxLayout(frame)
+        flayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_lbl = QLabel("Boarding Logs")
+        icon_lbl.setStyleSheet("font-size: 16pt; color: #64748B; font-weight: bold;")
+        desc_lbl = QLabel("No recent boarding activity found for today.")
+        desc_lbl.setStyleSheet("font-size: 11pt; color: #475569;")
+        desc_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        flayout.addWidget(icon_lbl, alignment=Qt.AlignmentFlag.AlignCenter)
+        flayout.addWidget(desc_lbl)
+        
+        layout.addWidget(title)
+        layout.addWidget(sub)
+        layout.addSpacing(15)
+        layout.addWidget(frame, 1)
+
+class SupportTicketsView(QWidget):
+    def __init__(self, parent_dashboard):
+        super().__init__()
+        self.parent_dashboard = parent_dashboard
+        self.create_widgets()
+
+    def create_widgets(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(25, 20, 25, 20)
+        
+        title = QLabel("Helpdesk & Support")
+        title.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
+        
+        sub = QLabel("Raise transport issues, feedback, or driver complaints.")
+        sub.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        
+        btn = QPushButton("+ Raise New Ticket")
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.setFixedSize(160, 40)
+        btn.setStyleSheet("QPushButton { background-color: #2563EB; color: #FFFFFF; border: none; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #1D4ED8; }")
+        btn.clicked.connect(self.raise_ticket)
+        
+        frame = QFrame()
+        frame.setStyleSheet("background-color: #1E293B; border-radius: 10px; border: 1px solid #334155;")
+        flayout = QVBoxLayout(frame)
+        flayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_lbl = QLabel("No Active Tickets")
+        icon_lbl.setStyleSheet("font-size: 16pt; color: #64748B; font-weight: bold;")
+        desc_lbl = QLabel("You don't have any open support tickets.")
+        desc_lbl.setStyleSheet("font-size: 11pt; color: #475569;")
+        desc_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        flayout.addWidget(icon_lbl, alignment=Qt.AlignmentFlag.AlignCenter)
+        flayout.addWidget(desc_lbl)
+        
+        layout.addWidget(title)
+        layout.addWidget(sub)
+        layout.addSpacing(10)
+        layout.addWidget(btn)
+        layout.addSpacing(10)
+        layout.addWidget(frame, 1)
+
+    def raise_ticket(self):
+        QMessageBox.information(
+            self,
+            "Ticket Raised",
+            "Your support ticket has been successfully created. Our helpdesk team will review it and get back to you shortly."
+        )
+
 class ParentDashboard(QWidget):
     def __init__(self, parent_id):
         super().__init__()
@@ -510,6 +591,8 @@ class ParentDashboard(QWidget):
 
         self.btn_children = self.add_sidebar_button("My Children", lambda: self.show_frame(ChildrenView, self.btn_children))
         self.btn_routes = self.add_sidebar_button("Bus Schedules", lambda: self.show_frame(ParentBusSchedule, self.btn_routes))
+        self.btn_attendance = self.add_sidebar_button("Boarding Logs", lambda: self.show_frame(AttendanceView, self.btn_attendance))
+        self.btn_support = self.add_sidebar_button("Helpdesk & Support", lambda: self.show_frame(SupportTicketsView, self.btn_support))
         
         self.sidebar_layout.addSpacing(15)
 
@@ -620,6 +703,10 @@ class ParentDashboard(QWidget):
                 self.header_breadcrumb.setText("Parent Portal  /  My Children")
             elif frame_class == ParentBusSchedule:
                 self.header_breadcrumb.setText("Parent Portal  /  Bus Schedules")
+            elif frame_class == AttendanceView:
+                self.header_breadcrumb.setText("Parent Portal  /  Boarding Logs")
+            elif frame_class == SupportTicketsView:
+                self.header_breadcrumb.setText("Parent Portal  /  Helpdesk & Support")
             elif hasattr(frame_class, '__name__') and frame_class.__name__ == "ProfileView":
                 self.header_breadcrumb.setText("Parent Portal  /  Personal Profile & Security")
             elif hasattr(frame_class, '__name__') and frame_class.__name__ == "SettingsView":
