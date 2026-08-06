@@ -1,4 +1,4 @@
-import sqlite3
+import psycopg2
 from dal import db_dal
 
 def run_tests():

@@ -1,4 +1,4 @@
-import sqlite3
+import psycopg2
 import database
 import security
 from typing import List, Dict, Any, Optional, Tuple
@@ -17,7 +17,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM admin WHERE USERNAME = ?", (username,))
+            cursor.execute("SELECT * FROM admin WHERE USERNAME = %s", (username,))
             return cursor.fetchone()
         finally:
             conn.close()
@@ -26,7 +26,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM parent WHERE username = ?", (username,))
+            cursor.execute("SELECT * FROM parent WHERE username = %s", (username,))
             return cursor.fetchone()
         finally:
             conn.close()
@@ -35,7 +35,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM admin WHERE admin_id = ?", (admin_id,))
+            cursor.execute("SELECT * FROM admin WHERE admin_id = %s", (admin_id,))
             return cursor.fetchone()
         finally:
             conn.close()
@@ -44,7 +44,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM parent WHERE parent_id = ?", (parent_id,))
+            cursor.execute("SELECT * FROM parent WHERE parent_id = %s", (parent_id,))
             return cursor.fetchone()
         finally:
             conn.close()
@@ -56,12 +56,12 @@ class DAL:
             if password and password.strip():
                 hashed_pw = security.hash_password(password.strip())
                 cursor.execute(
-                    "UPDATE admin SET USERNAME = ?, full_name = ?, password = ? WHERE admin_id = ?",
+                    "UPDATE admin SET USERNAME = %s, full_name = %s, password = %s WHERE admin_id = %s",
                     (username, full_name, hashed_pw, admin_id)
                 )
             else:
                 cursor.execute(
-                    "UPDATE admin SET USERNAME = ?, full_name = ? WHERE admin_id = ?",
+                    "UPDATE admin SET USERNAME = %s, full_name = %s WHERE admin_id = %s",
                     (username, full_name, admin_id)
                 )
             conn.commit()
@@ -80,8 +80,8 @@ class DAL:
                 cursor.execute(
                     """
                     UPDATE parent
-                    SET parent_name = ?, phone = ?, address = ?, pickup_point = ?, username = ?, password = ?
-                    WHERE parent_id = ?
+                    SET parent_name = %s, phone = %s, address = %s, pickup_point = %s, username = %s, password = %s
+                    WHERE parent_id = %s
                     """,
                     (name, phone, address, pickup_point, username, hashed_pw, parent_id)
                 )
@@ -89,8 +89,8 @@ class DAL:
                 cursor.execute(
                     """
                     UPDATE parent
-                    SET parent_name = ?, phone = ?, address = ?, pickup_point = ?, username = ?
-                    WHERE parent_id = ?
+                    SET parent_name = %s, phone = %s, address = %s, pickup_point = %s, username = %s
+                    WHERE parent_id = %s
                     """,
                     (name, phone, address, pickup_point, username, parent_id)
                 )
@@ -135,7 +135,7 @@ class DAL:
                 JOIN parent p ON s.parent_id = p.parent_id
                 LEFT JOIN route r ON s.route_id = r.route_id
                 LEFT JOIN bus b ON r.route_id = b.route_id
-                WHERE s.parent_id = ?
+                WHERE s.parent_id = %s
             ''', (parent_id,))
             return cursor.fetchall()
         finally:
@@ -172,7 +172,7 @@ class DAL:
                 LEFT JOIN bus b ON s.route_id = b.route_id
             '''
             if search_query:
-                query += " WHERE s.student_name LIKE ? OR s.student_class LIKE ?"
+                query += " WHERE s.student_name LIKE %s OR s.student_class LIKE %s"
                 cursor.execute(query, (f"%{search_query}%", f"%{search_query}%"))
             else:
                 cursor.execute(query)
@@ -189,7 +189,7 @@ class DAL:
                 """
                 INSERT INTO student
                 (student_name, student_class, parent_id, route_id, fee_status, fee_paid, fee_balance)
-                VALUES (?, ?, ?, ?, 'Active', ?, ?)
+                VALUES (%s, %s, %s, %s, 'Active', %s, %s)
                 """,
                 (student_name, student_class, parent_id, route_id, fee_paid, fee_balance)
             )
@@ -204,15 +204,15 @@ class DAL:
         try:
             cursor = conn.cursor()
             # Find the bus for this route
-            cursor.execute("SELECT bus_id, capacity FROM bus WHERE route_id = ?", (route_id,))
+            cursor.execute("SELECT bus_id, capacity FROM bus WHERE route_id = %s", (route_id,))
             bus_row = cursor.fetchone()
             if not bus_row:
-                return False, 0, 0 # No bus assigned, capacity check passes or fails? Let's say it passes, or maybe it's limitless.
+                return False, 0, 0 # No bus assigned, capacity check passes or fails%s Let's say it passes, or maybe it's limitless.
             
             bus_id, capacity = bus_row
             
             # Count students on this route
-            cursor.execute("SELECT COUNT(*) FROM student WHERE route_id = ?", (route_id,))
+            cursor.execute("SELECT COUNT(*) FROM student WHERE route_id = %s", (route_id,))
             current_students = cursor.fetchone()[0]
             
             is_full = current_students >= capacity
@@ -224,7 +224,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM student WHERE student_id = ?", (student_id,))
+            cursor.execute("DELETE FROM student WHERE student_id = %s", (student_id,))
             conn.commit()
             return True
         finally:
@@ -237,8 +237,8 @@ class DAL:
             cursor.execute(
                 """
                 UPDATE student
-                SET student_name = ?, student_class = ?, parent_id = ?, route_id = ?, fee_paid = ?, fee_balance = ?
-                WHERE student_id = ?
+                SET student_name = %s, student_class = %s, parent_id = %s, route_id = %s, fee_paid = %s, fee_balance = %s
+                WHERE student_id = %s
                 """,
                 (name, class_name, parent_id, route_id, fee_paid, fee_balance, student_id)
             )
@@ -254,7 +254,7 @@ class DAL:
             cursor = conn.cursor()
             query = "SELECT parent_id, parent_name, phone, address, pickup_point, username, password FROM parent"
             if search_query:
-                query += " WHERE parent_name LIKE ? OR username LIKE ? OR phone LIKE ?"
+                query += " WHERE parent_name LIKE %s OR username LIKE %s OR phone LIKE %s"
                 cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
             else:
                 cursor.execute(query)
@@ -269,7 +269,7 @@ class DAL:
             cursor.execute(
                 """
                 INSERT INTO parent (parent_name, phone, address, pickup_point, username, password)
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 """,
                 (name, phone, address, pickup_point, username, password)
             )
@@ -283,8 +283,8 @@ class DAL:
         try:
             cursor = conn.cursor()
             # Also delete students linked to this parent to maintain referential integrity if not cascaded
-            cursor.execute("DELETE FROM student WHERE parent_id = ?", (parent_id,))
-            cursor.execute("DELETE FROM parent WHERE parent_id = ?", (parent_id,))
+            cursor.execute("DELETE FROM student WHERE parent_id = %s", (parent_id,))
+            cursor.execute("DELETE FROM parent WHERE parent_id = %s", (parent_id,))
             conn.commit()
             return True
         finally:
@@ -297,8 +297,8 @@ class DAL:
             cursor.execute(
                 """
                 UPDATE parent
-                SET parent_name = ?, phone = ?, address = ?, pickup_point = ?, username = ?
-                WHERE parent_id = ?
+                SET parent_name = %s, phone = %s, address = %s, pickup_point = %s, username = %s
+                WHERE parent_id = %s
                 """,
                 (name, phone, address, pickup_point, username, parent_id)
             )
@@ -314,7 +314,7 @@ class DAL:
             cursor = conn.cursor()
             query = "SELECT b.bus_id, b.bus_number, b.driver_name, b.driver_phone, b.capacity, b.route_id, r.route_name FROM bus b LEFT JOIN route r ON b.route_id = r.route_id"
             if search_query:
-                query += " WHERE b.bus_number LIKE ? OR b.driver_name LIKE ? OR r.route_name LIKE ?"
+                query += " WHERE b.bus_number LIKE %s OR b.driver_name LIKE %s OR r.route_name LIKE %s"
                 cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
             else:
                 cursor.execute(query)
@@ -340,11 +340,11 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT route_id FROM route WHERE route_name = ?", (route_name,))
+            cursor.execute("SELECT route_id FROM route WHERE route_name = %s", (route_name,))
             res = cursor.fetchone()
             if res:
                 return res[0]
-            cursor.execute("INSERT INTO route (route_name) VALUES (?)", (route_name,))
+            cursor.execute("INSERT INTO route (route_name) VALUES (%s)", (route_name,))
             conn.commit()
             return cursor.lastrowid
         finally:
@@ -357,7 +357,7 @@ class DAL:
             cursor.execute(
                 """
                 INSERT INTO bus (bus_number, driver_name, driver_phone, capacity, route_id)
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s)
                 """,
                 (bus_number, driver_name, driver_phone, capacity, route_id)
             )
@@ -370,7 +370,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM bus WHERE bus_id = ?", (bus_id,))
+            cursor.execute("DELETE FROM bus WHERE bus_id = %s", (bus_id,))
             conn.commit()
             return True
         finally:
@@ -383,7 +383,7 @@ class DAL:
             cursor = conn.cursor()
             query = "SELECT route_id, route_name FROM route"
             if search_query:
-                query += " WHERE route_name LIKE ?"
+                query += " WHERE route_name LIKE %s"
                 cursor.execute(query, (f"%{search_query}%",))
             else:
                 cursor.execute(query)
@@ -395,7 +395,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO route (route_name) VALUES (?)", (route_name,))
+            cursor.execute("INSERT INTO route (route_name) VALUES (%s)", (route_name,))
             conn.commit()
             return True
         finally:
@@ -405,9 +405,9 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM bus WHERE route_id = ?", (route_id,))
-            cursor.execute("DELETE FROM student WHERE route_id = ?", (route_id,))
-            cursor.execute("DELETE FROM route WHERE route_id = ?", (route_id,))
+            cursor.execute("DELETE FROM bus WHERE route_id = %s", (route_id,))
+            cursor.execute("DELETE FROM student WHERE route_id = %s", (route_id,))
+            cursor.execute("DELETE FROM route WHERE route_id = %s", (route_id,))
             conn.commit()
             return True
         finally:
@@ -418,7 +418,7 @@ class DAL:
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE route SET route_name = ? WHERE route_id = ?",
+                "UPDATE route SET route_name = %s WHERE route_id = %s",
                 (route_name, route_id)
             )
             conn.commit()
