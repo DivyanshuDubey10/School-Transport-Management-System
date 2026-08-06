@@ -166,13 +166,13 @@ class DAL:
             cursor = conn.cursor()
             query = '''
                 SELECT s.student_id, s.student_name, s.student_class, 
-                       s.parent_id, p.phone, p.address, b.bus_id, s.route_id, s.fee_paid, s.fee_balance 
+                       s.parent_id, p.phone, p.address, b.bus_id, s.route_id, s.fee_paid, s.fee_balance, s.transport_status 
                 FROM student s 
                 JOIN parent p ON s.parent_id = p.parent_id 
                 LEFT JOIN bus b ON s.route_id = b.route_id
             '''
             if search_query:
-                query += " WHERE s.student_name LIKE %s OR s.student_class LIKE %s"
+                query += " WHERE s.student_name ILIKE %s OR s.student_class ILIKE %s"
                 cursor.execute(query, (f"%{search_query}%", f"%{search_query}%"))
             else:
                 cursor.execute(query)
@@ -188,10 +188,86 @@ class DAL:
             cursor.execute(
                 """
                 INSERT INTO student
-                (student_name, student_class, parent_id, route_id, fee_status, fee_paid, fee_balance)
-                VALUES (%s, %s, %s, %s, 'Active', %s, %s)
+                (student_name, student_class, parent_id, route_id, fee_status, fee_paid, fee_balance, transport_status)
+                VALUES (%s, %s, %s, %s, 'Active', %s, %s, 'Active')
                 """,
                 (student_name, student_class, parent_id, route_id, fee_paid, fee_balance)
+            )
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+
+    def create_change_request(self, student_id: int, new_pickup_point: str) -> bool:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO transport_change_request
+                (student_id, requested_pickup_point, status)
+                VALUES (%s, %s, 'Pending')
+                """,
+                (student_id, new_pickup_point)
+            )
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+
+    def get_pending_requests(self) -> List[Tuple]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            query = '''
+                SELECT tcr.request_id, s.student_id, s.student_name, s.student_class, p.parent_name, tcr.requested_pickup_point, tcr.status, p.parent_id 
+                FROM transport_change_request tcr 
+                JOIN student s ON tcr.student_id = s.student_id
+                JOIN parent p ON s.parent_id = p.parent_id
+                WHERE tcr.status = 'Pending'
+            '''
+            cursor.execute(query)
+            return cursor.fetchall()
+        finally:
+            conn.close()
+
+    def approve_change_request(self, request_id: int, student_id: int, new_route_id: int, new_pickup_point: str, parent_id: int) -> bool:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            # Update request status
+            cursor.execute(
+                "UPDATE transport_change_request SET status = 'Approved' WHERE request_id = %s",
+                (request_id,)
+            )
+            # Update student route
+            cursor.execute(
+                "UPDATE student SET route_id = %s WHERE student_id = %s",
+                (new_route_id, student_id)
+            )
+            # Update parent pickup point
+            cursor.execute(
+                "UPDATE parent SET pickup_point = %s WHERE parent_id = %s",
+                (new_pickup_point, parent_id)
+            )
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+
+    def update_transport_status(self, student_id: int, route_id: int, status: str, fee_balance: float = 0.0) -> bool:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            # If they are Active, we might want to update fee balance and fee_status.
+            fee_status = 'Active' if status == 'Active' else 'Pending'
+            cursor.execute(
+                """
+                UPDATE student
+                SET route_id = %s, transport_status = %s, fee_status = %s, fee_balance = %s
+                WHERE student_id = %s
+                """,
+                (route_id, status, fee_status, fee_balance, student_id)
             )
             conn.commit()
             return True

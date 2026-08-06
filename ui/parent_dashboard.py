@@ -1,12 +1,13 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
                                QFrame, QGridLayout, QScrollArea, QTableWidget, QTableWidgetItem, 
-                               QHeaderView, QLineEdit, QMessageBox, QSpacerItem, QSizePolicy)
+                               QHeaderView, QLineEdit, QMessageBox, QSpacerItem, QSizePolicy, QDialog, QFormLayout, QComboBox, QCheckBox)
 from PyQt6.QtCore import Qt
 import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import connect_database
+from dal import db_dal
 
 def create_initials_avatar(name, size=44, bg_color="#334155", text_color="#F8FAFC"):
     """Helper to create a circular initials avatar badge like in modern SaaS dashboards."""
@@ -55,17 +56,25 @@ class ChildrenView(QWidget):
         header_layout.addLayout(title_box)
         header_layout.addStretch()
 
-        # REFRESH Button exactly like screenshot
+        # REFRESH Button
         refresh_btn = QPushButton("REFRESH")
         refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        refresh_btn.setFixedSize(130, 38)
+        refresh_btn.setFixedSize(100, 38)
         refresh_btn.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #38BDF8; color: #0F172A; }")
         refresh_btn.clicked.connect(self.parent_dashboard.refresh_dashboard)
+        
+        # Request Transport Button
+        request_btn = QPushButton("REQUEST TRANSPORT")
+        request_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        request_btn.setFixedSize(170, 38)
+        request_btn.setStyleSheet("QPushButton { background-color: #38BDF8; color: #0F172A; border: none; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #0EA5E9; }")
+        request_btn.clicked.connect(self.open_request_modal)
+
         header_layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignTop)
+        header_layout.addWidget(request_btn, alignment=Qt.AlignmentFlag.AlignTop)
         
         main_layout.addLayout(header_layout)
 
-        # 2. Search Bar and Filter Section
         search_layout = QHBoxLayout()
         search_layout.addStretch()
         self.search_entry = QLineEdit()
@@ -74,6 +83,11 @@ class ChildrenView(QWidget):
         self.search_entry.textChanged.connect(self.filter_cards)
         search_layout.addWidget(self.search_entry)
         main_layout.addLayout(search_layout)
+
+    def open_request_modal(self):
+        dialog = RequestTransportDialog(self.parent_dashboard.parent_id, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.parent_dashboard.refresh_dashboard()
 
         # 3. KPI Summary Banner
         total_children = len(self.parent_dashboard.children_records)
@@ -754,3 +768,86 @@ class ParentDashboard(QWidget):
         self.login_window = LoginWindow()
         self.login_window.show()
         self.close()
+
+class RequestTransportDialog(QDialog):
+    def __init__(self, parent_id, parent=None):
+        super().__init__(parent)
+        self.parent_id = parent_id
+        self.dashboard = parent
+        self.setWindowTitle("Request Transport Change")
+        self.setFixedSize(400, 350)
+        self.setStyleSheet("background-color: #1E293B; color: #F8FAFC;")
+        
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel("Select child(ren) to change transport for:"))
+        
+        # Load children
+        self.children_checkboxes = []
+        children = getattr(self.dashboard.parent_dashboard, 'children_records', [])
+        
+        if not children:
+            layout.addWidget(QLabel("No enrolled children found.", styleSheet="color: #EF4444;"))
+        else:
+            for child in children:
+                # child format is from get_parent_children:
+                # (student_id, student_name, student_class, bus_id, route_id, fee_paid, fee_balance, transport_status)
+                chk = QCheckBox(f"{child[1]} (Class {child[2]})")
+                chk.setProperty("student_id", child[0])
+                chk.setStyleSheet("QCheckBox { spacing: 8px; font-size: 11pt; margin-bottom: 5px; } QCheckBox::indicator { width: 18px; height: 18px; }")
+                layout.addWidget(chk)
+                self.children_checkboxes.append(chk)
+                
+        form_layout = QFormLayout()
+        
+        self.pickup_input = QComboBox()
+        self.pickup_input.setStyleSheet("background-color: #0F172A; border: 1px solid #334155; padding: 5px; margin-top: 15px;")
+        
+        # Populate pickup points
+        from dal import db_dal
+        points = db_dal.get_all_pickup_points()
+        self.pickup_input.addItems(points)
+        
+        form_layout.addRow("New Pickup Point:", self.pickup_input)
+        
+        layout.addLayout(form_layout)
+        
+        layout.addStretch()
+        
+        btn_layout = QHBoxLayout()
+        submit_btn = QPushButton("Submit Request")
+        submit_btn.setStyleSheet("background-color: #38BDF8; color: #0F172A; font-weight: bold; padding: 8px;")
+        submit_btn.clicked.connect(self.submit_request)
+        
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.setStyleSheet("background-color: #EF4444; color: white; font-weight: bold; padding: 8px;")
+        cancel_btn.clicked.connect(self.reject)
+        
+        btn_layout.addWidget(submit_btn)
+        btn_layout.addWidget(cancel_btn)
+        
+        layout.addLayout(btn_layout)
+
+    def submit_request(self):
+        selected_student_ids = []
+        for chk in self.children_checkboxes:
+            if chk.isChecked():
+                selected_student_ids.append(chk.property("student_id"))
+                
+        if not selected_student_ids:
+            QMessageBox.warning(self, "Input Error", "Please select at least one child.")
+            return
+            
+        pickup = self.pickup_input.currentText()
+            
+        from dal import db_dal
+        
+        success = True
+        for s_id in selected_student_ids:
+            if not db_dal.create_change_request(s_id, pickup):
+                success = False
+                
+        if success:
+            QMessageBox.information(self, "Success", "Transport change request submitted! Waiting for Admin approval.")
+            self.accept()
+        else:
+            QMessageBox.critical(self, "Error", "Failed to submit some or all requests.")

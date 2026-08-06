@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QComboBox, 
-                               QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox)
+                               QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QDialog, QAbstractItemView)
 from PyQt6.QtCore import Qt
 import sys
 import os
@@ -33,10 +33,20 @@ class StudentManagement(QWidget):
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
 
-        # Title
+        # Title and Review Button
+        title_layout = QHBoxLayout()
         title_label = QLabel("Student Management")
         title_label.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
-        main_layout.addWidget(title_label)
+        title_layout.addWidget(title_label)
+        
+        title_layout.addStretch()
+        review_btn = QPushButton("Review Pending Requests")
+        review_btn.setFixedSize(220, 38)
+        review_btn.setStyleSheet("background-color: #F59E0B; color: #0F172A; font-weight: bold; border-radius: 6px;")
+        review_btn.clicked.connect(self.open_pending_requests)
+        title_layout.addWidget(review_btn)
+        
+        main_layout.addLayout(title_layout)
 
         # Form Container (Card)
         form_frame = QFrame()
@@ -179,3 +189,118 @@ class StudentManagement(QWidget):
             QMessageBox.information(self, "Success", "Student added successfully!")
 
         self.clear_form()
+
+    def open_pending_requests(self):
+        dialog = PendingRequestsDialog(self)
+        dialog.exec()
+
+class PendingRequestsDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Pending Transport Requests")
+        self.setFixedSize(800, 400)
+        self.setStyleSheet("background-color: #1E293B; color: #F8FAFC;")
+        
+        layout = QVBoxLayout(self)
+        
+        self.table = QTableWidget()
+        self.table.setColumnCount(7)
+        self.table.setHorizontalHeaderLabels(["ID", "Name", "Class", "Parent", "Pickup Point", "Status", "Action"])
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setStyleSheet("background-color: #0F172A; alternate-background-color: #1E293B;")
+        self.table.setAlternatingRowColors(True)
+        
+        layout.addWidget(self.table)
+        
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.accept)
+        close_btn.setStyleSheet("background-color: #64748B; color: white; padding: 8px; font-weight: bold;")
+        layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        
+        self.load_data()
+        
+    def load_data(self):
+        from dal import db_dal
+        self.requests = db_dal.get_pending_requests()
+        self.table.setRowCount(len(self.requests))
+        
+        for row, req in enumerate(self.requests):
+            req_id, student_id, name, cls, parent_name, pickup, status, parent_id = req
+            
+            self.table.setItem(row, 0, QTableWidgetItem(str(student_id)))
+            self.table.setItem(row, 1, QTableWidgetItem(name))
+            self.table.setItem(row, 2, QTableWidgetItem(cls))
+            self.table.setItem(row, 3, QTableWidgetItem(parent_name))
+            self.table.setItem(row, 4, QTableWidgetItem(pickup))
+            self.table.setItem(row, 5, QTableWidgetItem(status))
+            
+            btn = QPushButton("Review")
+            btn.setStyleSheet("background-color: #38BDF8; color: #0F172A; font-weight: bold;")
+            btn.clicked.connect(lambda _, r=req: self.review_request(r))
+            self.table.setCellWidget(row, 6, btn)
+
+    def review_request(self, req):
+        req_id, student_id, name, cls, parent_name, pickup, status, parent_id = req
+        dialog = ReviewActionDialog(req, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.load_data()
+
+class ReviewActionDialog(QDialog):
+    def __init__(self, req, parent=None):
+        super().__init__(parent)
+        self.req = req
+        req_id, student_id, name, cls, parent_name, pickup, status, parent_id = req
+        self.setWindowTitle(f"Review Request: {name}")
+        self.setFixedSize(400, 250)
+        self.setStyleSheet("background-color: #1E293B; color: #F8FAFC;")
+        
+        layout = QVBoxLayout(self)
+        
+        layout.addWidget(QLabel(f"<b>Student:</b> {name} ({cls})"))
+        layout.addWidget(QLabel(f"<b>Parent:</b> {parent_name}"))
+        layout.addWidget(QLabel(f"<b>Requested Pickup:</b> {pickup}"))
+        
+        self.route_combo = QComboBox()
+        from dal import db_dal
+        routes = db_dal.get_all_routes_with_bus_dropdown()
+        self.route_options = {}
+        for r in routes:
+            r_id, r_name, b_num = r
+            label = f"{r_name} (Bus: {b_num if b_num else 'None'})"
+            self.route_options[label] = r_id
+            self.route_combo.addItem(label)
+            
+        layout.addWidget(QLabel("<b>Assign to Route:</b>"))
+        layout.addWidget(self.route_combo)
+        
+        btn_layout = QHBoxLayout()
+        assign_btn = QPushButton("Assign & Approve")
+        assign_btn.setStyleSheet("background-color: #10B981; color: white; font-weight: bold; padding: 8px;")
+        assign_btn.clicked.connect(self.approve)
+        
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.setStyleSheet("background-color: #EF4444; color: white; padding: 8px;")
+        cancel_btn.clicked.connect(self.reject)
+        
+        btn_layout.addWidget(assign_btn)
+        btn_layout.addWidget(cancel_btn)
+        
+        layout.addLayout(btn_layout)
+
+    def approve(self):
+        from dal import db_dal
+        route_label = self.route_combo.currentText()
+        route_id = self.route_options[route_label]
+        
+        is_full, current, capacity = db_dal.check_bus_capacity(route_id)
+        if is_full:
+            QMessageBox.critical(self, "Bus Full", 
+                f"The bus for this route is full ({current}/{capacity}). Cannot approve this route.")
+            return
+            
+        # Success
+        req_id, student_id, name, cls, parent_name, pickup, status, parent_id = self.req
+        db_dal.approve_change_request(req_id, student_id, route_id, pickup, parent_id)
+        QMessageBox.information(self, "Approved", "Change request approved and assigned!")
+        self.accept()

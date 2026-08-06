@@ -71,12 +71,22 @@ def initialize_database():
                         student_name VARCHAR(255) NOT NULL,
                         student_class VARCHAR(50) NOT NULL,
                         parent_id INTEGER NOT NULL,
-                        route_id INTEGER NOT NULL,
+                        route_id INTEGER,
+                        transport_status VARCHAR(50) DEFAULT 'Pending',
                         fee_status VARCHAR(50) NOT NULL,
                         fee_paid DECIMAL DEFAULT 0.0,
                         fee_balance DECIMAL DEFAULT 0.0,
                         FOREIGN KEY (parent_id) REFERENCES parent(parent_id),
                         FOREIGN KEY (route_id) REFERENCES route(route_id)
+                    )
+                    """)
+    cursor.execute("""
+                   CREATE TABLE IF NOT EXISTS transport_change_request (
+                        request_id SERIAL PRIMARY KEY,
+                        student_id INTEGER NOT NULL,
+                        requested_pickup_point VARCHAR(255) NOT NULL,
+                        status VARCHAR(50) DEFAULT 'Pending',
+                        FOREIGN KEY (student_id) REFERENCES student(student_id)
                     )
                     """)
     connection.commit()
