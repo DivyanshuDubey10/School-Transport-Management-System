@@ -6,6 +6,26 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+def create_status_badge(status):
+    widget = QWidget()
+    layout = QHBoxLayout(widget)
+    layout.setContentsMargins(10, 5, 10, 5)
+    layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    
+    lbl = QLabel(status.upper())
+    if status.lower() == 'pending':
+        bg_color = "rgba(245, 158, 11, 0.2)"
+        text_color = "#F59E0B"
+        border_color = "rgba(245, 158, 11, 0.5)"
+    else:
+        bg_color = "rgba(16, 185, 129, 0.2)"
+        text_color = "#10B981"
+        border_color = "rgba(16, 185, 129, 0.5)"
+        
+    lbl.setStyleSheet(f"background-color: {bg_color}; color: {text_color}; border: 1px solid {border_color}; border-radius: 4px; padding: 4px 8px; font-weight: bold; font-size: 8.5pt; letter-spacing: 1px;")
+    layout.addWidget(lbl)
+    return widget
+
 class StudentManagement(QWidget):
     def __init__(self, master=None):
         super().__init__()
@@ -233,7 +253,7 @@ class PendingRequestsDialog(QDialog):
             self.table.setItem(row, 2, QTableWidgetItem(cls))
             self.table.setItem(row, 3, QTableWidgetItem(parent_name))
             self.table.setItem(row, 4, QTableWidgetItem(pickup))
-            self.table.setItem(row, 5, QTableWidgetItem(status))
+            self.table.setCellWidget(row, 5, create_status_badge(status))
             
             btn = QPushButton("Review")
             btn.setStyleSheet("background-color: #38BDF8; color: #0F172A; font-weight: bold;")

@@ -102,24 +102,56 @@ class DAL:
             conn.close()
             
     # --- Dashboard Stats ---
-    def get_dashboard_stats(self) -> Dict[str, int]:
+    def get_dashboard_stats(self) -> Dict[str, Any]:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM student")
+            cursor.execute("SELECT COUNT(*) FROM student WHERE transport_status = 'Active'")
             total_students = cursor.fetchone()[0]
-            
+
             cursor.execute("SELECT COUNT(*) FROM bus")
             total_buses = cursor.fetchone()[0]
-            
+
             cursor.execute("SELECT COUNT(*) FROM route")
             total_routes = cursor.fetchone()[0]
-            
+
             return {
                 "total_students": total_students,
                 "total_buses": total_buses,
                 "total_routes": total_routes
             }
+        finally:
+            conn.close()
+
+    def get_route_occupancy(self) -> List[Tuple]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT r.route_name,
+                       (SELECT COUNT(*) FROM student s WHERE s.route_id = r.route_id AND s.transport_status = 'Active') as students,
+                       (SELECT COALESCE(SUM(capacity), 0) FROM bus b WHERE b.route_id = r.route_id) as capacity
+                FROM route r
+            """)
+            return cursor.fetchall()
+        finally:
+            conn.close()
+
+    def get_fee_status_distribution(self) -> Dict[str, int]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT 
+                    SUM(CASE WHEN fee_balance = 0 THEN 1 ELSE 0 END) as fully_paid,
+                    SUM(CASE WHEN fee_balance > 0 THEN 1 ELSE 0 END) as pending
+                FROM student
+                WHERE transport_status = 'Active'
+            """)
+            row = cursor.fetchone()
+            fully_paid = row[0] if row and row[0] is not None else 0
+            pending = row[1] if row and row[1] is not None else 0
+            return {"fully_paid": int(fully_paid), "pending": int(pending)}
         finally:
             conn.close()
 

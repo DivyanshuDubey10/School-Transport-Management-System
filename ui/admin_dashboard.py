@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt
 import sys
 import os
 
+
 def create_initials_avatar(name, size=40, bg_color="#38BDF8", text_color="#0F172A"):
     """Helper to create a circular initials avatar badge."""
     lbl = QLabel()
@@ -36,6 +37,21 @@ class DashboardHome(QWidget):
             self.card1_value.setText(str(stats["total_students"]))
             self.card2_value.setText(str(stats["total_buses"]))
             self.card3_value.setText(str(stats["total_routes"]))
+            
+            # Occupancy Ring
+            occupancy_data = db_dal.get_route_occupancy()
+            total_students = sum(d[1] for d in occupancy_data)
+            total_capacity = sum(d[2] for d in occupancy_data)
+            if total_capacity > 0:
+                self.progress_occupancy.set_value((total_students / total_capacity) * 100, max_val=100)
+                
+            # Fee Ring
+            fee_data = db_dal.get_fee_status_distribution()
+            total_paid = fee_data['fully_paid']
+            total_pending = fee_data['pending']
+            total_fees = total_paid + total_pending
+            if total_fees > 0:
+                self.progress_fee.set_value((total_paid / total_fees) * 100, max_val=100)
             
         except Exception as e:
             print(f"Error loading stats: {e}")
@@ -108,6 +124,21 @@ class DashboardHome(QWidget):
         grid.addWidget(card3, 0, 2)
 
         main_layout.addWidget(self.summary_frame)
+
+        # Circular Progress Section
+        progress_layout = QHBoxLayout()
+        progress_layout.setContentsMargins(10, 10, 10, 20)
+        progress_layout.setSpacing(40)
+        
+        from ui.components.circular_progress import CircularProgress
+        self.progress_occupancy = CircularProgress(self, color="#38BDF8", title="Avg Occupancy")
+        self.progress_fee = CircularProgress(self, color="#10B981", title="Fee Paid %")
+        
+        progress_layout.addWidget(self.progress_occupancy)
+        progress_layout.addWidget(self.progress_fee)
+        progress_layout.addStretch()
+        
+        main_layout.addLayout(progress_layout)
 
         # Quick Actions Section
         qa_label = QLabel("Quick Actions & Management")
@@ -182,9 +213,15 @@ class AdminDashboard(QWidget):
         self.content_layout.addWidget(frame)
 
     def create_widgets(self):
-        self.main_layout = QHBoxLayout(self)
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+        
+        content_widget = QWidget()
+        self.main_layout = QHBoxLayout(content_widget)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
+        root_layout.addWidget(content_widget)
 
         # 1. Professional Executive Sidebar (Matching Screenshot Structure)
         self.sidebar_frame = QFrame()

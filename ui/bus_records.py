@@ -134,8 +134,9 @@ class BusRecords(QWidget):
         self.buses_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.buses_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.buses_table.setAlternatingRowColors(True)
-        self.buses_table.setStyleSheet("QTableWidget { background-color: #0F172A; alternate-background-color: #131C31; border: 1px solid #334155; border-radius: 8px; } QHeaderView::section { background-color: #1E293B; color: #38BDF8; font-weight: bold; font-size: 10pt; padding: 12px; border-bottom: 2px solid #334155; } QTableWidget::item { padding: 8px; font-size: 10.5pt; }")
+        self.buses_table.setStyleSheet("QTableWidget { background-color: #0F172A; alternate-background-color: #131C31; border: 1px solid #334155; border-radius: 8px; } QHeaderView::section { background-color: #1E293B; color: #94A3B8; font-weight: bold; font-size: 10pt; padding: 12px; border-bottom: 2px solid #334155; } QTableWidget::item { padding: 8px; font-size: 10.5pt; color: #F8FAFC; }")
         self.buses_table.itemSelectionChanged.connect(self.select_bus)
+        self.buses_table.verticalScrollBar().setSingleStep(15)
         
         main_layout.addWidget(self.buses_table)
 
@@ -186,18 +187,6 @@ class BusRecords(QWidget):
             self.buses_table.setItem(row_idx, 3, QTableWidgetItem(drv_phone))
             self.buses_table.setItem(row_idx, 4, QTableWidgetItem(f"Capacity: {capacity}"))
             self.buses_table.setItem(row_idx, 5, QTableWidgetItem(route_name))
-
-            # Set custom visual SaaS widgets
-            self.buses_table.setCellWidget(row_idx, 1, create_twoline_cell(f"Bus #{bus_no}", f"Max Seats: {capacity}", "#F8FAFC", "#38BDF8"))
-            
-            # Avatar cell for Driver Name
-            avatar_colors = ["#38BDF8", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#3B82F6"]
-            color_choice = avatar_colors[row_idx % len(avatar_colors)]
-            self.buses_table.setCellWidget(row_idx, 2, create_avatar_cell(drv_name, f"Driver ID: DRV-{100+row_idx}", color_choice, "#0F172A"))
-            
-            self.buses_table.setCellWidget(row_idx, 3, create_twoline_cell(drv_phone, "Active Mobile", "#E2E8F0", "#64748B"))
-            self.buses_table.setCellWidget(row_idx, 4, create_twoline_cell("Active", "Tenant: ORG-STMS", "#10B981", "#64748B"))
-            self.buses_table.setCellWidget(row_idx, 5, create_twoline_cell(route_name, "Daily School Pickup", "#F8FAFC", "#94A3B8"))
 
         total = len(buses)
         self.lbl_total_rows.setText(f"Rows per page:  15    •    1-{total} of {total} items")

@@ -139,8 +139,9 @@ class ParentRecords(QWidget):
         self.parents_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.parents_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.parents_table.setAlternatingRowColors(True)
-        self.parents_table.setStyleSheet("QTableWidget { background-color: #0F172A; alternate-background-color: #131C31; border: 1px solid #334155; border-radius: 8px; } QHeaderView::section { background-color: #1E293B; color: #38BDF8; font-weight: bold; font-size: 10pt; padding: 12px; border-bottom: 2px solid #334155; } QTableWidget::item { padding: 8px; font-size: 10.5pt; }")
+        self.parents_table.setStyleSheet("QTableWidget { background-color: #0F172A; alternate-background-color: #131C31; border: 1px solid #334155; border-radius: 8px; } QHeaderView::section { background-color: #1E293B; color: #94A3B8; font-weight: bold; font-size: 10pt; padding: 12px; border-bottom: 2px solid #334155; } QTableWidget::item { padding: 8px; font-size: 10.5pt; color: #F8FAFC; }")
         self.parents_table.itemSelectionChanged.connect(self.select_parent)
+        self.parents_table.verticalScrollBar().setSingleStep(15)
         main_layout.addWidget(self.parents_table)
 
         # 4. Footer Bar
@@ -184,14 +185,6 @@ class ParentRecords(QWidget):
             self.parents_table.setItem(row_idx, 3, QTableWidgetItem(addr))
             self.parents_table.setItem(row_idx, 4, QTableWidgetItem(stop))
             self.parents_table.setItem(row_idx, 5, QTableWidgetItem(uname))
-
-            avatar_colors = ["#10B981", "#38BDF8", "#8B5CF6", "#F59E0B", "#EC4899", "#3B82F6"]
-            col_choice = avatar_colors[row_idx % len(avatar_colors)]
-            self.parents_table.setCellWidget(row_idx, 1, create_avatar_cell(p_name, f"Parent ID: PAR-{1000+row_idx}", col_choice, "#0F172A"))
-            self.parents_table.setCellWidget(row_idx, 2, create_twoline_cell(phone, "Verified Mobile", "#F8FAFC", "#64748B"))
-            self.parents_table.setCellWidget(row_idx, 3, create_twoline_cell(addr[:22]+("..." if len(addr)>22 else ""), "Home Residence", "#E2E8F0", "#64748B"))
-            self.parents_table.setCellWidget(row_idx, 4, create_twoline_cell(stop, "Morning Pickup Point", "#38BDF8", "#64748B"))
-            self.parents_table.setCellWidget(row_idx, 5, create_twoline_cell(f"@{uname}", "Active Web Portal", "#10B981", "#64748B"))
 
         total = len(parents)
         self.lbl_total_rows.setText(f"Rows per page:  15    •    1-{total} of {total} items")

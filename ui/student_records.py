@@ -141,8 +141,9 @@ class StudentRecords(QWidget):
         self.students_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.students_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.students_table.setAlternatingRowColors(True)
-        self.students_table.setStyleSheet("QTableWidget { background-color: #0F172A; alternate-background-color: #131C31; border: 1px solid #334155; border-radius: 8px; } QHeaderView::section { background-color: #1E293B; color: #38BDF8; font-weight: bold; font-size: 10pt; padding: 12px; border-bottom: 2px solid #334155; } QTableWidget::item { padding: 8px; font-size: 10.5pt; }")
+        self.students_table.setStyleSheet("QTableWidget { background-color: #0F172A; alternate-background-color: #131C31; border: 1px solid #334155; border-radius: 8px; } QHeaderView::section { background-color: #1E293B; color: #94A3B8; font-weight: bold; font-size: 10pt; padding: 12px; border-bottom: 2px solid #334155; } QTableWidget::item { padding: 8px; font-size: 10.5pt; color: #F8FAFC; }")
         self.students_table.itemSelectionChanged.connect(self.select_student)
+        self.students_table.verticalScrollBar().setSingleStep(15)
         main_layout.addWidget(self.students_table)
 
         # 4. Footer Bar
@@ -191,20 +192,6 @@ class StudentRecords(QWidget):
             self.students_table.setItem(row_idx, 5, QTableWidgetItem(bus_id))
             self.students_table.setItem(row_idx, 6, QTableWidgetItem(f_paid))
             self.students_table.setItem(row_idx, 7, QTableWidgetItem(f_bal))
-
-            avatar_colors = ["#38BDF8", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#3B82F6"]
-            col_choice = avatar_colors[row_idx % len(avatar_colors)]
-            self.students_table.setCellWidget(row_idx, 1, create_avatar_cell(s_name, f"STU-ID: #{s_id} • Tenant: STMS", col_choice, "#0F172A"))
-            self.students_table.setCellWidget(row_idx, 2, create_twoline_cell(f"Class {s_class}", f"Route #{route_id}", "#F8FAFC", "#94A3B8"))
-            self.students_table.setCellWidget(row_idx, 3, create_twoline_cell(f"Parent #{row_data[3]}", f"Phone: {p_phone}", "#F8FAFC", "#64748B"))
-            self.students_table.setCellWidget(row_idx, 4, create_twoline_cell(addr[:18]+("..." if len(addr)>18 else ""), "Registered Home", "#E2E8F0", "#64748B"))
-            self.students_table.setCellWidget(row_idx, 5, create_twoline_cell(f"Bus #{bus_id}", "Daily Drop", "#38BDF8", "#64748B"))
-            self.students_table.setCellWidget(row_idx, 6, create_twoline_cell(f"₹{f_paid}", "Verified Paid", "#10B981", "#64748B"))
-            
-            bal_val = float(f_bal)
-            bal_col = "#EF4444" if bal_val > 0 else "#10B981"
-            bal_sub = "Payment Due" if bal_val > 0 else "All Clear"
-            self.students_table.setCellWidget(row_idx, 7, create_twoline_cell(f"₹{f_bal}", bal_sub, bal_col, "#64748B"))
 
         total = len(students)
         self.lbl_total_rows.setText(f"Rows per page:  15    •    1-{total} of {total} items")
