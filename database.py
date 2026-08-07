@@ -62,9 +62,22 @@ def initialize_database():
                        driver_phone VARCHAR(50) NOT NULL UNIQUE,
                        capacity INTEGER NOT NULL,
                        route_id INTEGER,
+                       username VARCHAR(255) UNIQUE,
+                       password VARCHAR(255),
                        FOREIGN KEY (route_id) REFERENCES route(route_id)
                    )
                    """)
+    connection.commit()
+    try:
+        cursor.execute("ALTER TABLE bus ADD COLUMN IF NOT EXISTS username VARCHAR(255) UNIQUE;")
+        cursor.execute("ALTER TABLE bus ADD COLUMN IF NOT EXISTS password VARCHAR(255);")
+        connection.commit()
+    except psycopg2.Error:
+        connection.rollback()
+        pass # Columns likely exist, or another error occurred. We should probably wrap this in a separate transaction or just rely on CREATE TABLE if we drop.
+    else:
+        # Just commit if alter succeeds
+        pass
     cursor.execute("""
                    CREATE TABLE IF NOT EXISTS student (
                         student_id SERIAL PRIMARY KEY,
@@ -89,6 +102,18 @@ def initialize_database():
                         FOREIGN KEY (student_id) REFERENCES student(student_id)
                     )
                     """)
+    cursor.execute("""
+                   CREATE TABLE IF NOT EXISTS attendance (
+                       attendance_id SERIAL PRIMARY KEY,
+                       student_id INTEGER NOT NULL,
+                       bus_id INTEGER NOT NULL,
+                       date DATE NOT NULL,
+                       status VARCHAR(50) NOT NULL,
+                       FOREIGN KEY (student_id) REFERENCES student(student_id),
+                       FOREIGN KEY (bus_id) REFERENCES bus(bus_id),
+                       UNIQUE (student_id, date)
+                   )
+                   """)
     connection.commit()
     cursor.close()
     connection.close()

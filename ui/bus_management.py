@@ -72,24 +72,34 @@ class BusManagement(QWidget):
         self.driver_phone_entry.setPlaceholderText("Enter Driver Phone")
         form_layout.addLayout(create_field("Driver Phone", self.driver_phone_entry), 2, 1)
 
-        # Row 3: Route Starting and Ending Points (Editable Dropdowns)
+        # Row 3: Driver Login Credentials
+        self.driver_username_entry = QLineEdit()
+        self.driver_username_entry.setPlaceholderText("Driver Login Username")
+        form_layout.addLayout(create_field("Driver Username", self.driver_username_entry), 3, 0)
+
+        self.driver_password_entry = QLineEdit()
+        self.driver_password_entry.setPlaceholderText("Driver Login Password")
+        self.driver_password_entry.setEchoMode(QLineEdit.EchoMode.Password)
+        form_layout.addLayout(create_field("Driver Password", self.driver_password_entry), 3, 1)
+
+        # Row 4: Route Starting and Ending Points (Editable Dropdowns)
         self.start_point_dropdown = QComboBox()
         self.start_point_dropdown.setEditable(True)
         self.start_point_dropdown.addItems(self.point_options)
         self.start_point_dropdown.setPlaceholderText("Select or type starting point")
-        form_layout.addLayout(create_field("Route Starting Point", self.start_point_dropdown), 3, 0)
+        form_layout.addLayout(create_field("Route Starting Point", self.start_point_dropdown), 4, 0)
 
         self.end_point_dropdown = QComboBox()
         self.end_point_dropdown.setEditable(True)
         self.end_point_dropdown.addItems(self.point_options)
         self.end_point_dropdown.setPlaceholderText("Select or type ending point")
-        form_layout.addLayout(create_field("Route Ending Point", self.end_point_dropdown), 3, 1)
+        form_layout.addLayout(create_field("Route Ending Point", self.end_point_dropdown), 4, 1)
 
         # Save Button
         self.save_button = QPushButton("Save Bus")
         self.save_button.setFixedWidth(200)
         self.save_button.clicked.connect(self.save_bus)
-        form_layout.addWidget(self.save_button, 4, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+        form_layout.addWidget(self.save_button, 5, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
         
         # Center Layout for Form (Horizontal and Vertical)
         h_center_layout = QHBoxLayout()
@@ -110,31 +120,13 @@ class BusManagement(QWidget):
         driver_name = self.driver_name_entry.text().strip()
         driver_phone = self.driver_phone_entry.text().strip()
         capacity_str = self.capacity_entry.text().strip()
+        username = self.driver_username_entry.text().strip()
+        password = self.driver_password_entry.text().strip()
         start_point = self.start_point_dropdown.currentText().strip()
         end_point = self.end_point_dropdown.currentText().strip()
         
-        if not bus_number:
-            QMessageBox.critical(self, "Error", "Bus Number is required.")
-            return
-            
-        if not driver_name:
-            QMessageBox.critical(self, "Error", "Driver Name is required.")
-            return
-            
-        if not driver_phone:
-            QMessageBox.critical(self, "Error", "Driver Phone is required.")
-            return
-            
-        if not capacity_str:
-            QMessageBox.critical(self, "Error", "Capacity is required.")
-            return
-            
-        if not start_point:
-            QMessageBox.critical(self, "Error", "Route Starting Point is required.")
-            return
-            
-        if not end_point:
-            QMessageBox.critical(self, "Error", "Route Ending Point is required.")
+        if not bus_number or not driver_name or not driver_phone or not capacity_str or not start_point or not end_point:
+            QMessageBox.critical(self, "Error", "All fields except credentials are required.")
             return
 
         if start_point.lower() == end_point.lower():
@@ -153,7 +145,7 @@ class BusManagement(QWidget):
         
         try:
             route_id = db_dal.get_or_create_route(route_name)
-            success = db_dal.add_bus(bus_number, driver_name, driver_phone, capacity, route_id)
+            success = db_dal.add_bus(bus_number, driver_name, driver_phone, capacity, route_id, username, password)
             if success:
                 QMessageBox.information(self, "Success", "Bus and route assigned successfully.")
                 
@@ -161,6 +153,8 @@ class BusManagement(QWidget):
                 self.driver_name_entry.clear()
                 self.driver_phone_entry.clear()
                 self.capacity_entry.clear()
+                self.driver_username_entry.clear()
+                self.driver_password_entry.clear()
                 self.start_point_dropdown.setCurrentIndex(0)
                 self.end_point_dropdown.setCurrentIndex(0)
         except Exception as e:

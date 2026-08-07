@@ -94,8 +94,8 @@ class ChildrenView(QWidget):
         unique_buses = set()
         total_balance = 0.0
         for child in self.parent_dashboard.children_records:
-            if child[4]: unique_buses.add(child[4])
-            if child[3]: total_balance += float(child[3])
+            if child[5]: unique_buses.add(child[5])
+            if child[4]: total_balance += float(child[4])
 
         summary_frame = QFrame()
         grid = QGridLayout(summary_frame)
@@ -171,12 +171,12 @@ class ChildrenView(QWidget):
     def filter_cards(self, query):
         query = query.lower().strip()
         for child, widget in self.all_child_widgets:
-            s_name, s_class, _, _, bus_no, drv_name, _, r_name, p_pickup = child
+            s_id, s_name, s_class, _, _, bus_no, drv_name, _, r_name, p_pickup = child
             text_pool = f"{s_name} {s_class} {bus_no} {drv_name} {r_name} {p_pickup}".lower()
             widget.setVisible(query in text_pool)
 
     def create_child_card(self, child):
-        s_name, s_class, fee_paid, fee_balance, bus_no, drv_name, drv_phone, r_name, p_pickup = child
+        s_id, s_name, s_class, fee_paid, fee_balance, bus_no, drv_name, drv_phone, r_name, p_pickup = child
         
         card = QFrame()
         card.setObjectName("cardFrame")
@@ -204,8 +204,28 @@ class ChildrenView(QWidget):
         top_layout.addLayout(name_info_box)
         top_layout.addStretch()
         
-        status_pill = QLabel("Active Transport")
-        status_pill.setStyleSheet("font-size: 9.5pt; font-weight: bold; color: #94A3B8; background-color: #334155; border-radius: 12px; padding: 5px 12px; border: 1px solid #475569;")
+        # Get today's attendance status
+        from dal import db_dal
+        from PyQt6.QtCore import QDate
+        today = QDate.currentDate().toString("yyyy-MM-dd")
+        att_records = db_dal.get_attendance_history_for_student(s_id)
+        today_status = "Not Marked"
+        for r in att_records:
+            if str(r[0]) == today:
+                today_status = r[1]
+                break
+
+        status_color = "#334155" # Default gray
+        text_color = "#94A3B8"
+        if today_status == "Present":
+            status_color = "#047857" # Green
+            text_color = "#FFFFFF"
+        elif today_status == "Absent":
+            status_color = "#B91C1C" # Red
+            text_color = "#FFFFFF"
+
+        status_pill = QLabel(f"Today: {today_status}")
+        status_pill.setStyleSheet(f"font-size: 9.5pt; font-weight: bold; color: {text_color}; background-color: {status_color}; border-radius: 12px; padding: 5px 12px; border: 1px solid #475569;")
         top_layout.addWidget(status_pill)
         
         card_layout.addLayout(top_layout)
@@ -432,25 +452,97 @@ class AttendanceView(QWidget):
         title = QLabel("Boarding & Attendance Logs")
         title.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
         
-        sub = QLabel("Daily transport boarding and drop-off timestamps.")
+        sub = QLabel("Daily transport boarding and attendance records.")
         sub.setStyleSheet("font-size: 10pt; color: #94A3B8;")
         
-        frame = QFrame()
-        frame.setStyleSheet("background-color: #1E293B; border-radius: 10px; border: 1px solid #334155;")
-        flayout = QVBoxLayout(frame)
-        flayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_lbl = QLabel("Boarding Logs")
-        icon_lbl.setStyleSheet("font-size: 16pt; color: #64748B; font-weight: bold;")
-        desc_lbl = QLabel("No recent boarding activity found for today.")
-        desc_lbl.setStyleSheet("font-size: 11pt; color: #475569;")
-        desc_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        flayout.addWidget(icon_lbl, alignment=Qt.AlignmentFlag.AlignCenter)
-        flayout.addWidget(desc_lbl)
+        header_layout = QHBoxLayout()
+        header_layout.addWidget(title)
+        header_layout.addStretch()
         
-        layout.addWidget(title)
+        refresh_btn = QPushButton("REFRESH")
+        refresh_btn.setFixedSize(100, 38)
+        refresh_btn.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 6px; font-weight: bold; font-size: 10pt; }")
+        refresh_btn.clicked.connect(self.load_attendance)
+        header_layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignBottom)
+        
+        layout.addLayout(header_layout)
         layout.addWidget(sub)
         layout.addSpacing(15)
-        layout.addWidget(frame, 1)
+
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll.setStyleSheet("background: transparent;")
+        
+        self.content_widget = QWidget()
+        self.content_widget.setStyleSheet("background: transparent;")
+        self.content_layout = QVBoxLayout(self.content_widget)
+        self.content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.content_layout.setSpacing(20)
+        
+        self.scroll.setWidget(self.content_widget)
+        layout.addWidget(self.scroll, 1)
+        
+        self.load_attendance()
+
+    def load_attendance(self):
+        # Clear existing
+        while self.content_layout.count():
+            child = self.content_layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+        from dal import db_dal
+        children = self.parent_dashboard.children_records
+        
+        if not children:
+            lbl = QLabel("No enrolled children found.")
+            lbl.setStyleSheet("font-size: 11pt; color: #94A3B8;")
+            self.content_layout.addWidget(lbl)
+            return
+
+        for child in children:
+            s_id, s_name, s_class = child[0], child[1], child[2]
+            records = db_dal.get_attendance_history_for_student(s_id)
+            
+            # Card for each child
+            card = QFrame()
+            card.setStyleSheet("background-color: #1E293B; border-radius: 10px; border: 1px solid #334155;")
+            card_layout = QVBoxLayout(card)
+            
+            name_lbl = QLabel(f"{s_name} (Class {s_class})")
+            name_lbl.setStyleSheet("font-size: 14pt; font-weight: bold; color: #F8FAFC;")
+            card_layout.addWidget(name_lbl)
+            
+            if not records:
+                no_rec_lbl = QLabel("No attendance records found.")
+                no_rec_lbl.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+                card_layout.addWidget(no_rec_lbl)
+            else:
+                table = QTableWidget()
+                table.setColumnCount(2)
+                table.setHorizontalHeaderLabels(["Date", "Status"])
+                table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+                table.setStyleSheet("QTableWidget { background-color: #0F172A; border: none; } QHeaderView::section { background-color: #0F172A; color: #94A3B8; font-weight: bold; font-size: 9pt; border-bottom: 1px solid #334155; } QTableWidget::item { padding: 4px; font-size: 10pt; color: #F8FAFC; border-bottom: 1px solid #1E293B; }")
+                table.setRowCount(len(records))
+                table.setFixedHeight(min(300, 40 + len(records)*35))
+                table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
+                table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+                
+                for r_idx, record in enumerate(records):
+                    date_str, status = str(record[0]), record[1]
+                    table.setItem(r_idx, 0, QTableWidgetItem(date_str))
+                    
+                    status_item = QTableWidgetItem(status)
+                    if status == "Present":
+                        status_item.setForeground(Qt.GlobalColor.green)
+                    elif status == "Absent":
+                        status_item.setForeground(Qt.GlobalColor.red)
+                    table.setItem(r_idx, 1, status_item)
+                
+                card_layout.addWidget(table)
+                
+            self.content_layout.addWidget(card)
 
 class SupportTicketsView(QWidget):
     def __init__(self, parent_dashboard):

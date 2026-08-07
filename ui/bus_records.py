@@ -63,6 +63,7 @@ def create_twoline_cell(main_text, sub_text, main_color="#F8FAFC", sub_color="#9
 class BusRecords(QWidget):
     def __init__(self, master=None):
         super().__init__()
+        self.bus_data_map = {}
         self.create_widgets()
         self.load_buses()
         
@@ -99,6 +100,13 @@ class BusRecords(QWidget):
         # 2. Search Bar & Actions Box
         search_layout = QHBoxLayout()
         
+        self.update_button = QPushButton("Update Selected Bus")
+        self.update_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.update_button.setFixedHeight(38)
+        self.update_button.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1px solid #38BDF8; border-radius: 6px; font-weight: bold; padding: 0 16px; font-size: 10pt; } QPushButton:hover { background-color: #2563EB; color: #FFFFFF; }")
+        self.update_button.clicked.connect(self.open_update_window)
+        search_layout.addWidget(self.update_button)
+
         self.delete_button = QPushButton("Delete Selected Bus")
         self.delete_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.delete_button.setFixedHeight(38)
@@ -170,9 +178,13 @@ class BusRecords(QWidget):
         buses = db_dal.get_all_buses(search_query=search_query)
 
         self.buses_table.setRowCount(0)
+        self.bus_data_map.clear()
         for row_idx, row_data in enumerate(buses):
             self.buses_table.insertRow(row_idx)
-            # row_data: (bus_id, bus_number, driver_name, driver_phone, capacity, route_id, route_name)
+            # row_data: (bus_id, bus_number, driver_name, driver_phone, capacity, route_id, route_name, username)
+            bus_id_val = int(row_data[0])
+            self.bus_data_map[bus_id_val] = row_data
+            
             bus_id = str(row_data[0])
             bus_no = str(row_data[1])
             drv_name = str(row_data[2]) if row_data[2] else "Unassigned Driver"
@@ -210,3 +222,74 @@ class BusRecords(QWidget):
                 self.load_buses()
             else:
                 QMessageBox.critical(self, "Error", "Failed to delete bus.")
+
+    def open_update_window(self):
+        if not hasattr(self, "selected_bus_id"):
+            QMessageBox.critical(self, "Error", "Please select a bus first.")
+            return
+
+        from PyQt6.QtWidgets import QDialog, QFormLayout
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Update Bus Details")
+        dialog.setFixedSize(420, 360)
+        dialog.setStyleSheet("QDialog { background-color: #1E293B; color: #F8FAFC; } QLabel { color: #F8FAFC; font-weight: bold; font-size: 10pt; } QLineEdit { background-color: #0F172A; border: 1px solid #334155; border-radius: 6px; padding: 6px; color: #F8FAFC; font-size: 10pt; }")
+        
+        layout = QFormLayout(dialog)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
+        
+        bus_data = self.bus_data_map.get(self.selected_bus_id)
+        if not bus_data:
+            return
+
+        bus_no_entry = QLineEdit(str(bus_data[1]))
+        driver_name_entry = QLineEdit(str(bus_data[2]) if bus_data[2] else "")
+        driver_phone_entry = QLineEdit(str(bus_data[3]) if bus_data[3] else "")
+        capacity_entry = QLineEdit(str(bus_data[4]))
+        username_entry = QLineEdit(str(bus_data[7]) if bus_data[7] else "")
+        password_entry = QLineEdit()
+        password_entry.setPlaceholderText("Leave blank to keep current password")
+        password_entry.setEchoMode(QLineEdit.EchoMode.Password)
+        
+        layout.addRow("Bus Number:", bus_no_entry)
+        layout.addRow("Driver Name:", driver_name_entry)
+        layout.addRow("Driver Phone:", driver_phone_entry)
+        layout.addRow("Capacity:", capacity_entry)
+        layout.addRow("Driver Username:", username_entry)
+        layout.addRow("New Password:", password_entry)
+
+        save_btn = QPushButton("Save Bus Changes")
+        save_btn.setFixedHeight(40)
+        save_btn.setStyleSheet("QPushButton { background-color: #10B981; color: #FFFFFF; border: none; border-radius: 6px; font-weight: bold; font-size: 10.5pt; margin-top: 10px; } QPushButton:hover { background-color: #059669; }")
+        
+        def save_changes():
+            from dal import db_dal
+            try:
+                capacity_val = int(capacity_entry.text().strip())
+            except ValueError:
+                QMessageBox.critical(dialog, "Error", "Capacity must be a valid number.")
+                return
+
+            try:
+                success = db_dal.update_bus(
+                    self.selected_bus_id,
+                    bus_no_entry.text().strip(),
+                    driver_name_entry.text().strip(),
+                    driver_phone_entry.text().strip(),
+                    capacity_val,
+                    username_entry.text().strip(),
+                    password_entry.text().strip()
+                )
+                if success:
+                    QMessageBox.information(dialog, "Success", "Bus updated successfully!")
+                    dialog.accept()
+                    self.load_buses()
+                else:
+                    QMessageBox.critical(dialog, "Error", "Could not update bus.")
+            except Exception as e:
+                QMessageBox.critical(dialog, "Error", f"Failed to update bus: {e}")
+                
+        save_btn.clicked.connect(save_changes)
+        layout.addWidget(save_btn)
+        
+        dialog.exec()

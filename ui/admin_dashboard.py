@@ -190,11 +190,12 @@ class AdminDashboard(QWidget):
                 "ParentRecords": "Admin Portal  /  Parent Accounts Directory",
                 "BusManagement": "Admin Portal  /  Bus Fleet & Route Assignment",
                 "BusRecords": "Admin Portal  /  Bus Fleet Records",
+                "AttendanceRecordsView": "Admin Portal  /  Student Attendance Records",
                 "ProfileView": "Admin Portal  /  Personal Profile & Security",
                 "SettingsView": "Admin Portal  /  System Settings & Preferences"
             }
             name = frame_class.__name__ if hasattr(frame_class, '__name__') else str(frame_class)
-            self.header_breadcrumb.setText(title_map.get(frame_class, f"Admin Portal  /  {name}"))
+            self.header_breadcrumb.setText(title_map.get(frame_class, title_map.get(name, f"Admin Portal  /  {name}")))
 
         while self.content_layout.count():
             child = self.content_layout.takeAt(0)
@@ -296,6 +297,7 @@ class AdminDashboard(QWidget):
         self.btn_par_rec = self.add_sidebar_button("Parent Records", self.open_parent_records)
         self.btn_bus_mgmt = self.add_sidebar_button("Bus Management", self.open_bus_management)
         self.btn_bus_rec = self.add_sidebar_button("Bus Fleet Records", self.open_bus_records)
+        self.btn_attendance = self.add_sidebar_button("Attendance Records", self.open_attendance_records)
         
         self.sidebar_layout.addSpacing(15)
 
@@ -374,10 +376,9 @@ class AdminDashboard(QWidget):
         right_layout.addWidget(self.content_frame, 1)
 
         self.main_layout.addWidget(right_container, 1)
-        self.sidebar_buttons = []
         
         # Register buttons
-        self.sidebar_buttons = [self.btn_home, self.btn_stu_mgmt, self.btn_stu_rec, self.btn_par_mgmt, self.btn_par_rec, self.btn_bus_mgmt, self.btn_bus_rec, self.btn_profile, self.btn_settings, self.btn_logout]
+        self.sidebar_buttons = [self.btn_home, self.btn_stu_mgmt, self.btn_stu_rec, self.btn_par_mgmt, self.btn_par_rec, self.btn_bus_mgmt, self.btn_bus_rec, self.btn_attendance, self.btn_profile, self.btn_settings, self.btn_logout]
 
     def add_sidebar_button(self, text, command):
         btn = QPushButton(text)
@@ -426,6 +427,10 @@ class AdminDashboard(QWidget):
     def open_bus_records(self):
         from ui.bus_records import BusRecords
         self.show_frame(BusRecords, self.btn_bus_rec)
+        
+    def open_attendance_records(self):
+        from ui.attendance_records import AttendanceRecordsView
+        self.show_frame(AttendanceRecordsView, self.btn_attendance)
         
     def open_profile_view(self):
         from ui.profile_view import ProfileView

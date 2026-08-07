@@ -31,6 +31,15 @@ class DAL:
         finally:
             conn.close()
 
+    def get_driver_by_username(self, username: str) -> Optional[Tuple]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM bus WHERE username = %s", (username,))
+            return cursor.fetchone()
+        finally:
+            conn.close()
+
     def get_admin_by_id(self, admin_id: int = 1) -> Optional[Tuple]:
         conn = self._get_connection()
         try:
@@ -161,7 +170,7 @@ class DAL:
             cursor = conn.cursor()
             # PRD: Select Child Name, Class, Fee Paid, Fee Balance, Bus Number, Driver Name, Driver Contact, Route, and Pickup Point.
             cursor.execute('''
-                SELECT s.student_name, s.student_class, s.fee_paid, s.fee_balance, b.bus_number, 
+                SELECT s.student_id, s.student_name, s.student_class, s.fee_paid, s.fee_balance, b.bus_number, 
                        b.driver_name, b.driver_phone, r.route_name, p.pickup_point
                 FROM student s
                 JOIN parent p ON s.parent_id = p.parent_id
@@ -420,7 +429,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            query = "SELECT b.bus_id, b.bus_number, b.driver_name, b.driver_phone, b.capacity, b.route_id, r.route_name FROM bus b LEFT JOIN route r ON b.route_id = r.route_id"
+            query = "SELECT b.bus_id, b.bus_number, b.driver_name, b.driver_phone, b.capacity, b.route_id, r.route_name, b.username FROM bus b LEFT JOIN route r ON b.route_id = r.route_id"
             if search_query:
                 query += " WHERE b.bus_number LIKE %s OR b.driver_name LIKE %s OR r.route_name LIKE %s"
                 cursor.execute(query, (f"%{search_query}%", f"%{search_query}%", f"%{search_query}%"))
@@ -458,17 +467,27 @@ class DAL:
         finally:
             conn.close()
 
-    def add_bus(self, bus_number: str, driver_name: str, driver_phone: str, capacity: int, route_id: int) -> bool:
+    def add_bus(self, bus_number: str, driver_name: str, driver_phone: str, capacity: int, route_id: int, username: str = None, password: str = None) -> bool:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute(
-                """
-                INSERT INTO bus (bus_number, driver_name, driver_phone, capacity, route_id)
-                VALUES (%s, %s, %s, %s, %s)
-                """,
-                (bus_number, driver_name, driver_phone, capacity, route_id)
-            )
+            if username and password:
+                hashed_pw = security.hash_password(password)
+                cursor.execute(
+                    """
+                    INSERT INTO bus (bus_number, driver_name, driver_phone, capacity, route_id, username, password)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (bus_number, driver_name, driver_phone, capacity, route_id, username, hashed_pw)
+                )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO bus (bus_number, driver_name, driver_phone, capacity, route_id)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (bus_number, driver_name, driver_phone, capacity, route_id)
+                )
             conn.commit()
             return True
         finally:
@@ -478,9 +497,35 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM bus WHERE bus_id = %s", (bus_id,))
+            cursor.execute('DELETE FROM bus WHERE bus_id = %s', (bus_id,))
             conn.commit()
             return True
+        except Exception as e:
+            print(f"Error deleting bus: {e}")
+            return False
+            
+    def update_bus(self, bus_id: int, bus_number: str, driver_name: str, driver_phone: str, capacity: int, username: str = None, password: str = None) -> bool:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            if password:
+                hashed_pw = security.hash_password(password)
+                cursor.execute('''
+                    UPDATE bus 
+                    SET bus_number = %s, driver_name = %s, driver_phone = %s, capacity = %s, username = %s, password = %s
+                    WHERE bus_id = %s
+                ''', (bus_number, driver_name, driver_phone, capacity, username, hashed_pw, bus_id))
+            else:
+                cursor.execute('''
+                    UPDATE bus 
+                    SET bus_number = %s, driver_name = %s, driver_phone = %s, capacity = %s, username = %s
+                    WHERE bus_id = %s
+                ''', (bus_number, driver_name, driver_phone, capacity, username, bus_id))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error updating bus: {e}")
+            return False
         finally:
             conn.close()
 
@@ -531,6 +576,84 @@ class DAL:
             )
             conn.commit()
             return True
+        finally:
+            conn.close()
+
+    # --- Driver & Attendance Management ---
+    def get_students_by_bus(self, bus_id: int) -> List[Tuple]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT s.student_id, s.student_name, s.student_class, p.pickup_point, p.phone, p.parent_name
+                FROM student s
+                JOIN parent p ON s.parent_id = p.parent_id
+                WHERE s.route_id = (SELECT route_id FROM bus WHERE bus_id = %s)
+            ''', (bus_id,))
+            return cursor.fetchall()
+        finally:
+            conn.close()
+
+    def mark_attendance(self, student_id: int, bus_id: int, date: str, status: str) -> bool:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            # Upsert logic (Insert or Update if exists)
+            cursor.execute('''
+                INSERT INTO attendance (student_id, bus_id, date, status)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (student_id, date) DO UPDATE SET status = EXCLUDED.status, bus_id = EXCLUDED.bus_id
+            ''', (student_id, bus_id, date, status))
+            conn.commit()
+            return True
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
+    def get_attendance_by_bus_and_date(self, bus_id: int, date: str) -> List[Tuple]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT student_id, status FROM attendance 
+                WHERE bus_id = %s AND date = %s
+            ''', (bus_id, date))
+            return cursor.fetchall()
+        finally:
+            conn.close()
+
+    def get_attendance_history_for_student(self, student_id: int) -> List[Tuple]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT date, status FROM attendance 
+                WHERE student_id = %s 
+                ORDER BY date DESC LIMIT 30
+            ''', (student_id,))
+            return cursor.fetchall()
+        finally:
+            conn.close()
+
+    def get_attendance_history_for_admin(self, search_query: str = "") -> List[Tuple]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            query = '''
+                SELECT a.date, s.student_name, s.student_class, b.bus_number, a.status 
+                FROM attendance a
+                JOIN student s ON a.student_id = s.student_id
+                JOIN bus b ON a.bus_id = b.bus_id
+            '''
+            if search_query:
+                query += " WHERE s.student_name ILIKE %s OR b.bus_number ILIKE %s"
+                query += " ORDER BY a.date DESC"
+                cursor.execute(query, (f"%{search_query}%", f"%{search_query}%"))
+            else:
+                query += " ORDER BY a.date DESC"
+                cursor.execute(query)
+            return cursor.fetchall()
         finally:
             conn.close()
 

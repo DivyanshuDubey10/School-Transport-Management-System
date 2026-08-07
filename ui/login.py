@@ -110,4 +110,15 @@ class LoginWindow(QWidget):
             self.close()
             return
 
+        # Check Driver
+        driver = db_dal.get_driver_by_username(username)
+        if driver and driver[7] and security.verify_password(password, driver[7]):
+            ToastNotification(self, f"Welcome Driver {driver[2]}!", "success")
+            bus_id = driver[0]
+            from ui.driver_dashboard import DriverDashboard
+            self.dashboard = DriverDashboard(bus_id)
+            self.dashboard.show()
+            self.close()
+            return
+
         ToastNotification(self, "Invalid username or password.", "error")
