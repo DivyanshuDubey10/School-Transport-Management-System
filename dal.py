@@ -606,7 +606,10 @@ class DAL:
             ''', (student_id, bus_id, date, status))
             conn.commit()
             return True
-        except Exception:
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(f"Error marking attendance: {e}")
             return False
         finally:
             conn.close()

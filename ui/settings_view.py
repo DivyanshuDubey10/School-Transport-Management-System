@@ -8,92 +8,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from dal import db_dal
+from theme_manager import ThemeManager
 
-LIGHT_THEME_QSS = """
-QWidget {
-    background-color: #F8FAFC;
-    color: #0F172A;
-    font-family: "Segoe UI", "Inter", -apple-system, sans-serif;
-    font-size: 11pt;
-}
-QPushButton {
-    background-color: #2563EB;
-    color: #FFFFFF;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-weight: 600;
-    font-size: 11pt;
-}
-QPushButton:hover { background-color: #1D4ED8; }
-QPushButton:pressed { background-color: #1E40AF; }
-QLineEdit, QComboBox {
-    background-color: #FFFFFF;
-    color: #0F172A;
-    border: 1.5px solid #CBD5E1;
-    border-radius: 8px;
-    padding: 8px 12px;
-    min-height: 24px;
-    font-size: 11pt;
-}
-QLineEdit:focus, QComboBox:focus {
-    border: 1.5px solid #2563EB;
-    background-color: #FFFFFF;
-}
-QTableWidget, QTableView {
-    background-color: #FFFFFF;
-    alternate-background-color: #F1F5F9;
-    color: #0F172A;
-    gridline-color: #E2E8F0;
-    border: 1px solid #CBD5E1;
-    border-radius: 8px;
-    outline: none;
-}
-QTableWidget::item, QTableView::item {
-    padding: 6px 10px;
-    border-bottom: 1px solid #E2E8F0;
-}
-QTableWidget::item:selected, QTableView::item:selected {
-    background-color: #2563EB;
-    color: #FFFFFF;
-    font-weight: 600;
-}
-QHeaderView::section {
-    background-color: #E2E8F0;
-    color: #334155;
-    padding: 12px 10px;
-    border: none;
-    border-bottom: 2px solid #CBD5E1;
-    font-weight: bold;
-    font-size: 10pt;
-}
-QFrame#cardFrame, QFrame#loginFrame {
-    background-color: #FFFFFF;
-    border-radius: 12px;
-    border: 1px solid #E2E8F0;
-}
-QFrame#sidebarFrame {
-    background-color: #0F172A;
-    border-right: 1px solid #1E293B;
-}
-QPushButton#sidebarBtn {
-    background-color: transparent;
-    color: #94A3B8;
-    text-align: left;
-    padding: 12px 18px;
-    border-radius: 8px;
-    font-weight: 600;
-}
-QPushButton#sidebarBtn:hover {
-    background-color: #1E293B;
-    color: #FFFFFF;
-}
-QLabel#titleLabel {
-    font-size: 20pt;
-    font-weight: 800;
-    color: #2563EB;
-}
-"""
+
 
 MIDNIGHT_THEME_QSS = """
 QWidget {
@@ -207,11 +124,11 @@ class SettingsView(QWidget):
             sub_text = "Customize visual themes, real-time child transport notifications, and contact localization."
             
         title_label = QLabel(title_text)
-        title_label.setStyleSheet("font-size: 18pt; font-weight: 800; color: #F8FAFC; letter-spacing: -0.5px;")
+        title_label.setObjectName("pageTitle")
         title_box.addWidget(title_label)
         
         sub_label = QLabel(sub_text)
-        sub_label.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        sub_label.setObjectName("statDesc")
         title_box.addWidget(sub_label)
         
         header_layout.addLayout(title_box)
@@ -220,7 +137,7 @@ class SettingsView(QWidget):
         btn_save = QPushButton("Save All Preferences")
         btn_save.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_save.setFixedSize(180, 40)
-        btn_save.setStyleSheet("QPushButton { background-color: #10B981; color: #FFFFFF; border: none; border-radius: 8px; font-weight: bold; font-size: 10.5pt; } QPushButton:hover { background-color: #059669; }")
+        btn_save.setObjectName("primaryButton")
         btn_save.clicked.connect(self.save_preferences)
         header_layout.addWidget(btn_save, alignment=Qt.AlignmentFlag.AlignTop)
 
@@ -250,17 +167,17 @@ class SettingsView(QWidget):
     def build_admin_settings(self, layout):
         # 1. Appearance, Accessibility & UI Scaling Card
         card1 = QFrame()
-        card1.setStyleSheet("QFrame { background-color: #1E293B; border-radius: 12px; border: 1px solid #334155; }")
+        card1.setObjectName("statCard")
         l1 = QVBoxLayout(card1)
         l1.setContentsMargins(22, 20, 22, 22)
         l1.setSpacing(15)
         
         lbl_title1 = QLabel("APPEARANCE, ACCESSIBILITY & UI SCALING")
-        lbl_title1.setStyleSheet("font-size: 9pt; font-weight: 800; color: #38BDF8; letter-spacing: 1px; border: none;")
+        lbl_title1
         l1.addWidget(lbl_title1)
         
         lbl_sub1 = QLabel("Select visual theme mode and accessibility scaling for optimal high-density data management.")
-        lbl_sub1.setStyleSheet("font-size: 9.5pt; color: #94A3B8; border: none;")
+        lbl_sub1
         l1.addWidget(lbl_sub1)
         
         theme_btn_layout = QHBoxLayout()
@@ -269,13 +186,13 @@ class SettingsView(QWidget):
         btn_night = QPushButton("Night Mode (Default)")
         btn_night.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_night.setFixedHeight(46)
-        btn_night.setStyleSheet("QPushButton { background-color: #0F172A; color: #38BDF8; border: 2px solid #38BDF8; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #1E293B; }")
+        btn_night.setObjectName("secondaryButton")
         btn_night.clicked.connect(lambda: self.apply_theme("night"))
         
         btn_day = QPushButton("Day Mode")
         btn_day.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_day.setFixedHeight(46)
-        btn_day.setStyleSheet("QPushButton { background-color: #F8FAFC; color: #0F172A; border: 2px solid #CBD5E1; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #E2E8F0; }")
+        btn_day.setStyleSheet("QPushButton { background-color: #111827; color: #FFFFFF; border: 2px solid #9CA3AF; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #E2E8F0; }")
         btn_day.clicked.connect(lambda: self.apply_theme("day"))
         
         theme_btn_layout.addWidget(btn_night)
@@ -287,7 +204,7 @@ class SettingsView(QWidget):
         grid_acc.setVerticalSpacing(12)
         
         lbl_scale = QLabel("UI Scaling & Typography:")
-        lbl_scale.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_scale
         self.combo_scale = QComboBox()
         self.combo_scale.addItems([
             "Standard (100% Default - Balanced Grid)", 
@@ -300,45 +217,45 @@ class SettingsView(QWidget):
         
         self.chk_contrast = QCheckBox("Enable High-Contrast Gridlines & Bold Row Borders in Data Directories (Accessibility Mode)")
         self.chk_contrast.setChecked(True)
-        self.chk_contrast.setStyleSheet("color: #F8FAFC; font-size: 10pt; font-weight: 600; border: none;")
+        self.chk_contrast
         l1.addWidget(self.chk_contrast)
         
         self.chk_tooltips = QCheckBox("Enable Screen Reader Compatible Table Cell Tooltips & Keyboard Focus Indicators")
         self.chk_tooltips.setChecked(True)
-        self.chk_tooltips.setStyleSheet("color: #F8FAFC; font-size: 10pt; font-weight: 600; border: none;")
+        self.chk_tooltips
         l1.addWidget(self.chk_tooltips)
         
         layout.addWidget(card1)
 
         # 2. Global Security & Access Policies Card
         card2 = QFrame()
-        card2.setStyleSheet("QFrame { background-color: #0F172A; border-radius: 12px; border: 1px solid #334155; }")
+        card2.setObjectName("statCard")
         l2 = QVBoxLayout(card2)
         l2.setContentsMargins(22, 20, 22, 22)
         l2.setSpacing(15)
         
         lbl_title2 = QLabel("GLOBAL SECURITY, 2FA & ACCESS POLICIES")
-        lbl_title2.setStyleSheet("font-size: 9pt; font-weight: 800; color: #F59E0B; letter-spacing: 1px; border: none;")
+        lbl_title2
         l2.addWidget(lbl_title2)
         
         self.chk_2fa = QCheckBox("Enforce Two-Factor Authentication (2FA) for All Administrator & Staff Logins")
         self.chk_2fa.setChecked(True)
-        self.chk_2fa.setStyleSheet("color: #F8FAFC; font-size: 10.5pt; font-weight: 600; border: none;")
+        self.chk_2fa
         l2.addWidget(self.chk_2fa)
         
         self.chk_autolock = QCheckBox("Automatically Lock Administrative Portal Session After 15 Minutes of Inactivity")
         self.chk_autolock.setChecked(True)
-        self.chk_autolock.setStyleSheet("color: #F8FAFC; font-size: 10.5pt; font-weight: 600; border: none;")
+        self.chk_autolock
         l2.addWidget(self.chk_autolock)
         
         self.chk_ip = QCheckBox("Restrict Administrative Portal Access to Approved Campus Network IP Addresses")
         self.chk_ip.setChecked(False)
-        self.chk_ip.setStyleSheet("color: #F8FAFC; font-size: 10.5pt; font-weight: 600; border: none;")
+        self.chk_ip
         l2.addWidget(self.chk_ip)
         
         self.chk_audit_alert = QCheckBox("Log Audit Alert & Notify SuperAdmin on Multiple Failed Login Attempts")
         self.chk_audit_alert.setChecked(True)
-        self.chk_audit_alert.setStyleSheet("color: #F8FAFC; font-size: 10.5pt; font-weight: 600; border: none;")
+        self.chk_audit_alert
         l2.addWidget(self.chk_audit_alert)
         
         grid_sec = QGridLayout()
@@ -346,14 +263,14 @@ class SettingsView(QWidget):
         grid_sec.setVerticalSpacing(12)
         
         lbl_expiry = QLabel("Staff Password Expiry Policy:")
-        lbl_expiry.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_expiry
         self.combo_expiry = QComboBox()
         self.combo_expiry.addItems(["No Expiry (Default)", "Require Password Change Every 60 Days", "Require Password Change Every 90 Days"])
         grid_sec.addWidget(lbl_expiry, 0, 0)
         grid_sec.addWidget(self.combo_expiry, 0, 1)
         
         lbl_strength = QLabel("Minimum Password Strength:")
-        lbl_strength.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_strength
         self.combo_strength = QComboBox()
         self.combo_strength.addItems(["High Security (Min 8 chars, alphanumeric & special symbols)", "Standard Security (Min 6 chars alphanumeric)", "Basic Security (Min 4 chars)"])
         grid_sec.addWidget(lbl_strength, 1, 0)
@@ -364,28 +281,28 @@ class SettingsView(QWidget):
 
         # 3. Automated Fleet Operations Card
         card3 = QFrame()
-        card3.setStyleSheet("QFrame { background-color: #0F172A; border-radius: 12px; border: 1px solid #334155; }")
+        card3.setObjectName("statCard")
         l3 = QVBoxLayout(card3)
         l3.setContentsMargins(22, 20, 22, 22)
         l3.setSpacing(15)
         
         lbl_title3 = QLabel("AUTOMATED FLEET OPERATIONS & GPS TELEMETRY")
-        lbl_title3.setStyleSheet("font-size: 9pt; font-weight: 800; color: #38BDF8; letter-spacing: 1px; border: none;")
+        lbl_title3
         l3.addWidget(lbl_title3)
         
         self.chk_gps = QCheckBox("Broadcast Real-Time GPS Bus Coordinates & Route Progress to Parent Mobile Portal")
         self.chk_gps.setChecked(True)
-        self.chk_gps.setStyleSheet("color: #F8FAFC; font-size: 10.5pt; font-weight: 600; border: none;")
+        self.chk_gps
         l3.addWidget(self.chk_gps)
         
         self.chk_route_opt = QCheckBox("Enable Automated Daily Route Optimization & Student Stop Matcher")
         self.chk_route_opt.setChecked(True)
-        self.chk_route_opt.setStyleSheet("color: #F8FAFC; font-size: 10.5pt; font-weight: 600; border: none;")
+        self.chk_route_opt
         l3.addWidget(self.chk_route_opt)
         
         self.chk_delay_sms = QCheckBox("Send Automated SMS Delay Notifications to Parents when Bus is > 10 Minutes Late")
         self.chk_delay_sms.setChecked(True)
-        self.chk_delay_sms.setStyleSheet("color: #F8FAFC; font-size: 10.5pt; font-weight: 600; border: none;")
+        self.chk_delay_sms
         l3.addWidget(self.chk_delay_sms)
         
         grid_fleet = QGridLayout()
@@ -393,14 +310,14 @@ class SettingsView(QWidget):
         grid_fleet.setVerticalSpacing(12)
         
         lbl_maint = QLabel("Bus Maintenance Alert Threshold:")
-        lbl_maint.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_maint
         self.combo_maint = QComboBox()
         self.combo_maint.addItems(["Every 3,000 km / 3 Months (Standard Fleet Check)", "Every 5,000 km / 6 Months (Extended Schedule)", "Every 10,000 km / 1 Year (Heavy Duty Only)"])
         grid_fleet.addWidget(lbl_maint, 0, 0)
         grid_fleet.addWidget(self.combo_maint, 0, 1)
         
         lbl_speed = QLabel("Fleet Telemetry Speed Warning:")
-        lbl_speed.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_speed
         self.combo_speed = QComboBox()
         self.combo_speed.addItems(["60 km/h (City School Zone Standard)", "50 km/h (Strict Urban Safety)", "70 km/h (Express Highway Routes)"])
         grid_fleet.addWidget(lbl_speed, 1, 0)
@@ -411,13 +328,13 @@ class SettingsView(QWidget):
 
         # 4. Database Management & System Actions Card
         card4 = QFrame()
-        card4.setStyleSheet("QFrame { background-color: #0F172A; border-radius: 12px; border: 1px solid #334155; }")
+        card4.setObjectName("statCard")
         l4 = QVBoxLayout(card4)
         l4.setContentsMargins(22, 20, 22, 22)
         l4.setSpacing(15)
         
         lbl_title4 = QLabel("DATABASE MANAGEMENT & SYSTEM OPERATIONS")
-        lbl_title4.setStyleSheet("font-size: 9pt; font-weight: 800; color: #10B981; letter-spacing: 1px; border: none;")
+        lbl_title4
         l4.addWidget(lbl_title4)
         
         btn_grid = QGridLayout()
@@ -427,28 +344,28 @@ class SettingsView(QWidget):
         btn_backup = QPushButton("Export Database Backup (SQLite)")
         btn_backup.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_backup.setFixedHeight(42)
-        btn_backup.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #38BDF8; color: #0F172A; }")
+        btn_backup.setStyleSheet("QPushButton { background-color: #F3F4F6; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #38BDF8; color: #FFFFFF; }")
         btn_backup.clicked.connect(self.export_backup)
         btn_grid.addWidget(btn_backup, 0, 0)
         
         btn_opt = QPushButton("Optimize & Deframent Database (VACUUM)")
         btn_opt.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_opt.setFixedHeight(42)
-        btn_opt.setStyleSheet("QPushButton { background-color: #064E3B; color: #10B981; border: 1.5px solid #10B981; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #10B981; color: #064E3B; }")
+        btn_opt.setObjectName("primaryButton")
         btn_opt.clicked.connect(self.optimize_db)
         btn_grid.addWidget(btn_opt, 0, 1)
         
         btn_audit = QPushButton("Export System Audit Logs (CSV)")
         btn_audit.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_audit.setFixedHeight(42)
-        btn_audit.setStyleSheet("QPushButton { background-color: #1E293B; color: #F59E0B; border: 1.5px solid #F59E0B; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #F59E0B; color: #0F172A; }")
+        btn_audit.setStyleSheet("QPushButton { background-color: #F3F4F6; color: #F59E0B; border: 1.5px solid #F59E0B; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #F59E0B; color: #FFFFFF; }")
         btn_audit.clicked.connect(self.export_audit_logs)
         btn_grid.addWidget(btn_audit, 1, 0)
         
         btn_cache = QPushButton("Clear Temporary System Cache & Buffers")
         btn_cache.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_cache.setFixedHeight(42)
-        btn_cache.setStyleSheet("QPushButton { background-color: #7F1D1D; color: #F8FAFC; border: 1.5px solid #EF4444; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #EF4444; color: #FFFFFF; }")
+        btn_cache.setStyleSheet("QPushButton { background-color: #7F1D1D; color: #111827; border: 1.5px solid #EF4444; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #EF4444; color: #FFFFFF; }")
         btn_cache.clicked.connect(self.clear_cache)
         btn_grid.addWidget(btn_cache, 1, 1)
         
@@ -458,17 +375,17 @@ class SettingsView(QWidget):
     def build_parent_settings(self, layout):
         # 1. Theme Card
         theme_card = QFrame()
-        theme_card.setStyleSheet("QFrame { background-color: #1E293B; border-radius: 12px; border: 1px solid #334155; }")
+        theme_card.setObjectName("statCard")
         l1 = QVBoxLayout(theme_card)
         l1.setContentsMargins(22, 20, 22, 22)
         l1.setSpacing(15)
         
         lbl_t_title = QLabel("APPEARANCE & VISUAL THEME MODE")
-        lbl_t_title.setStyleSheet("font-size: 9pt; font-weight: 800; color: #38BDF8; letter-spacing: 1px; border: none;")
+        lbl_t_title
         l1.addWidget(lbl_t_title)
         
         lbl_t_sub = QLabel("Select your preferred visual theme for the parent portal interface.")
-        lbl_t_sub.setStyleSheet("font-size: 9.5pt; color: #94A3B8; border: none;")
+        lbl_t_sub
         l1.addWidget(lbl_t_sub)
         
         theme_btn_layout = QHBoxLayout()
@@ -477,13 +394,13 @@ class SettingsView(QWidget):
         btn_night = QPushButton("Night Mode (Default)")
         btn_night.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_night.setFixedHeight(46)
-        btn_night.setStyleSheet("QPushButton { background-color: #0F172A; color: #38BDF8; border: 2px solid #38BDF8; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #1E293B; }")
+        btn_night.setObjectName("secondaryButton")
         btn_night.clicked.connect(lambda: self.apply_theme("night"))
         
         btn_day = QPushButton("Day Mode")
         btn_day.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_day.setFixedHeight(46)
-        btn_day.setStyleSheet("QPushButton { background-color: #F8FAFC; color: #0F172A; border: 2px solid #CBD5E1; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #E2E8F0; }")
+        btn_day.setStyleSheet("QPushButton { background-color: #111827; color: #FFFFFF; border: 2px solid #9CA3AF; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #E2E8F0; }")
         btn_day.clicked.connect(lambda: self.apply_theme("day"))
         
         theme_btn_layout.addWidget(btn_night)
@@ -493,46 +410,46 @@ class SettingsView(QWidget):
 
         # 2. Child Transport Alerts Card
         notif_card = QFrame()
-        notif_card.setStyleSheet("QFrame { background-color: #0F172A; border-radius: 12px; border: 1px solid #334155; }")
+        notif_card.setObjectName("statCard")
         l2 = QVBoxLayout(notif_card)
         l2.setContentsMargins(22, 20, 22, 22)
         l2.setSpacing(15)
         
         lbl_n_title = QLabel("REAL-TIME CHILD TRANSPORT NOTIFICATIONS")
-        lbl_n_title.setStyleSheet("font-size: 9pt; font-weight: 800; color: #38BDF8; letter-spacing: 1px; border: none;")
+        lbl_n_title
         l2.addWidget(lbl_n_title)
         
         self.chk_sms = QCheckBox("SMS Notification when Bus Arrives at Assigned School Stop")
         self.chk_sms.setChecked(True)
-        self.chk_sms.setStyleSheet("color: #F8FAFC; font-size: 10.5pt; border: none;")
+        self.chk_sms
         l2.addWidget(self.chk_sms)
         
         self.chk_push = QCheckBox("Instant Mobile Push Alert on Student Boarding & Alighting")
         self.chk_push.setChecked(True)
-        self.chk_push.setStyleSheet("color: #F8FAFC; font-size: 10.5pt; border: none;")
+        self.chk_push
         l2.addWidget(self.chk_push)
         
         self.chk_emergency = QCheckBox("Emergency Route Delay & Weather Traffic Broadcasts")
         self.chk_emergency.setChecked(True)
-        self.chk_emergency.setStyleSheet("color: #F8FAFC; font-size: 10.5pt; border: none;")
+        self.chk_emergency
         l2.addWidget(self.chk_emergency)
         
         self.chk_email = QCheckBox("Receive Monthly Fee & Payment Receipt Confirmations via Email")
         self.chk_email.setChecked(True)
-        self.chk_email.setStyleSheet("color: #F8FAFC; font-size: 10.5pt; border: none;")
+        self.chk_email
         l2.addWidget(self.chk_email)
         
         layout.addWidget(notif_card)
 
         # 3. Contact & Localization Card
         loc_card = QFrame()
-        loc_card.setStyleSheet("QFrame { background-color: #0F172A; border-radius: 12px; border: 1px solid #334155; }")
+        loc_card.setObjectName("statCard")
         l3 = QVBoxLayout(loc_card)
         l3.setContentsMargins(22, 20, 22, 22)
         l3.setSpacing(15)
         
         lbl_l_title = QLabel("CONTACT METHOD & LOCALIZATION")
-        lbl_l_title.setStyleSheet("font-size: 9pt; font-weight: 800; color: #38BDF8; letter-spacing: 1px; border: none;")
+        lbl_l_title
         l3.addWidget(lbl_l_title)
         
         grid_loc = QGridLayout()
@@ -540,21 +457,21 @@ class SettingsView(QWidget):
         grid_loc.setVerticalSpacing(15)
         
         lbl_lang = QLabel("Preferred Display Language:")
-        lbl_lang.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_lang
         self.combo_lang = QComboBox()
         self.combo_lang.addItems(["English (United States)", "Spanish (Español)", "French (Français)", "Hindi (हिन्दी)"])
         grid_loc.addWidget(lbl_lang, 0, 0)
         grid_loc.addWidget(self.combo_lang, 0, 1)
         
         lbl_channel = QLabel("Primary Alert Channel:")
-        lbl_channel.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_channel
         self.combo_channel = QComboBox()
         self.combo_channel.addItems(["Primary Phone Call & SMS Alerts", "Email Notifications Only", "WhatsApp Instant Messaging"])
         grid_loc.addWidget(lbl_channel, 1, 0)
         grid_loc.addWidget(self.combo_channel, 1, 1)
         
         lbl_tz = QLabel("Timezone Setting:")
-        lbl_tz.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_tz
         self.combo_tz = QComboBox()
         self.combo_tz.addItems(["IST (UTC+05:30) India Standard Time", "GMT (UTC+00:00) Greenwich Mean Time", "EST (UTC-05:00) Eastern Standard Time", "PST (UTC-08:00) Pacific Standard Time"])
         grid_loc.addWidget(lbl_tz, 2, 0)
@@ -565,13 +482,13 @@ class SettingsView(QWidget):
 
         # 4. Privacy & Account Actions Card
         sys_card = QFrame()
-        sys_card.setStyleSheet("QFrame { background-color: #0F172A; border-radius: 12px; border: 1px solid #334155; }")
+        sys_card.setObjectName("statCard")
         l4 = QVBoxLayout(sys_card)
         l4.setContentsMargins(22, 20, 22, 22)
         l4.setSpacing(15)
         
         lbl_s_title = QLabel("ACCOUNT PRIVACY & DEVICE SECURITY")
-        lbl_s_title.setStyleSheet("font-size: 9pt; font-weight: 800; color: #F59E0B; letter-spacing: 1px; border: none;")
+        lbl_s_title
         l4.addWidget(lbl_s_title)
         
         sys_btn_layout = QHBoxLayout()
@@ -580,13 +497,13 @@ class SettingsView(QWidget):
         btn_export = QPushButton("Download Child Transport Summary (PDF)")
         btn_export.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_export.setFixedHeight(42)
-        btn_export.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #38BDF8; color: #0F172A; }")
+        btn_export.setStyleSheet("QPushButton { background-color: #F3F4F6; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #38BDF8; color: #FFFFFF; }")
         btn_export.clicked.connect(self.download_summary)
         
         btn_sessions = QPushButton("Sign Out of All Other Remote Devices")
         btn_sessions.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_sessions.setFixedHeight(42)
-        btn_sessions.setStyleSheet("QPushButton { background-color: #7F1D1D; color: #F8FAFC; border: 1.5px solid #EF4444; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #EF4444; color: #FFFFFF; }")
+        btn_sessions.setStyleSheet("QPushButton { background-color: #7F1D1D; color: #111827; border: 1.5px solid #EF4444; border-radius: 8px; font-weight: bold; } QPushButton:hover { background-color: #EF4444; color: #FFFFFF; }")
         btn_sessions.clicked.connect(self.signout_sessions)
         
         sys_btn_layout.addWidget(btn_export)
@@ -595,20 +512,12 @@ class SettingsView(QWidget):
         layout.addWidget(sys_card)
 
     def apply_theme(self, theme_name):
-        app = QApplication.instance()
-        if not app:
-            return
-            
-        if theme_name == "night":
-            try:
-                if os.path.exists("style.qss"):
-                    with open("style.qss", "r") as f:
-                        app.setStyleSheet(f.read())
-            except Exception as e:
-                print(f"Could not load style.qss: {e}")
+        manager = ThemeManager.get_instance()
+        if theme_name == "night" and manager.get_current_theme() == "light":
+            manager.toggle_theme()
             QMessageBox.information(self, "Theme Applied", "Night Mode applied successfully!")
-        elif theme_name == "day":
-            app.setStyleSheet(LIGHT_THEME_QSS)
+        elif theme_name == "day" and manager.get_current_theme() == "dark":
+            manager.toggle_theme()
             QMessageBox.information(self, "Theme Applied", "Day Mode applied successfully!")
 
     def save_preferences(self):

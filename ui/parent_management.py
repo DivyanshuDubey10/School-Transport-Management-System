@@ -19,7 +19,7 @@ class ParentManagement(QWidget):
 
         # Title
         title_label = QLabel("Parent Management")
-        title_label.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
+        title_label.setObjectName("pageTitle")
         main_layout.addWidget(title_label)
 
         # Form Container (Card)
@@ -35,7 +35,7 @@ class ParentManagement(QWidget):
         form_layout.setColumnStretch(1, 1)
 
         form_title = QLabel("Add New Parent")
-        form_title.setStyleSheet("font-size: 15pt; font-weight: bold; color: #F8FAFC; margin-bottom: 10px;")
+        form_title
         form_layout.addWidget(form_title, 0, 0, 1, 2)
 
         def create_field(label_text, widget):
@@ -43,7 +43,7 @@ class ParentManagement(QWidget):
             field_layout.setSpacing(6)
             field_layout.setContentsMargins(0, 0, 0, 0)
             lbl = QLabel(label_text)
-            lbl.setStyleSheet("font-size: 10pt; font-weight: 600; color: #94A3B8;")
+            lbl
             field_layout.addWidget(lbl)
             field_layout.addWidget(widget)
             return field_layout

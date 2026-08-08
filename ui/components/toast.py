@@ -1,5 +1,5 @@
 # ui/components/toast.py
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QFrame, QGraphicsDropShadowEffect
 from PyQt6.QtCore import Qt, QPropertyAnimation, QTimer, QEasingCurve, QRect
 from PyQt6.QtGui import QColor, QPalette
 
@@ -13,18 +13,43 @@ class ToastNotification(QWidget):
         self.initUI()
         
     def initUI(self):
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.ToolTip | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(20, 15, 20, 15)
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(15, 15, 15, 15) # Margin for drop shadow
+        
+        self.frame = QFrame()
+        self.frame.setObjectName("toastFrame")
+        
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 60))
+        shadow.setOffset(0, 5)
+        self.frame.setGraphicsEffect(shadow)
+        
+        frame_layout = QHBoxLayout(self.frame)
+        frame_layout.setContentsMargins(20, 16, 25, 16)
+        frame_layout.setSpacing(15)
+        
+        icon_lbl = QLabel()
         
         self.label = QLabel(self.message)
-        self.label.setStyleSheet("color: white; font-weight: bold; font-size: 11pt;")
-        layout.addWidget(self.label)
+        self.label
         
-        bg_color = "#10B981" if self.type == "success" else "#EF4444"
-        self.setStyleSheet(f"background-color: {bg_color}; border-radius: 8px;")
+        if self.type == "success":
+            icon_lbl.setText("✓")
+            icon_lbl
+            self.frame.setStyleSheet("QFrame#toastFrame { background-color: #ECFDF5; border: 1px solid #A7F3D0; border-left: 6px solid #10B981; border-radius: 8px; }")
+        else:
+            icon_lbl.setText("⚠")
+            icon_lbl
+            self.frame.setStyleSheet("QFrame#toastFrame { background-color: #FEF2F2; border: 1px solid #FECACA; border-left: 6px solid #EF4444; border-radius: 8px; }")
+            
+        frame_layout.addWidget(icon_lbl)
+        frame_layout.addWidget(self.label)
+        
+        main_layout.addWidget(self.frame)
         
         self.adjustSize()
         self.position_toast()

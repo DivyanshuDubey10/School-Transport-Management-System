@@ -13,10 +13,10 @@ class CustomTitleBar(QWidget):
         self.setFixedHeight(40)
         
         # Transparent background so it blends, but handles clicks
-        self.setStyleSheet("background-color: transparent;")
+        self
         
         self.title_label = QLabel(title_text)
-        self.title_label.setStyleSheet("color: #64748B; font-weight: 800; font-size: 10pt; letter-spacing: 1px;")
+        self.title_label
         self.layout.addWidget(self.title_label)
         
         self.layout.addStretch()
@@ -26,11 +26,11 @@ class CustomTitleBar(QWidget):
         segoe_font = QFont("Segoe MDL2 Assets", 10)
         
         btn_style = """
-            QPushButton { border: none; color: #94A3B8; background: transparent; }
+            QPushButton { border: none; color: #4B5563; background: transparent; }
             QPushButton:hover { background-color: rgba(255, 255, 255, 0.1); color: #FFFFFF; }
         """
         close_style = """
-            QPushButton { border: none; color: #94A3B8; background: transparent; }
+            QPushButton { border: none; color: #4B5563; background: transparent; }
             QPushButton:hover { background-color: #E81123; color: #FFFFFF; }
         """
         

@@ -19,11 +19,11 @@ class RouteMapView(QWidget):
         layout.setContentsMargins(25, 20, 25, 20)
         
         title = QLabel("My Route Map")
-        title.setStyleSheet("font-size: 18pt; font-weight: 800; color: #F8FAFC;")
+        title
         layout.addWidget(title)
         
         sub = QLabel("Stops and student counts for your route.")
-        sub.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        sub
         layout.addWidget(sub)
         
         layout.addSpacing(15)
@@ -31,10 +31,10 @@ class RouteMapView(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setStyleSheet("background: transparent;")
+        scroll
         
         content = QWidget()
-        content.setStyleSheet("background: transparent;")
+        content
         content_layout = QVBoxLayout(content)
         content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         content_layout.setSpacing(15)
@@ -53,20 +53,19 @@ class RouteMapView(QWidget):
             
         if not stops:
             lbl = QLabel("No students assigned to this route.")
-            lbl.setStyleSheet("color: #94A3B8;")
             content_layout.addWidget(lbl)
         else:
             for idx, (stop, st_list) in enumerate(stops.items()):
                 card = QFrame()
-                card.setStyleSheet("background-color: #1E293B; border-radius: 8px; border: 1px solid #334155; padding: 10px;")
+                card
                 cl = QVBoxLayout(card)
                 
                 header = QLabel(f"Stop {idx+1}: {stop}")
-                header.setStyleSheet("font-size: 12pt; font-weight: bold; color: #38BDF8; border: none;")
+                header
                 cl.addWidget(header)
                 
                 desc = QLabel(f"{len(st_list)} Students: {', '.join(st_list)}")
-                desc.setStyleSheet("font-size: 10pt; color: #F8FAFC; border: none;")
+                desc
                 desc.setWordWrap(True)
                 cl.addWidget(desc)
                 
@@ -91,31 +90,26 @@ class MyStudentsView(QWidget):
         title_box = QVBoxLayout()
         title_box.setSpacing(4)
         title_label = QLabel("My Bus Route Students")
-        title_label.setStyleSheet("font-size: 18pt; font-weight: 800; color: #F8FAFC; letter-spacing: -0.5px;")
+        title_label
         title_box.addWidget(title_label)
         
         sub_label = QLabel("View students assigned to your bus and mark daily attendance.")
-        sub_label.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        sub_label
         title_box.addWidget(sub_label)
         header_layout.addLayout(title_box)
         header_layout.addStretch()
 
         # Date Picker for Attendance
         self.date_label = QLabel(f"Attendance Date: {QDate.currentDate().toString('yyyy-MM-dd')}")
-        self.date_label.setStyleSheet("font-size: 11pt; color: #38BDF8; font-weight: bold;")
+        self.date_label
         header_layout.addWidget(self.date_label, alignment=Qt.AlignmentFlag.AlignBottom)
 
         mark_all_btn = QPushButton("Mark All Present")
         mark_all_btn.setFixedSize(140, 38)
-        mark_all_btn.setStyleSheet("QPushButton { background-color: #10B981; color: white; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #059669; }")
+        mark_all_btn.setObjectName("primaryButton")
         mark_all_btn.clicked.connect(self.mark_all_present)
         header_layout.addWidget(mark_all_btn, alignment=Qt.AlignmentFlag.AlignBottom)
 
-        refresh_btn = QPushButton("REFRESH")
-        refresh_btn.setFixedSize(100, 38)
-        refresh_btn.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 6px; font-weight: bold; font-size: 10pt; }")
-        refresh_btn.clicked.connect(self.load_students)
-        header_layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignBottom)
         
         main_layout.addLayout(header_layout)
 
@@ -125,7 +119,7 @@ class MyStudentsView(QWidget):
         self.table.setHorizontalHeaderLabels(["Student Name", "Class", "Pickup Point", "Parent Phone", "Status (Today)", "Action"])
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.table.setStyleSheet("QTableWidget { background-color: #0F172A; alternate-background-color: #131C31; border: 1px solid #334155; border-radius: 8px; } QHeaderView::section { background-color: #1E293B; color: #94A3B8; font-weight: bold; font-size: 10pt; padding: 10px; border-bottom: 2px solid #334155; } QTableWidget::item { padding: 8px 12px; font-size: 10.5pt; color: #F8FAFC; }")
+        self.table.setObjectName("dataTable")
         
         main_layout.addWidget(self.table)
         
@@ -163,7 +157,7 @@ class MyStudentsView(QWidget):
             
             present_btn = QPushButton("Present")
             present_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            present_btn.setStyleSheet("QPushButton { background-color: #059669; color: white; border-radius: 4px; padding: 6px; font-weight: bold; } QPushButton:hover { background-color: #10B981; }")
+            present_btn.setObjectName("primaryButton")
             present_btn.clicked.connect(lambda checked, sid=s_id: self.mark_attendance(sid, "Present"))
             
             absent_btn = QPushButton("Absent")
@@ -224,36 +218,26 @@ class DriverDashboard(QWidget):
         self.sidebar_frame = QFrame()
         self.sidebar_frame.setFixedWidth(240)
         self.sidebar_frame.setObjectName("sidebarFrame")
-        self.sidebar_frame.setStyleSheet("QFrame#sidebarFrame { background-color: #1E293B; }")
         self.sidebar_layout = QVBoxLayout(self.sidebar_frame)
         self.sidebar_layout.setContentsMargins(14, 20, 14, 15)
         self.sidebar_layout.setSpacing(8)
 
         sidebar_top_layout = QHBoxLayout()
-        logo_icon = QLabel("D")
-        logo_icon.setFixedSize(32, 32)
-        logo_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        logo_icon.setStyleSheet("background-color: #10B981; color: #FFFFFF; font-weight: 900; font-size: 14pt; border-radius: 16px;")
-        
         brand_text = QVBoxLayout()
         brand_text.setSpacing(0)
         lbl_brand1 = QLabel("NeoYatra")
-        lbl_brand1.setStyleSheet("font-size: 11pt; font-weight: 800; color: #F8FAFC; border: none;")
+        lbl_brand1.setObjectName("pageTitle")
         lbl_brand2 = QLabel("Driver Portal")
-        lbl_brand2.setStyleSheet("font-size: 8.5pt; font-weight: 600; color: #10B981; border: none;")
+        lbl_brand2.setObjectName("statDesc")
         brand_text.addWidget(lbl_brand1)
         brand_text.addWidget(lbl_brand2)
         
-        sidebar_top_layout.addWidget(logo_icon)
+        sidebar_top_layout.addSpacing(10)
         sidebar_top_layout.addLayout(brand_text)
         sidebar_top_layout.addStretch()
         self.sidebar_layout.addLayout(sidebar_top_layout)
         
         self.sidebar_layout.addSpacing(25)
-
-        cat_app = QLabel("APPLICATION")
-        cat_app.setStyleSheet("font-size: 8pt; font-weight: 800; color: #64748B; letter-spacing: 1px; margin-left: 4px; border: none;")
-        self.sidebar_layout.addWidget(cat_app)
 
         self.btn_students = self.add_sidebar_button("My Route Students", lambda: self.show_frame(MyStudentsView, self.btn_students))
         self.btn_route_map = self.add_sidebar_button("My Route Map", lambda: self.show_frame(RouteMapView, self.btn_route_map))
@@ -263,7 +247,7 @@ class DriverDashboard(QWidget):
         self.btn_sos = QPushButton("EMERGENCY SOS")
         self.btn_sos.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_sos.setFixedHeight(40)
-        self.btn_sos.setStyleSheet("QPushButton { background-color: #7F1D1D; color: #FFFFFF; font-weight: bold; border-radius: 6px; border: 1px solid #DC2626; } QPushButton:hover { background-color: #991B1B; }")
+        self.btn_sos.setStyleSheet("QPushButton { background-color: #7F1D1D;  font-weight: bold; border-radius: 6px; border: 1px solid #DC2626; } QPushButton:hover { background-color: #991B1B; }")
         self.btn_sos.clicked.connect(self.trigger_sos)
         self.sidebar_layout.addWidget(self.btn_sos)
         self.sidebar_layout.addSpacing(10)
@@ -277,19 +261,29 @@ class DriverDashboard(QWidget):
 
         top_bar = QFrame()
         top_bar.setFixedHeight(54)
-        top_bar.setStyleSheet("background-color: #0F172A; border-bottom: 1px solid #1E293B;")
+        top_bar.setObjectName("topBar")
         top_bar_layout = QHBoxLayout(top_bar)
         top_bar_layout.setContentsMargins(15, 6, 20, 6)
         
         self.header_breadcrumb = QLabel(f"Driver Portal")
-        self.header_breadcrumb.setStyleSheet("font-size: 11pt; font-weight: bold; color: #94A3B8; border: none; margin-left: 10px;")
+        self.header_breadcrumb
         top_bar_layout.addWidget(self.header_breadcrumb)
         top_bar_layout.addStretch()
         
+        # Theme Toggle
+        self.theme_btn = QPushButton("Night Mode")
+        self.theme_btn.setObjectName("secondaryButton")
+        self.theme_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.theme_btn.setStyleSheet("QPushButton { font-size: 11pt; border: none; background: transparent; font-weight: bold; color: #64748B; padding: 4px 10px; } QPushButton:hover { color: #38BDF8; }")
+        self.theme_btn.clicked.connect(self.toggle_theme)
+        from theme_manager import ThemeManager
+        if ThemeManager.get_instance().get_current_theme() == "dark":
+            self.theme_btn.setText("Day Mode")
+        top_bar_layout.addWidget(self.theme_btn)
         logout_btn = QPushButton("Logout")
         logout_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         logout_btn.setFixedHeight(34)
-        logout_btn.setStyleSheet("QPushButton { background-color: #EF4444; color: #FFFFFF; border: none; border-radius: 6px; padding: 0px 14px; font-weight: bold; font-size: 9.5pt; }")
+        logout_btn.setStyleSheet("QPushButton { background-color: #EF4444;  border: none; border-radius: 6px; padding: 0px 14px; font-weight: bold; font-size: 9.5pt; }")
         logout_btn.clicked.connect(self.logout)
         top_bar_layout.addWidget(logout_btn)
         
@@ -314,9 +308,9 @@ class DriverDashboard(QWidget):
     def set_active_sidebar_btn(self, active_btn):
         for btn in self.sidebar_buttons:
             if btn == active_btn:
-                btn.setStyleSheet("QPushButton#sidebarBtn { background-color: #0F172A; color: #10B981; border-left: 4px solid #10B981; font-weight: 800; }")
+                btn.setStyleSheet("QPushButton#sidebarBtn { background- color: #10B981; border-left: 4px solid #10B981; font-weight: 800; }")
             else:
-                btn.setStyleSheet("QPushButton#sidebarBtn { background-color: transparent; color: #94A3B8; border: none; font-weight: 600; }")
+                btn.setStyleSheet("QPushButton#sidebarBtn { background-color: transparent;  border: none; font-weight: 600; }")
 
     def show_frame(self, frame_class, active_btn=None):
         if active_btn:
@@ -329,6 +323,15 @@ class DriverDashboard(QWidget):
 
         frame = frame_class(self)
         self.content_layout.addWidget(frame)
+
+    def toggle_theme(self):
+        from theme_manager import ThemeManager
+        tm = ThemeManager.get_instance()
+        mode = tm.toggle_theme()
+        if mode == "dark":
+            self.theme_btn.setText("Day Mode")
+        else:
+            self.theme_btn.setText("Night Mode")
 
     def logout(self):
         from ui.login import LoginWindow

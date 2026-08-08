@@ -41,7 +41,7 @@ class ToggleSwitch(QCheckBox):
         if self.isChecked():
             bg_color = QColor("#10B981") # Green
         else:
-            bg_color = QColor("#334155") # Gray
+            bg_color = QColor("#D1D5DB") # Gray
             
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QBrush(bg_color))

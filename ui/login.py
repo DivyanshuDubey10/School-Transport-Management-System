@@ -17,15 +17,14 @@ class LoginWindow(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-        
+
         center_layout = QVBoxLayout()
         center_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Login Frame
         self.login_frame = QFrame()
-        self.login_frame.setFixedSize(480, 440)
+        self.login_frame.setFixedSize(480, 460)
         self.login_frame.setObjectName("loginFrame")
-        self.login_frame.setStyleSheet("QFrame#loginFrame { background-color: #1E293B; border-radius: 16px; border: 1px solid #334155; }")
         
         frame_layout = QVBoxLayout(self.login_frame)
         frame_layout.setContentsMargins(40, 40, 40, 40)
@@ -33,9 +32,15 @@ class LoginWindow(QWidget):
 
         # Title
         self.title_label = QLabel("NeoYatra")
-        self.title_label.setObjectName("titleLabel")
+        self.title_label.setObjectName("pageTitle")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         frame_layout.addWidget(self.title_label)
+
+        # Inline Alert Box (Hidden initially)
+        self.alert_label = QLabel("")
+        self.alert_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.alert_label.setVisible(False)
+        frame_layout.addWidget(self.alert_label)
 
         # Username
         self.username_label = QLabel("Username")
@@ -59,7 +64,7 @@ class LoginWindow(QWidget):
         self.show_password_cb = ToggleSwitch()
         self.show_password_cb.stateChanged.connect(self.toggle_password_visibility)
         lbl_show = QLabel("Show Password")
-        lbl_show.setStyleSheet("color: #94A3B8; font-weight: bold;")
+        lbl_show.setObjectName("userLabel") # maps to secondary text color
         show_pwd_layout.addWidget(self.show_password_cb)
         show_pwd_layout.addWidget(lbl_show)
         show_pwd_layout.addStretch()
@@ -84,6 +89,14 @@ class LoginWindow(QWidget):
         else:
             self.password_entry.setEchoMode(QLineEdit.EchoMode.Password)
 
+    def show_alert(self, message, type="error"):
+        self.alert_label.setText(message)
+        if type == "error":
+            self.alert_label
+        else:
+            self.alert_label
+        self.alert_label.setVisible(True)
+
     def login(self):
         username = self.username_entry.text().strip()
         password = self.password_entry.text().strip()
@@ -94,7 +107,7 @@ class LoginWindow(QWidget):
         # Check Admin first
         admin = db_dal.get_admin_by_username(username)
         if admin and security.verify_password(password, admin[2]):
-            ToastNotification(self, "Login Successful as Admin!", "success")
+            self.show_alert("Login Successful as Admin!", "success")
             self.dashboard = AdminDashboard()
             self.dashboard.show()
             self.close()
@@ -103,7 +116,7 @@ class LoginWindow(QWidget):
         # Check Parent
         parent = db_dal.get_parent_by_username(username)
         if parent and security.verify_password(password, parent[6]):
-            ToastNotification(self, f"Welcome back, {parent[1]}!", "success")
+            self.show_alert(f"Welcome back, {parent[1]}!", "success")
             parent_id = parent[0]
             self.dashboard = ParentDashboard(parent_id)
             self.dashboard.show()
@@ -113,7 +126,7 @@ class LoginWindow(QWidget):
         # Check Driver
         driver = db_dal.get_driver_by_username(username)
         if driver and driver[7] and security.verify_password(password, driver[7]):
-            ToastNotification(self, f"Welcome Driver {driver[2]}!", "success")
+            self.show_alert(f"Welcome Driver {driver[2]}!", "success")
             bus_id = driver[0]
             from ui.driver_dashboard import DriverDashboard
             self.dashboard = DriverDashboard(bus_id)
@@ -121,4 +134,4 @@ class LoginWindow(QWidget):
             self.close()
             return
 
-        ToastNotification(self, "Invalid username or password.", "error")
+        self.show_alert("⚠ Invalid username or password.", "error")

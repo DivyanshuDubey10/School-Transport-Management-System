@@ -4,8 +4,7 @@ from PyQt6.QtCore import Qt
 import sys
 import os
 
-
-def create_initials_avatar(name, size=40, bg_color="#38BDF8", text_color="#0F172A"):
+def create_initials_avatar(name, size=40, bg_color="#38BDF8", text_color="#FFFFFF"):
     """Helper to create a circular initials avatar badge."""
     lbl = QLabel()
     lbl.setFixedSize(size, size)
@@ -19,7 +18,7 @@ def create_initials_avatar(name, size=40, bg_color="#38BDF8", text_color="#0F172
         initials = "AD"
     lbl.setText(initials)
     radius = size // 2
-    lbl.setStyleSheet(f"background-color: {bg_color}; color: {text_color}; border-radius: {radius}px; font-weight: 800; font-size: 12pt; border: 1px solid #475569;")
+    lbl.setStyleSheet(f"background-color: {bg_color}; color: {text_color}; border-radius: {radius}px; font-weight: 800; font-size: 12pt; ")
     return lbl
 
 class DashboardHome(QWidget):
@@ -71,22 +70,16 @@ class DashboardHome(QWidget):
         title_box.setSpacing(4)
         self.title_label = QLabel("Admin Dashboard Overview")
         self.title_label.setObjectName("titleLabel")
-        self.title_label.setStyleSheet("font-size: 18pt; font-weight: 800; color: #F8FAFC; letter-spacing: -0.5px;")
+        self.title_label
         title_box.addWidget(self.title_label)
         
         sub_label = QLabel("Live transport metrics, student enrollment summary, and fleet operations.")
-        sub_label.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        sub_label
         title_box.addWidget(sub_label)
         
         header_layout.addLayout(title_box)
         header_layout.addStretch()
 
-        refresh_btn = QPushButton("REFRESH")
-        refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        refresh_btn.setFixedSize(130, 38)
-        refresh_btn.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #38BDF8; color: #0F172A; }")
-        refresh_btn.clicked.connect(self.load_dashboard_stats)
-        header_layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignTop)
         
         main_layout.addLayout(header_layout)
 
@@ -98,17 +91,17 @@ class DashboardHome(QWidget):
 
         def create_kpi_card(title, subtext, val_color="#38BDF8"):
             card = QFrame()
-            card.setObjectName("cardFrame")
-            card.setStyleSheet("QFrame#cardFrame { background-color: #131C31; border: 1px solid #334155; border-radius: 10px; }")
+            card.setObjectName("statCard")
+            card.setStyleSheet("QFrame#cardFrame {   border-radius: 10px; }")
             layout = QVBoxLayout(card)
             layout.setContentsMargins(18, 18, 18, 18)
             
             lbl_title = QLabel(title)
-            lbl_title.setStyleSheet("font-size: 9.5pt; font-weight: bold; color: #94A3B8; border: none;")
+            lbl_title
             lbl_val = QLabel("0")
             lbl_val.setStyleSheet(f"font-size: 26pt; font-weight: 800; color: {val_color}; border: none; margin-top: 4px;")
             lbl_sub = QLabel(subtext)
-            lbl_sub.setStyleSheet("font-size: 9pt; color: #64748B; border: none;")
+            lbl_sub
             
             layout.addWidget(lbl_title)
             layout.addWidget(lbl_val)
@@ -142,7 +135,7 @@ class DashboardHome(QWidget):
 
         # Quick Actions Section
         qa_label = QLabel("Quick Actions & Management")
-        qa_label.setStyleSheet("font-size: 13pt; font-weight: bold; color: #F8FAFC; margin-top: 10px;")
+        qa_label
         main_layout.addWidget(qa_label)
 
         qa_frame = QFrame()
@@ -154,7 +147,7 @@ class DashboardHome(QWidget):
             btn = QPushButton(text)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.setMinimumHeight(46)
-            btn.setStyleSheet("QPushButton { background-color: #1E293B; color: #F8FAFC; border: 1px solid #334155; border-radius: 8px; font-weight: bold; font-size: 10.5pt; padding: 0 16px; text-align: left; } QPushButton:hover { background-color: #2563EB; border-color: #38BDF8; color: #FFFFFF; }")
+            btn.setObjectName("actionButton")
             btn.clicked.connect(callback)
             qa_layout.addWidget(btn, row, col)
             return btn
@@ -168,7 +161,6 @@ class DashboardHome(QWidget):
 
         main_layout.addWidget(qa_frame)
         main_layout.addStretch()
-
 
 class AdminDashboard(QWidget):
     def __init__(self):
@@ -239,22 +231,17 @@ class AdminDashboard(QWidget):
         self.sidebar_toggle_btn.setFixedSize(38, 38)
         self.sidebar_toggle_btn.clicked.connect(self.toggle_sidebar)
         
-        logo_icon = QLabel("M")
-        logo_icon.setFixedSize(32, 32)
-        logo_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        logo_icon.setStyleSheet("background-color: #2563EB; color: #FFFFFF; font-weight: 900; font-size: 14pt; border-radius: 16px;")
-        
         brand_text = QVBoxLayout()
         brand_text.setSpacing(0)
         lbl_brand1 = QLabel("NeoYatra")
-        lbl_brand1.setStyleSheet("font-size: 11pt; font-weight: 800; color: #F8FAFC; border: none;")
+        lbl_brand1.setObjectName("pageTitle")
         lbl_brand2 = QLabel("Transport Portal")
-        lbl_brand2.setStyleSheet("font-size: 8.5pt; font-weight: 600; color: #38BDF8; border: none;")
+        lbl_brand2.setObjectName("statDesc")
         brand_text.addWidget(lbl_brand1)
         brand_text.addWidget(lbl_brand2)
         
         sidebar_top_layout.addWidget(self.sidebar_toggle_btn)
-        sidebar_top_layout.addWidget(logo_icon)
+        sidebar_top_layout.addSpacing(10)
         sidebar_top_layout.addLayout(brand_text)
         sidebar_top_layout.addStretch()
         self.sidebar_layout.addLayout(sidebar_top_layout)
@@ -263,7 +250,7 @@ class AdminDashboard(QWidget):
 
         # User Profile Card in Sidebar (exactly like screenshot!)
         user_card = QFrame()
-        user_card.setStyleSheet("QFrame { background-color: #1E293B; border-radius: 8px; border: 1px solid #334155; }")
+        user_card.setStyleSheet("QFrame {  border-radius: 8px;  }")
         user_card_layout = QHBoxLayout(user_card)
         user_card_layout.setContentsMargins(12, 10, 12, 10)
         user_card_layout.setSpacing(10)
@@ -274,9 +261,9 @@ class AdminDashboard(QWidget):
         user_text = QVBoxLayout()
         user_text.setSpacing(2)
         self.lbl_uname = QLabel("Administrator")
-        self.lbl_uname.setStyleSheet("font-size: 10pt; font-weight: bold; color: #F8FAFC; border: none;")
-        lbl_urole = QLabel("SuperAdmin Portal")
-        lbl_urole.setStyleSheet("font-size: 8.5pt; color: #38BDF8; border: none;")
+        self.lbl_uname.setObjectName("statTitle")
+        lbl_urole = QLabel("Admin")
+        lbl_urole.setObjectName("statDesc")
         user_text.addWidget(self.lbl_uname)
         user_text.addWidget(lbl_urole)
         user_card_layout.addLayout(user_text)
@@ -284,11 +271,6 @@ class AdminDashboard(QWidget):
         
         self.sidebar_layout.addWidget(user_card)
         self.sidebar_layout.addSpacing(12)
-
-        # Section Header 1: APPLICATION
-        cat_app = QLabel("APPLICATION")
-        cat_app.setStyleSheet("font-size: 8pt; font-weight: 800; color: #64748B; letter-spacing: 1px; margin-left: 4px; border: none;")
-        self.sidebar_layout.addWidget(cat_app)
 
         self.btn_home = self.add_sidebar_button("Dashboard", lambda: self.show_frame(DashboardHome, self.btn_home))
         self.btn_stu_mgmt = self.add_sidebar_button("Student Management", self.open_student_management)
@@ -301,10 +283,7 @@ class AdminDashboard(QWidget):
         
         self.sidebar_layout.addSpacing(15)
 
-        # Section Header 2: MANAGEMENT
-        cat_mgmt = QLabel("MANAGEMENT")
-        cat_mgmt.setStyleSheet("font-size: 8pt; font-weight: 800; color: #64748B; letter-spacing: 1px; margin-left: 4px; border: none;")
-        self.sidebar_layout.addWidget(cat_mgmt)
+        
 
         self.btn_profile = self.add_sidebar_button("Profile & Security", self.open_profile_view)
         self.btn_settings = self.add_sidebar_button("System Settings", self.open_settings_view)
@@ -315,14 +294,14 @@ class AdminDashboard(QWidget):
         # Footer (Copyright & Version exactly like screenshot)
         footer_line = QFrame()
         footer_line.setFixedHeight(1)
-        footer_line.setStyleSheet("background-color: #1E293B; border: none;")
+        footer_line
         self.sidebar_layout.addWidget(footer_line)
         
         footer_layout = QHBoxLayout()
         lbl_copy = QLabel("@2026 Copyright")
-        lbl_copy.setStyleSheet("font-size: 8pt; color: #64748B; border: none;")
+        lbl_copy
         lbl_ver = QLabel("version 1.4.0")
-        lbl_ver.setStyleSheet("font-size: 8pt; color: #64748B; border: none;")
+        lbl_ver
         footer_layout.addWidget(lbl_copy)
         footer_layout.addStretch()
         footer_layout.addWidget(lbl_ver)
@@ -339,7 +318,7 @@ class AdminDashboard(QWidget):
         # Top Bar (with toggle button and right-side action icons like screenshot)
         top_bar = QFrame()
         top_bar.setFixedHeight(54)
-        top_bar.setStyleSheet("background-color: #0F172A; border-bottom: 1px solid #1E293B;")
+        top_bar.setObjectName("topBar")
         top_bar_layout = QHBoxLayout(top_bar)
         top_bar_layout.setContentsMargins(15, 6, 20, 6)
         
@@ -351,7 +330,7 @@ class AdminDashboard(QWidget):
         top_bar_layout.addWidget(self.toggle_btn)
         
         self.header_breadcrumb = QLabel("Admin Portal  /  Dashboard Overview")
-        self.header_breadcrumb.setStyleSheet("font-size: 11pt; font-weight: bold; color: #94A3B8; border: none; margin-left: 10px;")
+        self.header_breadcrumb
         top_bar_layout.addWidget(self.header_breadcrumb)
         
         top_bar_layout.addStretch()
@@ -359,11 +338,20 @@ class AdminDashboard(QWidget):
         # Right-side action badge icons
         # System Online and Alerts have been removed
 
-
+        # Theme Toggle
+        self.theme_btn = QPushButton("Night Mode")
+        self.theme_btn.setObjectName("secondaryButton")
+        self.theme_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.theme_btn.setStyleSheet("QPushButton { font-size: 11pt; border: none; background: transparent; font-weight: bold; color: #64748B; padding: 4px 10px; } QPushButton:hover { color: #38BDF8; }")
+        self.theme_btn.clicked.connect(self.toggle_theme)
+        from theme_manager import ThemeManager
+        if ThemeManager.get_instance().get_current_theme() == "dark":
+            self.theme_btn.setText("Day Mode")
+        top_bar_layout.addWidget(self.theme_btn)
         logout_btn = QPushButton("Logout")
         logout_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         logout_btn.setFixedHeight(34)
-        logout_btn.setStyleSheet("QPushButton { background-color: #EF4444; color: #FFFFFF; border: none; border-radius: 6px; padding: 0px 14px; font-weight: bold; font-size: 9.5pt; } QPushButton:hover { background-color: #DC2626; }")
+        logout_btn.setObjectName("dangerButton")
         logout_btn.clicked.connect(self.logout)
         top_bar_layout.addWidget(logout_btn)
 
@@ -392,9 +380,9 @@ class AdminDashboard(QWidget):
     def set_active_sidebar_btn(self, active_btn):
         for btn in self.sidebar_buttons:
             if btn == active_btn:
-                btn.setStyleSheet("QPushButton#sidebarBtn { background-color: #1E293B; color: #38BDF8; border-left: 4px solid #38BDF8; font-weight: 800; text-align: left; padding-left: 12px; }")
+                btn.setStyleSheet("QPushButton#sidebarBtn {  color: #38BDF8; border-left: 4px solid #38BDF8; font-weight: 800; text-align: left; padding-left: 12px; }")
             else:
-                btn.setStyleSheet("QPushButton#sidebarBtn { background-color: transparent; color: #94A3B8; border: none; font-weight: 600; text-align: left; padding-left: 14px; } QPushButton#sidebarBtn:hover { background-color: #1E293B; color: #F8FAFC; }")
+                btn.setStyleSheet("QPushButton#sidebarBtn { background-color: transparent;  border: none; font-weight: 600; text-align: left; padding-left: 14px; } QPushButton#sidebarBtn:hover {   }")
 
     def toggle_sidebar(self):
         if self.sidebar_frame.isVisible():
@@ -452,6 +440,15 @@ class AdminDashboard(QWidget):
             self.user_avatar.setParent(self.lbl_uname.parentWidget())
             self.lbl_uname.parentWidget().layout().insertWidget(0, self.user_avatar)
         
+    def toggle_theme(self):
+        from theme_manager import ThemeManager
+        tm = ThemeManager.get_instance()
+        mode = tm.toggle_theme()
+        if mode == "dark":
+            self.theme_btn.setText("Day Mode")
+        else:
+            self.theme_btn.setText("Night Mode")
+
     def logout(self):
         from ui.login import LoginWindow
         self.login_window = LoginWindow()

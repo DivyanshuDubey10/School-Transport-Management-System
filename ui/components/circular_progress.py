@@ -46,7 +46,9 @@ class CircularProgress(QWidget):
         rect = QRectF(margin, margin, width - margin * 2, height - margin * 2)
         
         # Background ring
-        pen_bg = QPen(QColor("#1E293B"))
+        is_dark_mode = self.palette().text().color().lightness() > 128
+        bg_color = QColor("#334155") if is_dark_mode else QColor("#E5E7EB")
+        pen_bg = QPen(bg_color)
         pen_bg.setWidth(12)
         pen_bg.setCapStyle(Qt.PenCapStyle.RoundCap)
         painter.setPen(pen_bg)
@@ -67,7 +69,8 @@ class CircularProgress(QWidget):
         painter.drawArc(rect.toRect(), 90 * 16, span_angle)
         
         # Draw Value
-        painter.setPen(QColor("#F8FAFC"))
+        text_color = QColor("#F8FAFC") if is_dark_mode else QColor("#0F172A")
+        painter.setPen(text_color)
         font = QFont("Segoe UI", 18, QFont.Weight.Bold)
         painter.setFont(font)
         
@@ -79,10 +82,10 @@ class CircularProgress(QWidget):
             
         painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, text)
         
-        # Draw Title
         if self.title:
             font_title = QFont("Segoe UI", 9, QFont.Weight.Bold)
             painter.setFont(font_title)
-            painter.setPen(QColor("#94A3B8"))
+            title_color = QColor("#CBD5E1") if is_dark_mode else QColor("#475569")
+            painter.setPen(title_color)
             title_rect = QRectF(rect.x(), rect.y() + 30, rect.width(), rect.height())
             painter.drawText(title_rect, Qt.AlignmentFlag.AlignCenter, self.title)

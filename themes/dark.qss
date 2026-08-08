@@ -1,0 +1,196 @@
+
+/* =========================================================
+   STMS - DARK THEME
+   School Transport Management System
+   ========================================================= */
+
+QWidget {
+    background-color: #0F172A;
+    color: #F8FAFC;
+    font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+}
+
+QLabel {
+    background: transparent;
+    color: #F8FAFC;
+}
+
+QMainWindow, QDialog {
+    background-color: #0F172A;
+}
+
+#sidebarFrame {
+    background-color: #111827;
+    border-right: 1px solid #334155;
+}
+
+#sidebarBtn {
+    background-color: transparent;
+    color: #F8FAFC;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 14px;
+    text-align: left;
+    font-weight: 600;
+}
+#sidebarBtn:hover {
+    background-color: #1E293B;
+    color: #60A5FA;
+}
+#sidebarBtn:checked {
+    background-color: #2563EB;
+    color: #FFFFFF;
+}
+
+#topBar {
+    background-color: #111827;
+    border-bottom: 1px solid #334155;
+}
+#titleLabel {
+    font-size: 20px;
+    font-weight: bold;
+    color: #F8FAFC;
+}
+
+#statCard, QGroupBox {
+    background-color: #1E293B;
+    border: 1px solid #334155;
+    border-radius: 12px;
+}
+QGroupBox {
+    margin-top: 10px;
+    padding-top: 15px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 15px;
+    padding: 0 5px;
+    color: #F8FAFC;
+    font-weight: bold;
+}
+#statTitle {
+    color: #94A3B8;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+#statValue {
+    color: #F8FAFC;
+    font-weight: bold;
+    font-size: 26px;
+}
+#statDesc {
+    color: #CBD5E1;
+    font-size: 12px;
+}
+
+QPushButton {
+    background-color: #2563EB;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+QPushButton:hover {
+    background-color: #3B82F6;
+}
+
+#actionButton {
+    background-color: #2563EB;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 12px 16px;
+    text-align: left;
+}
+#actionButton:hover {
+    background-color: #3B82F6;
+}
+
+#secondaryButton {
+    background-color: #1E293B;
+    color: #F8FAFC;
+    border: 1px solid #475569;
+}
+#secondaryButton:hover {
+    background-color: #334155;
+}
+
+#dangerButton {
+    background-color: #EF4444;
+    color: #FFFFFF;
+}
+#dangerButton:hover {
+    background-color: #F87171;
+}
+
+QLineEdit, QComboBox, QSpinBox {
+    background-color: #1E293B;
+    color: #F8FAFC;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    padding: 8px;
+}
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus {
+    border: 1px solid #60A5FA;
+}
+
+QTableWidget {
+    background-color: #111827;
+    color: #F8FAFC;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    gridline-color: #334155;
+    selection-background-color: #1E3A5F;
+    selection-color: #FFFFFF;
+}
+QHeaderView::section {
+    background-color: #1E293B;
+    color: #F8FAFC;
+    font-weight: bold;
+    padding: 8px;
+    border: none;
+    border-bottom: 1px solid #334155;
+    border-right: 1px solid #334155;
+}
+QTableWidget::item {
+    padding: 8px;
+    border-bottom: 1px solid #334155;
+}
+
+QScrollBar:vertical {
+    background: #111827;
+    width: 10px;
+    margin: 0px 0px 0px 0px;
+}
+QScrollBar::handle:vertical {
+    background: #475569;
+    min-height: 20px;
+    border-radius: 5px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #64748B;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+QScrollBar:horizontal {
+    background: #111827;
+    height: 10px;
+    margin: 0px 0px 0px 0px;
+}
+QScrollBar::handle:horizontal {
+    background: #475569;
+    min-width: 20px;
+    border-radius: 5px;
+}
+QScrollBar::handle:horizontal:hover {
+    background: #64748B;
+}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}

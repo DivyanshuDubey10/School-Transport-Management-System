@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
                                QFrame, QGridLayout, QScrollArea, QTableWidget, QTableWidgetItem, 
-                               QHeaderView, QLineEdit, QMessageBox, QSpacerItem, QSizePolicy, QDialog, QFormLayout, QComboBox, QCheckBox)
-from PyQt6.QtCore import Qt
+                               QHeaderView, QLineEdit, QMessageBox, QSpacerItem, QSizePolicy, QDialog, QFormLayout, QComboBox, QCheckBox, QCalendarWidget)
+from PyQt6.QtCore import Qt, QDate, QRect
+from PyQt6.QtGui import QPainter, QColor
 import sys
 import os
 
@@ -9,7 +10,45 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import connect_database
 from dal import db_dal
 
-def create_initials_avatar(name, size=44, bg_color="#334155", text_color="#F8FAFC"):
+class CustomCalendarWidget(QCalendarWidget):
+    def __init__(self, attendance_map):
+        super().__init__()
+        self.attendance_map = attendance_map
+        
+    def paintCell(self, painter, rect, date):
+        date_str = date.toString("yyyy-MM-dd")
+        status = self.attendance_map.get(date_str)
+        
+        if status == "Present":
+            painter.fillRect(rect, QColor(209, 250, 229)) # light green
+        elif status == "Absent":
+            painter.fillRect(rect, QColor(254, 226, 226)) # light red
+            
+        super().paintCell(painter, rect, date)
+
+class AttendanceCalendarDialog(QDialog):
+    def __init__(self, parent, student_id, student_name):
+        super().__init__(parent)
+        self.setWindowTitle(f"Attendance Calendar - {student_name}")
+        self.setFixedSize(500, 450)
+        self
+        
+        layout = QVBoxLayout(self)
+        
+        att_records = db_dal.get_attendance_history_for_student(student_id)
+        att_map = {str(r[0]): r[1] for r in att_records}
+        
+        self.calendar = CustomCalendarWidget(att_map)
+        self.calendar.setStyleSheet("QCalendarWidget QWidget { alternate-background- }")
+        layout.addWidget(self.calendar)
+        
+        close_btn = QPushButton("Close Calendar")
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_btn.setStyleSheet("QPushButton { background- color: white; border-radius: 6px; padding: 8px; font-weight: bold; } QPushButton:hover { background- }")
+        close_btn.clicked.connect(self.accept)
+        layout.addWidget(close_btn)
+
+def create_initials_avatar(name, size=44, bg_color="#D1D5DB", text_color="#111827"):
     """Helper to create a circular initials avatar badge like in modern SaaS dashboards."""
     lbl = QLabel()
     lbl.setFixedSize(size, size)
@@ -25,7 +64,7 @@ def create_initials_avatar(name, size=44, bg_color="#334155", text_color="#F8FAF
         
     lbl.setText(initials)
     radius = size // 2
-    lbl.setStyleSheet(f"background-color: {bg_color}; color: {text_color}; border-radius: {radius}px; font-weight: 800; font-size: 13pt; border: 1px solid #475569;")
+    lbl.setStyleSheet(f"background-color: {bg_color}; color: {text_color}; border-radius: {radius}px; font-weight: 800; font-size: 13pt; ")
     return lbl
 
 class ChildrenView(QWidget):
@@ -46,31 +85,25 @@ class ChildrenView(QWidget):
         title_box.setSpacing(4)
         title_label = QLabel("My Enrolled Children")
         title_label.setObjectName("titleLabel")
-        title_label.setStyleSheet("font-size: 18pt; font-weight: 800; color: #F8FAFC; letter-spacing: -0.5px;")
+        title_label
         title_box.addWidget(title_label)
         
         sub_label = QLabel("Active student transport profiles, assigned bus routes, and live fee status.")
-        sub_label.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        sub_label
         title_box.addWidget(sub_label)
         
         header_layout.addLayout(title_box)
         header_layout.addStretch()
 
         # REFRESH Button
-        refresh_btn = QPushButton("REFRESH")
-        refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        refresh_btn.setFixedSize(100, 38)
-        refresh_btn.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #38BDF8; color: #0F172A; }")
-        refresh_btn.clicked.connect(self.parent_dashboard.refresh_dashboard)
         
         # Request Transport Button
         request_btn = QPushButton("REQUEST TRANSPORT")
         request_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         request_btn.setFixedSize(170, 38)
-        request_btn.setStyleSheet("QPushButton { background-color: #38BDF8; color: #0F172A; border: none; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #0EA5E9; }")
+        request_btn.setStyleSheet("QPushButton { background-color: #38BDF8;  border: none; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #0EA5E9; }")
         request_btn.clicked.connect(self.open_request_modal)
 
-        header_layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignTop)
         header_layout.addWidget(request_btn, alignment=Qt.AlignmentFlag.AlignTop)
         
         main_layout.addLayout(header_layout)
@@ -83,11 +116,6 @@ class ChildrenView(QWidget):
         self.search_entry.textChanged.connect(self.filter_cards)
         search_layout.addWidget(self.search_entry)
         main_layout.addLayout(search_layout)
-
-    def open_request_modal(self):
-        dialog = RequestTransportDialog(self.parent_dashboard.parent_id, self)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            self.parent_dashboard.refresh_dashboard()
 
         # 3. KPI Summary Banner
         total_children = len(self.parent_dashboard.children_records)
@@ -104,18 +132,18 @@ class ChildrenView(QWidget):
 
         def create_kpi_card(title, value, subtext, val_color="#38BDF8"):
             card = QFrame()
-            card.setObjectName("cardFrame")
-            card.setStyleSheet("QFrame#cardFrame { background-color: #131C31; border: 1px solid #334155; border-radius: 10px; }")
+            card.setObjectName("statCard")
+            card.setStyleSheet("QFrame#cardFrame {   border-radius: 10px; }")
             layout = QVBoxLayout(card)
             layout.setContentsMargins(16, 14, 16, 14)
-            
+
             lbl_title = QLabel(title)
-            lbl_title.setStyleSheet("font-size: 9pt; font-weight: bold; color: #94A3B8; border: none;")
+            lbl_title
             lbl_val = QLabel(str(value))
             lbl_val.setStyleSheet(f"font-size: 20pt; font-weight: 800; color: {val_color}; border: none; margin-top: 2px;")
             lbl_sub = QLabel(subtext)
-            lbl_sub.setStyleSheet("font-size: 9pt; color: #64748B; border: none;")
-            
+            lbl_sub
+
             layout.addWidget(lbl_title)
             layout.addWidget(lbl_val)
             layout.addWidget(lbl_sub)
@@ -127,17 +155,17 @@ class ChildrenView(QWidget):
         bal_text = f"₹{total_balance:,.2f}" if total_balance > 0 else "₹0.00 (Clear)"
         bal_sub = "Payment Outstanding" if total_balance > 0 else "All Fee Accounts Paid"
         grid.addWidget(create_kpi_card("TOTAL BALANCE DUE", bal_text, bal_sub, bal_color), 0, 2)
-        
+
         main_layout.addWidget(summary_frame)
 
         # 4. Scroll Area for Professional Student Cards
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        scroll_area.setStyleSheet("background: transparent;")
+        scroll_area
 
         scroll_content = QWidget()
-        scroll_content.setStyleSheet("background: transparent;")
+        scroll_content
         self.scroll_layout = QVBoxLayout(scroll_content)
         self.scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.scroll_layout.setSpacing(16)
@@ -149,11 +177,16 @@ class ChildrenView(QWidget):
         self.all_child_widgets = []
         self.populate_cards()
 
+    def open_request_modal(self):
+        dialog = RequestTransportDialog(self.parent_dashboard.parent_id, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.parent_dashboard.refresh_dashboard()
+
     def populate_cards(self):
         children = self.parent_dashboard.children_records
         if not children:
             no_record_label = QLabel("No student transport records found.")
-            no_record_label.setStyleSheet("font-size: 12pt; color: #94A3B8;")
+            no_record_label
             no_record_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             
             empty_frame = QFrame()
@@ -179,8 +212,8 @@ class ChildrenView(QWidget):
         s_id, s_name, s_class, fee_paid, fee_balance, bus_no, drv_name, drv_phone, r_name, p_pickup = child
         
         card = QFrame()
-        card.setObjectName("cardFrame")
-        card.setStyleSheet("QFrame#cardFrame { background-color: #1E293B; border: 1px solid #334155; border-radius: 10px; } QFrame#cardFrame:hover { border: 1px solid #475569; background-color: #223046; }")
+        card.setObjectName("statCard")
+        card.setStyleSheet("QFrame#cardFrame {   border-radius: 10px; } QFrame#cardFrame:hover {  background- }")
         
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(20, 18, 20, 16)
@@ -194,11 +227,11 @@ class ChildrenView(QWidget):
         name_info_box.setSpacing(2)
         
         name_lbl = QLabel(s_name)
-        name_lbl.setStyleSheet("font-size: 14pt; font-weight: 800; color: #F8FAFC; border: none;")
+        name_lbl
         name_info_box.addWidget(name_lbl)
         
         sub_info_lbl = QLabel(f"Class {s_class}  •  Tenant: STMS-ORG  •  ID: STU-{hash(s_name)%10000:04d}")
-        sub_info_lbl.setStyleSheet("font-size: 9.5pt; color: #94A3B8; border: none;")
+        sub_info_lbl
         name_info_box.addWidget(sub_info_lbl)
         
         top_layout.addLayout(name_info_box)
@@ -215,8 +248,8 @@ class ChildrenView(QWidget):
                 today_status = r[1]
                 break
 
-        status_color = "#334155" # Default gray
-        text_color = "#94A3B8"
+        status_color = "#D1D5DB" # Default gray
+        text_color = "#1F2937"
         if today_status == "Present":
             status_color = "#047857" # Green
             text_color = "#FFFFFF"
@@ -225,7 +258,7 @@ class ChildrenView(QWidget):
             text_color = "#FFFFFF"
 
         status_pill = QLabel(f"Today: {today_status}")
-        status_pill.setStyleSheet(f"font-size: 9.5pt; font-weight: bold; color: {text_color}; background-color: {status_color}; border-radius: 12px; padding: 5px 12px; border: 1px solid #475569;")
+        status_pill.setStyleSheet(f"font-size: 9.5pt; font-weight: bold; color: {text_color}; background-color: {status_color}; border-radius: 12px; padding: 5px 12px; ")
         top_layout.addWidget(status_pill)
         
         card_layout.addLayout(top_layout)
@@ -233,7 +266,7 @@ class ChildrenView(QWidget):
         # Divider line
         div1 = QFrame()
         div1.setFixedHeight(1)
-        div1.setStyleSheet("background-color: #334155; border: none;")
+        div1
         card_layout.addWidget(div1)
 
         # Row 2: Two Column Service & Route Details
@@ -248,26 +281,26 @@ class ChildrenView(QWidget):
         left_layout.setSpacing(6)
         
         bus_title = QLabel("ASSIGNED BUS SERVICE")
-        bus_title.setStyleSheet("font-size: 9.5pt; font-weight: 800; color: #94A3B8; letter-spacing: 0.5px; border: none;")
+        bus_title
         left_layout.addWidget(bus_title)
         
         bus_val = QLabel(f"Bus Number:  {bus_no if bus_no else 'Unassigned'}")
-        bus_val.setStyleSheet("font-size: 12pt; font-weight: bold; color: #F8FAFC; border: none;")
+        bus_val
         left_layout.addWidget(bus_val)
         
         drv_val = QLabel(f"Driver Name:  {drv_name if drv_name else 'N/A'}")
-        drv_val.setStyleSheet("font-size: 10.5pt; color: #CBD5E1; border: none;")
+        drv_val
         left_layout.addWidget(drv_val)
         
         ph_val = QLabel(f"Contact Phone:  {drv_phone if drv_phone else 'N/A'}")
-        ph_val.setStyleSheet("font-size: 10.5pt; color: #CBD5E1; border: none;")
+        ph_val
         left_layout.addWidget(ph_val)
 
         if drv_phone and drv_phone != 'N/A':
             call_btn = QPushButton(f"Call Driver ({drv_phone})")
             call_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             call_btn.setFixedWidth(190)
-            call_btn.setStyleSheet("QPushButton { background-color: #0F172A; color: #38BDF8; border: 1px solid #38BDF8; border-radius: 6px; padding: 5px 12px; font-weight: bold; font-size: 9.5pt; } QPushButton:hover { background-color: #38BDF8; color: #0F172A; }")
+            call_btn.setStyleSheet("QPushButton { background- color: #38BDF8; border: 1px solid #38BDF8; border-radius: 6px; padding: 5px 12px; font-weight: bold; font-size: 9.5pt; } QPushButton:hover { background-color: #38BDF8;  }")
             call_btn.clicked.connect(lambda checked=False, n=drv_name, p=drv_phone: self.call_driver(n, p))
             left_layout.addWidget(call_btn)
 
@@ -278,16 +311,25 @@ class ChildrenView(QWidget):
         right_layout.setSpacing(6)
         
         route_title = QLabel("ROUTE DETAILS")
-        route_title.setStyleSheet("font-size: 9.5pt; font-weight: 800; color: #94A3B8; letter-spacing: 0.5px; border: none;")
+        route_title
         right_layout.addWidget(route_title)
         
         rt_val = QLabel(f"Route Path:  {r_name if r_name else 'Unassigned'}")
-        rt_val.setStyleSheet("font-size: 12pt; font-weight: bold; color: #F8FAFC; border: none;")
+        rt_val
         right_layout.addWidget(rt_val)
         
         stop_val = QLabel(f"Designated Stop:  {p_pickup if p_pickup else 'Unassigned'}")
-        stop_val.setStyleSheet("font-size: 10.5pt; color: #CBD5E1; border: none;")
+        stop_val
         right_layout.addWidget(stop_val)
+
+        # Quick Link to Attendance Calendar
+        cal_btn = QPushButton("📅 View Attendance Calendar")
+        cal_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        cal_btn.setFixedWidth(220)
+        cal_btn.setObjectName("primaryButton")
+        cal_btn.clicked.connect(lambda checked=False, sid=s_id, sname=s_name: self.open_calendar(sid, sname))
+        right_layout.addWidget(cal_btn)
+
         
         right_layout.addStretch()
         body_layout.addLayout(right_layout, 0, 1)
@@ -297,7 +339,7 @@ class ChildrenView(QWidget):
         # Divider line 2
         div2 = QFrame()
         div2.setFixedHeight(1)
-        div2.setStyleSheet("background-color: #334155; border: none; margin-top: 4px;")
+        div2
         card_layout.addWidget(div2)
 
         # Row 3: Fee Status & Payment Action
@@ -305,36 +347,40 @@ class ChildrenView(QWidget):
         foot_layout.setSpacing(10)
         
         paid_lbl = QLabel(f"Total Paid: ₹{fee_paid}")
-        paid_lbl.setStyleSheet("font-size: 10.5pt; font-weight: bold; color: #10B981; border: none;")
+        paid_lbl
         foot_layout.addWidget(paid_lbl)
 
         fee_bal_val = float(fee_balance)
         if fee_bal_val > 0:
             bal_lbl = QLabel(f"  •   Balance: ₹{fee_balance}")
-            bal_lbl.setStyleSheet("font-size: 10.5pt; font-weight: 800; color: #EF4444; border: none;")
+            bal_lbl
             foot_layout.addWidget(bal_lbl)
             
             foot_layout.addStretch()
             
             pay_btn = QPushButton("Pay Balance")
             pay_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            pay_btn.setStyleSheet("QPushButton { background-color: #2563EB; color: #FFFFFF; border: none; border-radius: 6px; padding: 6px 16px; font-weight: bold; font-size: 9.5pt; } QPushButton:hover { background-color: #1D4ED8; }")
+            pay_btn.setObjectName("actionButton")
             pay_btn.clicked.connect(lambda checked=False, student=s_name, bal=fee_balance: self.pay_fee_prompt(student, bal))
             foot_layout.addWidget(pay_btn)
         else:
             bal_lbl = QLabel("  •   Fully Paid")
-            bal_lbl.setStyleSheet("font-size: 10.5pt; font-weight: bold; color: #10B981; border: none;")
+            bal_lbl
             foot_layout.addWidget(bal_lbl)
             
             foot_layout.addStretch()
             
             clear_pill = QLabel("CLEARED")
-            clear_pill.setStyleSheet("font-size: 9pt; font-weight: bold; color: #10B981; background-color: #064E3B; border-radius: 6px; padding: 4px 12px; border: none;")
+            clear_pill
             foot_layout.addWidget(clear_pill)
 
         card_layout.addLayout(foot_layout)
 
         return card
+
+    def open_calendar(self, student_id, student_name):
+        dialog = AttendanceCalendarDialog(self, student_id, student_name)
+        dialog.exec()
 
     def call_driver(self, driver_name, phone):
         QMessageBox.information(
@@ -349,7 +395,6 @@ class ChildrenView(QWidget):
             "Online Fee Payment",
             f"Fee Payment Portal for {student_name}\nAmount Due: ₹{balance}"
         )
-
 
 class ParentBusSchedule(QWidget):
     def __init__(self, parent_dashboard):
@@ -369,22 +414,16 @@ class ParentBusSchedule(QWidget):
         title_box = QVBoxLayout()
         title_box.setSpacing(4)
         title_label = QLabel("NeoYatra Fleet & Routes")
-        title_label.setStyleSheet("font-size: 20pt; font-weight: bold; color: #F8FAFC;")
+        title_label
         main_layout.addWidget(title_label)
 
         sub_label = QLabel("Complete schedule of NeoYatra buses, assigned drivers, and travel paths.")
-        sub_label.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        sub_label
         title_box.addWidget(sub_label)
         
         header_layout.addLayout(title_box)
         header_layout.addStretch()
 
-        refresh_btn = QPushButton("REFRESH")
-        refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        refresh_btn.setFixedSize(130, 38)
-        refresh_btn.setStyleSheet("QPushButton { background-color: #1E293B; color: #F8FAFC; border: 1.5px solid #334155; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #334155; }")
-        refresh_btn.clicked.connect(self.load_buses)
-        header_layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignTop)
         
         main_layout.addLayout(header_layout)
 
@@ -404,7 +443,7 @@ class ParentBusSchedule(QWidget):
         self.buses_table.setHorizontalHeaderLabels(["Bus Number", "Driver Profile", "Contact Number", "Assigned Travel Path"])
         
         header = self.buses_table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.buses_table.setColumnWidth(0, 150)
         self.buses_table.setColumnWidth(1, 230)
         self.buses_table.setColumnWidth(2, 170)
@@ -415,7 +454,7 @@ class ParentBusSchedule(QWidget):
         self.buses_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.buses_table.setAlternatingRowColors(True)
         self.buses_table.verticalScrollBar().setSingleStep(15)
-        self.buses_table.setStyleSheet("QTableWidget { background-color: #0F172A; alternate-background-color: #131C31; border: 1px solid #334155; border-radius: 8px; } QHeaderView::section { background-color: #1E293B; color: #94A3B8; font-weight: bold; font-size: 10pt; padding: 10px; border-bottom: 2px solid #334155; } QTableWidget::item { padding: 8px 12px; font-size: 10.5pt; color: #F8FAFC; }")
+        self.buses_table.setObjectName("dataTable")
         
         main_layout.addWidget(self.buses_table)
 
@@ -438,7 +477,6 @@ class ParentBusSchedule(QWidget):
             self.buses_table.setItem(row_idx, 2, QTableWidgetItem(f"{drv_phone}"))
             self.buses_table.setItem(row_idx, 3, QTableWidgetItem(f"{route_name}"))
 
-
 class AttendanceView(QWidget):
     def __init__(self, parent_dashboard):
         super().__init__()
@@ -450,20 +488,15 @@ class AttendanceView(QWidget):
         layout.setContentsMargins(25, 20, 25, 20)
         
         title = QLabel("Boarding & Attendance Logs")
-        title.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
+        title.setObjectName("pageTitle")
         
         sub = QLabel("Daily transport boarding and attendance records.")
-        sub.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        sub
         
         header_layout = QHBoxLayout()
         header_layout.addWidget(title)
         header_layout.addStretch()
         
-        refresh_btn = QPushButton("REFRESH")
-        refresh_btn.setFixedSize(100, 38)
-        refresh_btn.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 6px; font-weight: bold; font-size: 10pt; }")
-        refresh_btn.clicked.connect(self.load_attendance)
-        header_layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignBottom)
         
         layout.addLayout(header_layout)
         layout.addWidget(sub)
@@ -472,10 +505,10 @@ class AttendanceView(QWidget):
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.scroll.setStyleSheet("background: transparent;")
+        self.scroll
         
         self.content_widget = QWidget()
-        self.content_widget.setStyleSheet("background: transparent;")
+        self.content_widget
         self.content_layout = QVBoxLayout(self.content_widget)
         self.content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.content_layout.setSpacing(20)
@@ -497,7 +530,7 @@ class AttendanceView(QWidget):
         
         if not children:
             lbl = QLabel("No enrolled children found.")
-            lbl.setStyleSheet("font-size: 11pt; color: #94A3B8;")
+            lbl
             self.content_layout.addWidget(lbl)
             return
 
@@ -507,23 +540,23 @@ class AttendanceView(QWidget):
             
             # Card for each child
             card = QFrame()
-            card.setStyleSheet("background-color: #1E293B; border-radius: 10px; border: 1px solid #334155;")
+            card
             card_layout = QVBoxLayout(card)
             
             name_lbl = QLabel(f"{s_name} (Class {s_class})")
-            name_lbl.setStyleSheet("font-size: 14pt; font-weight: bold; color: #F8FAFC;")
+            name_lbl
             card_layout.addWidget(name_lbl)
             
             if not records:
                 no_rec_lbl = QLabel("No attendance records found.")
-                no_rec_lbl.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+                no_rec_lbl
                 card_layout.addWidget(no_rec_lbl)
             else:
                 table = QTableWidget()
                 table.setColumnCount(2)
                 table.setHorizontalHeaderLabels(["Date", "Status"])
                 table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-                table.setStyleSheet("QTableWidget { background-color: #0F172A; border: none; } QHeaderView::section { background-color: #0F172A; color: #94A3B8; font-weight: bold; font-size: 9pt; border-bottom: 1px solid #334155; } QTableWidget::item { padding: 4px; font-size: 10pt; color: #F8FAFC; border-bottom: 1px solid #1E293B; }")
+                table.setObjectName("dataTable")
                 table.setRowCount(len(records))
                 table.setFixedHeight(min(300, 40 + len(records)*35))
                 table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
@@ -555,25 +588,26 @@ class SupportTicketsView(QWidget):
         layout.setContentsMargins(25, 20, 25, 20)
         
         title = QLabel("Helpdesk & Support")
-        title.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
+        title.setObjectName("pageTitle")
         
         sub = QLabel("Raise transport issues, feedback, or driver complaints.")
-        sub.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        sub
         
         btn = QPushButton("+ Raise New Ticket")
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.setObjectName("actionButton")
         btn.setFixedSize(160, 40)
-        btn.setStyleSheet("QPushButton { background-color: #2563EB; color: #FFFFFF; border: none; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #1D4ED8; }")
+        btn.setObjectName("actionButton")
         btn.clicked.connect(self.raise_ticket)
         
         frame = QFrame()
-        frame.setStyleSheet("background-color: #1E293B; border-radius: 10px; border: 1px solid #334155;")
+        frame
         flayout = QVBoxLayout(frame)
         flayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_lbl = QLabel("No Active Tickets")
-        icon_lbl.setStyleSheet("font-size: 16pt; color: #64748B; font-weight: bold;")
+        icon_lbl
         desc_lbl = QLabel("You don't have any open support tickets.")
-        desc_lbl.setStyleSheet("font-size: 11pt; color: #475569;")
+        desc_lbl
         desc_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         flayout.addWidget(icon_lbl, alignment=Qt.AlignmentFlag.AlignCenter)
         flayout.addWidget(desc_lbl)
@@ -610,7 +644,7 @@ class ParentDashboard(QWidget):
         
         connection = connect_database()
         cursor = connection.cursor()
-        cursor.execute("SELECT parent_name FROM parent WHERE parent_id = ?", (self.parent_id,))
+        cursor.execute("SELECT parent_name FROM parent WHERE parent_id = %s", (self.parent_id,))
         result = cursor.fetchone()
         self.parent_name = result[0] if result else "Parent Account"
         connection.close()
@@ -645,22 +679,17 @@ class ParentDashboard(QWidget):
         self.sidebar_toggle_btn.setFixedSize(38, 38)
         self.sidebar_toggle_btn.clicked.connect(self.toggle_sidebar)
         
-        logo_icon = QLabel("M")
-        logo_icon.setFixedSize(32, 32)
-        logo_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        logo_icon.setStyleSheet("background-color: #2563EB; color: #FFFFFF; font-weight: 900; font-size: 14pt; border-radius: 16px;")
-        
         brand_text = QVBoxLayout()
         brand_text.setSpacing(0)
         lbl_brand1 = QLabel("NeoYatra")
-        lbl_brand1.setStyleSheet("font-size: 11pt; font-weight: 800; color: #F8FAFC; border: none;")
+        lbl_brand1.setObjectName("pageTitle")
         lbl_brand2 = QLabel("Transport Portal")
-        lbl_brand2.setStyleSheet("font-size: 8.5pt; font-weight: 600; color: #38BDF8; border: none;")
+        lbl_brand2.setObjectName("statDesc")
         brand_text.addWidget(lbl_brand1)
         brand_text.addWidget(lbl_brand2)
         
         sidebar_top_layout.addWidget(self.sidebar_toggle_btn)
-        sidebar_top_layout.addWidget(logo_icon)
+        sidebar_top_layout.addSpacing(10)
         sidebar_top_layout.addLayout(brand_text)
         sidebar_top_layout.addStretch()
         self.sidebar_layout.addLayout(sidebar_top_layout)
@@ -669,20 +698,20 @@ class ParentDashboard(QWidget):
 
         # User Profile Card in Sidebar (exactly like screenshot!)
         user_card = QFrame()
-        user_card.setStyleSheet("QFrame { background-color: #1E293B; border-radius: 8px; border: 1px solid #334155; }")
+        user_card.setStyleSheet("QFrame {  border-radius: 8px;  }")
         user_card_layout = QHBoxLayout(user_card)
         user_card_layout.setContentsMargins(12, 10, 12, 10)
         user_card_layout.setSpacing(10)
         
-        self.user_avatar = create_initials_avatar(self.parent_name, size=38, bg_color="#38BDF8", text_color="#0F172A")
+        self.user_avatar = create_initials_avatar(self.parent_name, size=38, bg_color="#38BDF8", text_color="#FFFFFF")
         user_card_layout.addWidget(self.user_avatar)
         
         user_text = QVBoxLayout()
         user_text.setSpacing(2)
         self.lbl_uname = QLabel(self.parent_name[:14] + ("..." if len(self.parent_name) > 14 else ""))
-        self.lbl_uname.setStyleSheet("font-size: 10pt; font-weight: bold; color: #F8FAFC; border: none;")
+        self.lbl_uname.setObjectName("statTitle")
         lbl_urole = QLabel("Parent Account")
-        lbl_urole.setStyleSheet("font-size: 8.5pt; color: #94A3B8; border: none;")
+        lbl_urole.setObjectName("statDesc")
         user_text.addWidget(self.lbl_uname)
         user_text.addWidget(lbl_urole)
         user_card_layout.addLayout(user_text)
@@ -691,10 +720,7 @@ class ParentDashboard(QWidget):
         self.sidebar_layout.addWidget(user_card)
         self.sidebar_layout.addSpacing(15)
 
-        # Section Header 1: APPLICATION
-        cat_app = QLabel("APPLICATION")
-        cat_app.setStyleSheet("font-size: 8pt; font-weight: 800; color: #64748B; letter-spacing: 1px; margin-left: 4px; border: none;")
-        self.sidebar_layout.addWidget(cat_app)
+        
 
         self.btn_children = self.add_sidebar_button("My Children", lambda: self.show_frame(ChildrenView, self.btn_children))
         self.btn_routes = self.add_sidebar_button("Bus Schedules", lambda: self.show_frame(ParentBusSchedule, self.btn_routes))
@@ -703,10 +729,7 @@ class ParentDashboard(QWidget):
         
         self.sidebar_layout.addSpacing(15)
 
-        # Section Header 2: MANAGEMENT
-        cat_mgmt = QLabel("MANAGEMENT")
-        cat_mgmt.setStyleSheet("font-size: 8pt; font-weight: 800; color: #64748B; letter-spacing: 1px; margin-left: 4px; border: none;")
-        self.sidebar_layout.addWidget(cat_mgmt)
+        
 
         self.btn_profile = self.add_sidebar_button("Profile & Security", self.open_profile_view)
         self.btn_settings = self.add_sidebar_button("System Settings", self.open_settings_view)
@@ -718,14 +741,14 @@ class ParentDashboard(QWidget):
         # Footer (Copyright & Version exactly like screenshot)
         footer_line = QFrame()
         footer_line.setFixedHeight(1)
-        footer_line.setStyleSheet("background-color: #1E293B; border: none;")
+        footer_line
         self.sidebar_layout.addWidget(footer_line)
         
         footer_layout = QHBoxLayout()
         lbl_copy = QLabel("@2026 Copyright")
-        lbl_copy.setStyleSheet("font-size: 8pt; color: #64748B; border: none;")
+        lbl_copy
         lbl_ver = QLabel("version 1.4.0")
-        lbl_ver.setStyleSheet("font-size: 8pt; color: #64748B; border: none;")
+        lbl_ver
         footer_layout.addWidget(lbl_copy)
         footer_layout.addStretch()
         footer_layout.addWidget(lbl_ver)
@@ -741,7 +764,7 @@ class ParentDashboard(QWidget):
         # Top Bar (with toggle button and right-side action icons like screenshot)
         top_bar = QFrame()
         top_bar.setFixedHeight(54)
-        top_bar.setStyleSheet("background-color: #0F172A; border-bottom: 1px solid #1E293B;")
+        top_bar.setObjectName("topBar")
         top_bar_layout = QHBoxLayout(top_bar)
         top_bar_layout.setContentsMargins(15, 6, 20, 6)
         
@@ -753,7 +776,7 @@ class ParentDashboard(QWidget):
         top_bar_layout.addWidget(self.toggle_btn)
         
         self.header_breadcrumb = QLabel(f"Parent Portal  /  My Children")
-        self.header_breadcrumb.setStyleSheet("font-size: 11pt; font-weight: bold; color: #94A3B8; border: none; margin-left: 10px;")
+        self.header_breadcrumb
         top_bar_layout.addWidget(self.header_breadcrumb)
         
         top_bar_layout.addStretch()
@@ -761,11 +784,20 @@ class ParentDashboard(QWidget):
         # Right-side action badge icons (Company / Logout)
         # System Online and Alerts have been removed
 
-
+        # Theme Toggle
+        self.theme_btn = QPushButton("Night Mode")
+        self.theme_btn.setObjectName("secondaryButton")
+        self.theme_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.theme_btn.setStyleSheet("QPushButton { font-size: 11pt; border: none; background: transparent; font-weight: bold; color: #64748B; padding: 4px 10px; } QPushButton:hover { color: #38BDF8; }")
+        self.theme_btn.clicked.connect(self.toggle_theme)
+        from theme_manager import ThemeManager
+        if ThemeManager.get_instance().get_current_theme() == "dark":
+            self.theme_btn.setText("Day Mode")
+        top_bar_layout.addWidget(self.theme_btn)
         logout_btn = QPushButton("Logout")
         logout_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         logout_btn.setFixedHeight(34)
-        logout_btn.setStyleSheet("QPushButton { background-color: #EF4444; color: #FFFFFF; border: none; border-radius: 6px; padding: 0px 14px; font-weight: bold; font-size: 9.5pt; } QPushButton:hover { background-color: #DC2626; }")
+        logout_btn.setObjectName("dangerButton")
         logout_btn.clicked.connect(self.logout)
         top_bar_layout.addWidget(logout_btn)
 
@@ -791,9 +823,9 @@ class ParentDashboard(QWidget):
     def set_active_sidebar_btn(self, active_btn):
         for btn in self.sidebar_buttons:
             if btn == active_btn:
-                btn.setStyleSheet("QPushButton#sidebarBtn { background-color: #1E293B; color: #38BDF8; border-left: 4px solid #38BDF8; font-weight: 800; }")
+                btn.setStyleSheet("QPushButton#sidebarBtn {  color: #38BDF8; border-left: 4px solid #38BDF8; font-weight: 800; }")
             else:
-                btn.setStyleSheet("QPushButton#sidebarBtn { background-color: transparent; color: #94A3B8; border: none; font-weight: 600; } QPushButton#sidebarBtn:hover { background-color: #1E293B; color: #F8FAFC; }")
+                btn.setStyleSheet("QPushButton#sidebarBtn { background-color: transparent;  border: none; font-weight: 600; } QPushButton#sidebarBtn:hover {   }")
 
     def toggle_sidebar(self):
         if self.sidebar_frame.isVisible():
@@ -846,7 +878,7 @@ class ParentDashboard(QWidget):
         if parent_data:
             self.parent_name = str(parent_data[1])
             self.lbl_uname.setText(self.parent_name[:14] + ("..." if len(self.parent_name) > 14 else ""))
-            new_avatar = create_initials_avatar(self.parent_name, size=38, bg_color="#38BDF8", text_color="#0F172A")
+            new_avatar = create_initials_avatar(self.parent_name, size=38, bg_color="#38BDF8", text_color="#FFFFFF")
             self.user_avatar.deleteLater()
             self.user_avatar = new_avatar
             self.user_avatar.setParent(self.lbl_uname.parentWidget())
@@ -855,6 +887,15 @@ class ParentDashboard(QWidget):
     def refresh_dashboard(self):
         self.fetch_data()
         self.show_frame(ChildrenView, self.btn_children)
+
+    def toggle_theme(self):
+        from theme_manager import ThemeManager
+        tm = ThemeManager.get_instance()
+        mode = tm.toggle_theme()
+        if mode == "dark":
+            self.theme_btn.setText("Day Mode")
+        else:
+            self.theme_btn.setText("Night Mode")
 
     def logout(self):
         from ui.login import LoginWindow
@@ -869,8 +910,7 @@ class RequestTransportDialog(QDialog):
         self.dashboard = parent
         self.setWindowTitle("Request Transport Change")
         self.setFixedSize(400, 350)
-        self.setStyleSheet("background-color: #1E293B; color: #F8FAFC;")
-        
+                
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("Select child(ren) to change transport for:"))
         
@@ -893,7 +933,7 @@ class RequestTransportDialog(QDialog):
         form_layout = QFormLayout()
         
         self.pickup_input = QComboBox()
-        self.pickup_input.setStyleSheet("background-color: #0F172A; border: 1px solid #334155; padding: 5px; margin-top: 15px;")
+        self.pickup_input
         
         # Populate pickup points
         from dal import db_dal
@@ -908,11 +948,11 @@ class RequestTransportDialog(QDialog):
         
         btn_layout = QHBoxLayout()
         submit_btn = QPushButton("Submit Request")
-        submit_btn.setStyleSheet("background-color: #38BDF8; color: #0F172A; font-weight: bold; padding: 8px;")
+        submit_btn
         submit_btn.clicked.connect(self.submit_request)
         
         cancel_btn = QPushButton("Cancel")
-        cancel_btn.setStyleSheet("background-color: #EF4444; color: white; font-weight: bold; padding: 8px;")
+        cancel_btn
         cancel_btn.clicked.connect(self.reject)
         
         btn_layout.addWidget(submit_btn)

@@ -56,13 +56,13 @@ class StudentManagement(QWidget):
         # Title and Review Button
         title_layout = QHBoxLayout()
         title_label = QLabel("Student Management")
-        title_label.setStyleSheet("font-size: 20pt; font-weight: bold; color: #38BDF8;")
+        title_label.setObjectName("pageTitle")
         title_layout.addWidget(title_label)
         
         title_layout.addStretch()
         review_btn = QPushButton("Review Pending Requests")
         review_btn.setFixedSize(220, 38)
-        review_btn.setStyleSheet("background-color: #F59E0B; color: #0F172A; font-weight: bold; border-radius: 6px;")
+        review_btn.setObjectName("primaryButton")
         review_btn.clicked.connect(self.open_pending_requests)
         title_layout.addWidget(review_btn)
         
@@ -81,7 +81,7 @@ class StudentManagement(QWidget):
         form_layout.setColumnStretch(1, 1)
 
         form_title = QLabel("Add New Student")
-        form_title.setStyleSheet("font-size: 15pt; font-weight: bold; color: #F8FAFC; margin-bottom: 10px;")
+        form_title
         form_layout.addWidget(form_title, 0, 0, 1, 2)
 
         def create_field(label_text, widget):
@@ -89,7 +89,7 @@ class StudentManagement(QWidget):
             field_layout.setSpacing(6)
             field_layout.setContentsMargins(0, 0, 0, 0)
             lbl = QLabel(label_text)
-            lbl.setStyleSheet("font-size: 10pt; font-weight: 600; color: #94A3B8;")
+            lbl
             field_layout.addWidget(lbl)
             field_layout.addWidget(widget)
             return field_layout
@@ -219,7 +219,7 @@ class PendingRequestsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Pending Transport Requests")
         self.setFixedSize(800, 400)
-        self.setStyleSheet("background-color: #1E293B; color: #F8FAFC;")
+        self
         
         layout = QVBoxLayout(self)
         
@@ -228,14 +228,14 @@ class PendingRequestsDialog(QDialog):
         self.table.setHorizontalHeaderLabels(["ID", "Name", "Class", "Parent", "Pickup Point", "Status", "Action"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table.setStyleSheet("background-color: #0F172A; alternate-background-color: #1E293B;")
+        self.table.setObjectName("dataTable")
         self.table.setAlternatingRowColors(True)
         
         layout.addWidget(self.table)
         
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.accept)
-        close_btn.setStyleSheet("background-color: #64748B; color: white; padding: 8px; font-weight: bold;")
+        close_btn.setObjectName("secondaryButton")
         layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignRight)
         
         self.load_data()
@@ -256,7 +256,7 @@ class PendingRequestsDialog(QDialog):
             self.table.setCellWidget(row, 5, create_status_badge(status))
             
             btn = QPushButton("Review")
-            btn.setStyleSheet("background-color: #38BDF8; color: #0F172A; font-weight: bold;")
+            btn
             btn.clicked.connect(lambda _, r=req: self.review_request(r))
             self.table.setCellWidget(row, 6, btn)
 
@@ -273,7 +273,7 @@ class ReviewActionDialog(QDialog):
         req_id, student_id, name, cls, parent_name, pickup, status, parent_id = req
         self.setWindowTitle(f"Review Request: {name}")
         self.setFixedSize(400, 250)
-        self.setStyleSheet("background-color: #1E293B; color: #F8FAFC;")
+        self
         
         layout = QVBoxLayout(self)
         
@@ -296,11 +296,11 @@ class ReviewActionDialog(QDialog):
         
         btn_layout = QHBoxLayout()
         assign_btn = QPushButton("Assign & Approve")
-        assign_btn.setStyleSheet("background-color: #10B981; color: white; font-weight: bold; padding: 8px;")
+        assign_btn.setObjectName("primaryButton")
         assign_btn.clicked.connect(self.approve)
         
         cancel_btn = QPushButton("Cancel")
-        cancel_btn.setStyleSheet("background-color: #EF4444; color: white; padding: 8px;")
+        cancel_btn.setObjectName("dangerButton")
         cancel_btn.clicked.connect(self.reject)
         
         btn_layout.addWidget(assign_btn)

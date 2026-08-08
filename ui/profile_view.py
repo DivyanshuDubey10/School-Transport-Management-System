@@ -43,22 +43,16 @@ class ProfileView(QWidget):
         title_box.setSpacing(4)
         
         title_label = QLabel("Personal Profile & Security")
-        title_label.setStyleSheet("font-size: 18pt; font-weight: 800; color: #F8FAFC; letter-spacing: -0.5px;")
+        title_label.setObjectName("pageTitle")
         title_box.addWidget(title_label)
         
         sub_label = QLabel("Manage your account identity, contact credentials, and security password.")
-        sub_label.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        sub_label.setObjectName("statDesc")
         title_box.addWidget(sub_label)
         
         header_layout.addLayout(title_box)
         header_layout.addStretch()
 
-        refresh_btn = QPushButton("REFRESH")
-        refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        refresh_btn.setFixedSize(120, 38)
-        refresh_btn.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #38BDF8; color: #0F172A; }")
-        refresh_btn.clicked.connect(self.load_profile_data)
-        header_layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignTop)
 
         main_layout.addLayout(header_layout)
 
@@ -76,7 +70,7 @@ class ProfileView(QWidget):
 
         # 2. Executive Profile Banner
         banner_card = QFrame()
-        banner_card.setStyleSheet("QFrame { background-color: #1E293B; border-radius: 12px; border: 1px solid #334155; }")
+        banner_card.setObjectName("statCard")
         banner_layout = QHBoxLayout(banner_card)
         banner_layout.setContentsMargins(20, 18, 20, 18)
         banner_layout.setSpacing(16)
@@ -88,9 +82,9 @@ class ProfileView(QWidget):
         banner_text = QVBoxLayout()
         banner_text.setSpacing(4)
         self.banner_name_lbl = QLabel("Loading Name...")
-        self.banner_name_lbl.setStyleSheet("font-size: 14pt; font-weight: bold; color: #F8FAFC; border: none;")
+        self.banner_name_lbl
         self.banner_role_lbl = QLabel("System Role")
-        self.banner_role_lbl.setStyleSheet("font-size: 10pt; color: #38BDF8; font-weight: 600; border: none;")
+        self.banner_role_lbl
         banner_text.addWidget(self.banner_name_lbl)
         banner_text.addWidget(self.banner_role_lbl)
         banner_layout.addLayout(banner_text)
@@ -98,20 +92,20 @@ class ProfileView(QWidget):
         banner_layout.addStretch()
         
         status_pill = QLabel("Verified Active")
-        status_pill.setStyleSheet("font-size: 9.5pt; font-weight: bold; color: #10B981; background-color: #064E3B; border-radius: 12px; padding: 6px 14px; border: 1px solid #059669;")
+        status_pill
         banner_layout.addWidget(status_pill)
         
         content_layout.addWidget(banner_card)
 
         # 3. Personal Information Edit Form
         form_card = QFrame()
-        form_card.setStyleSheet("QFrame { background-color: #0F172A; border-radius: 12px; border: 1px solid #334155; }")
+        form_card.setObjectName("statCard")
         form_card_layout = QVBoxLayout(form_card)
         form_card_layout.setContentsMargins(22, 20, 22, 22)
         form_card_layout.setSpacing(15)
         
         sec1_title = QLabel("PERSONAL DETAILS & CREDENTIALS")
-        sec1_title.setStyleSheet("font-size: 9pt; font-weight: 800; color: #38BDF8; letter-spacing: 1px; border: none;")
+        sec1_title
         form_card_layout.addWidget(sec1_title)
         
         grid_form = QGridLayout()
@@ -119,14 +113,14 @@ class ProfileView(QWidget):
         grid_form.setVerticalSpacing(15)
         
         lbl_name = QLabel("Full / Guardian Name:")
-        lbl_name.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_name
         self.entry_name = QLineEdit()
         self.entry_name.setPlaceholderText("Enter your full legal name...")
         grid_form.addWidget(lbl_name, 0, 0)
         grid_form.addWidget(self.entry_name, 0, 1)
         
         lbl_user = QLabel("Account Username:")
-        lbl_user.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_user
         self.entry_username = QLineEdit()
         self.entry_username.setPlaceholderText("Enter login username...")
         grid_form.addWidget(lbl_user, 1, 0)
@@ -134,17 +128,17 @@ class ProfileView(QWidget):
         
         # Parent specific fields
         self.lbl_phone = QLabel("Contact Phone:")
-        self.lbl_phone.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        self.lbl_phone
         self.entry_phone = QLineEdit()
         self.entry_phone.setPlaceholderText("Enter primary mobile number...")
         
         self.lbl_addr = QLabel("Home Address:")
-        self.lbl_addr.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        self.lbl_addr
         self.entry_addr = QLineEdit()
         self.entry_addr.setPlaceholderText("Enter residential address...")
         
         self.lbl_pickup = QLabel("Assigned Pickup Stop:")
-        self.lbl_pickup.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        self.lbl_pickup
         self.entry_pickup = QLineEdit()
         self.entry_pickup.setPlaceholderText("Designated bus stop location...")
         
@@ -168,17 +162,17 @@ class ProfileView(QWidget):
 
         # 4. Security & Password Update Card
         sec_card = QFrame()
-        sec_card.setStyleSheet("QFrame { background-color: #0F172A; border-radius: 12px; border: 1px solid #334155; }")
+        sec_card.setObjectName("statCard")
         sec_layout = QVBoxLayout(sec_card)
         sec_layout.setContentsMargins(22, 20, 22, 22)
         sec_layout.setSpacing(15)
         
         sec2_title = QLabel("SECURITY & PASSWORD CHANGE")
-        sec2_title.setStyleSheet("font-size: 9pt; font-weight: 800; color: #F59E0B; letter-spacing: 1px; border: none;")
+        sec2_title
         sec_layout.addWidget(sec2_title)
         
         sec_sub = QLabel("Leave password fields blank if you do not wish to change your current login password.")
-        sec_sub.setStyleSheet("font-size: 9.5pt; color: #64748B; font-style: italic; border: none;")
+        sec_sub
         sec_layout.addWidget(sec_sub)
         
         grid_sec = QGridLayout()
@@ -186,7 +180,7 @@ class ProfileView(QWidget):
         grid_sec.setVerticalSpacing(15)
         
         lbl_new_pw = QLabel("New Password:")
-        lbl_new_pw.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_new_pw
         self.entry_new_pw = QLineEdit()
         self.entry_new_pw.setEchoMode(QLineEdit.EchoMode.Password)
         self.entry_new_pw.setPlaceholderText("Enter new secure password (optional)...")
@@ -194,7 +188,7 @@ class ProfileView(QWidget):
         grid_sec.addWidget(self.entry_new_pw, 0, 1)
         
         lbl_confirm_pw = QLabel("Confirm Password:")
-        lbl_confirm_pw.setStyleSheet("font-size: 10pt; color: #CBD5E1; font-weight: 600; border: none;")
+        lbl_confirm_pw
         self.entry_confirm_pw = QLineEdit()
         self.entry_confirm_pw.setEchoMode(QLineEdit.EchoMode.Password)
         self.entry_confirm_pw.setPlaceholderText("Re-type new password...")
@@ -211,14 +205,14 @@ class ProfileView(QWidget):
         btn_reset = QPushButton("Reset Form")
         btn_reset.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_reset.setFixedSize(140, 42)
-        btn_reset.setStyleSheet("QPushButton { background-color: #334155; color: #F8FAFC; border: none; border-radius: 8px; font-weight: bold; font-size: 10.5pt; } QPushButton:hover { background-color: #475569; }")
+        btn_reset.setStyleSheet("QPushButton { background-color: #D1D5DB; color: #111827; border: none; border-radius: 8px; font-weight: bold; font-size: 10.5pt; } QPushButton:hover { background-color: #9CA3AF; }")
         btn_reset.clicked.connect(self.load_profile_data)
         action_layout.addWidget(btn_reset)
         
         btn_save = QPushButton("Save Profile Changes")
         btn_save.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_save.setFixedSize(220, 42)
-        btn_save.setStyleSheet("QPushButton { background-color: #10B981; color: #FFFFFF; border: none; border-radius: 8px; font-weight: bold; font-size: 10.5pt; } QPushButton:hover { background-color: #059669; }")
+        btn_save.setObjectName("primaryButton")
         btn_save.clicked.connect(self.save_profile)
         action_layout.addWidget(btn_save)
         
@@ -264,7 +258,7 @@ class ProfileView(QWidget):
                 self.banner_name_lbl.setText(pname)
                 self.banner_role_lbl.setText("Registered Parent Portal Account")
                 
-                new_avatar = create_initials_avatar(pname, size=60, bg_color="#38BDF8", text_color="#0F172A")
+                new_avatar = create_initials_avatar(pname, size=60, bg_color="#38BDF8", text_color="#FFFFFF")
                 self.avatar_lbl.deleteLater()
                 self.avatar_lbl = new_avatar
                 self.avatar_lbl.setParent(self)

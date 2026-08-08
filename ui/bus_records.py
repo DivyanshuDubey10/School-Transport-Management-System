@@ -6,7 +6,7 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-def create_avatar_cell(name, subtext, bg_color="#38BDF8", text_color="#0F172A"):
+def create_avatar_cell(name, subtext, bg_color="#38BDF8", text_color="#FFFFFF"):
     """Creates a circular initials avatar cell matching modern SaaS dashboards."""
     widget = QWidget()
     layout = QHBoxLayout(widget)
@@ -24,7 +24,7 @@ def create_avatar_cell(name, subtext, bg_color="#38BDF8", text_color="#0F172A"):
     else:
         init = "FL"
     avatar.setText(init)
-    avatar.setStyleSheet(f"background-color: {bg_color}; color: {text_color}; border-radius: 19px; font-weight: 800; font-size: 11pt; border: 1px solid #475569;")
+    avatar.setStyleSheet(f"background-color: {bg_color}; color: {text_color}; border-radius: 19px; font-weight: 800; font-size: 11pt; border: 1px solid #9CA3AF;")
     layout.addWidget(avatar)
     
     text_box = QVBoxLayout()
@@ -32,18 +32,18 @@ def create_avatar_cell(name, subtext, bg_color="#38BDF8", text_color="#0F172A"):
     text_box.setAlignment(Qt.AlignmentFlag.AlignVCenter)
     
     lbl_main = QLabel(name)
-    lbl_main.setStyleSheet("font-size: 11pt; font-weight: bold; color: #F8FAFC; border: none;")
+    lbl_main.setObjectName("statTitle")
     text_box.addWidget(lbl_main)
     
     lbl_sub = QLabel(subtext)
-    lbl_sub.setStyleSheet("font-size: 8.5pt; color: #94A3B8; border: none;")
+    lbl_sub.setObjectName("statDesc")
     text_box.addWidget(lbl_sub)
     
     layout.addLayout(text_box)
     layout.addStretch()
     return widget
 
-def create_twoline_cell(main_text, sub_text, main_color="#F8FAFC", sub_color="#94A3B8"):
+def create_twoline_cell(main_text, sub_text, main_color="#111827", sub_color="#1F2937"):
     """Creates a 2-line cell with primary text and muted subtext."""
     widget = QWidget()
     layout = QVBoxLayout(widget)
@@ -78,39 +78,33 @@ class BusRecords(QWidget):
         title_box = QVBoxLayout()
         title_box.setSpacing(4)
         title_label = QLabel("Drivers & Bus Fleet Directory")
-        title_label.setStyleSheet("font-size: 18pt; font-weight: 800; color: #F8FAFC; letter-spacing: -0.5px;")
+        title_label.setObjectName("pageTitle")
         title_box.addWidget(title_label)
         
         sub_label = QLabel("Manage school transport fleet, assigned drivers, capacity limits, and route alignments.")
-        sub_label.setStyleSheet("font-size: 10pt; color: #94A3B8;")
+        sub_label.setObjectName("statDesc")
         title_box.addWidget(sub_label)
         
         header_layout.addLayout(title_box)
         header_layout.addStretch()
 
-        refresh_btn = QPushButton("REFRESH")
-        refresh_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        refresh_btn.setFixedSize(130, 38)
-        refresh_btn.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1.5px solid #38BDF8; border-radius: 6px; font-weight: bold; font-size: 10pt; } QPushButton:hover { background-color: #38BDF8; color: #0F172A; }")
-        refresh_btn.clicked.connect(self.load_buses)
-        header_layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignTop)
         
         main_layout.addLayout(header_layout)
 
         # 2. Search Bar & Actions Box
         search_layout = QHBoxLayout()
         
-        self.update_button = QPushButton("Update Selected Bus")
+        self.update_button = QPushButton("Update Selected")
         self.update_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.update_button.setFixedHeight(38)
-        self.update_button.setStyleSheet("QPushButton { background-color: #1E293B; color: #38BDF8; border: 1px solid #38BDF8; border-radius: 6px; font-weight: bold; padding: 0 16px; font-size: 10pt; } QPushButton:hover { background-color: #2563EB; color: #FFFFFF; }")
+        self.update_button.setObjectName("actionButton")
         self.update_button.clicked.connect(self.open_update_window)
         search_layout.addWidget(self.update_button)
 
         self.delete_button = QPushButton("Delete Selected Bus")
         self.delete_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.delete_button.setFixedHeight(38)
-        self.delete_button.setStyleSheet("QPushButton { background-color: #7F1D1D; color: #F8FAFC; border: 1px solid #991B1B; border-radius: 6px; font-weight: bold; padding: 0 16px; font-size: 10pt; } QPushButton:hover { background-color: #991B1B; }")
+        self.delete_button.setObjectName("dangerButton")
         self.delete_button.clicked.connect(self.delete_bus)
         search_layout.addWidget(self.delete_button)
         
@@ -130,7 +124,7 @@ class BusRecords(QWidget):
         self.buses_table.setHorizontalHeaderLabels(["ID", "Bus & Capacity", "Driver Profile", "Contact Phone", "Status & Tenant", "Assigned Travel Route"])
         
         header = self.buses_table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.buses_table.setColumnWidth(0, 50)   # ID
         self.buses_table.setColumnWidth(1, 160)  # Bus & Capacity
         self.buses_table.setColumnWidth(2, 240)  # Driver Profile (with Avatar)
@@ -142,7 +136,7 @@ class BusRecords(QWidget):
         self.buses_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.buses_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.buses_table.setAlternatingRowColors(True)
-        self.buses_table.setStyleSheet("QTableWidget { background-color: #0F172A; alternate-background-color: #131C31; border: 1px solid #334155; border-radius: 8px; } QHeaderView::section { background-color: #1E293B; color: #94A3B8; font-weight: bold; font-size: 10pt; padding: 12px; border-bottom: 2px solid #334155; } QTableWidget::item { padding: 8px; font-size: 10.5pt; color: #F8FAFC; }")
+        self.buses_table.setObjectName("dataTable")
         self.buses_table.itemSelectionChanged.connect(self.select_bus)
         self.buses_table.verticalScrollBar().setSingleStep(15)
         
@@ -152,13 +146,13 @@ class BusRecords(QWidget):
         footer_bar = QHBoxLayout()
         
         self.lbl_total_rows = QLabel("Rows per page:  15    •    1-0 of 0 items")
-        self.lbl_total_rows.setStyleSheet("font-size: 9.5pt; color: #94A3B8; font-weight: 600;")
+        self.lbl_total_rows
         footer_bar.addWidget(self.lbl_total_rows)
         
         footer_bar.addStretch()
         
         pagination_controls = QLabel("|<     <     1     >     >|")
-        pagination_controls.setStyleSheet("font-size: 11pt; font-weight: bold; color: #38BDF8; letter-spacing: 4px;")
+        pagination_controls
         footer_bar.addWidget(pagination_controls)
         
         main_layout.addLayout(footer_bar)
@@ -232,7 +226,7 @@ class BusRecords(QWidget):
         dialog = QDialog(self)
         dialog.setWindowTitle("Update Bus Details")
         dialog.setFixedSize(420, 360)
-        dialog.setStyleSheet("QDialog { background-color: #1E293B; color: #F8FAFC; } QLabel { color: #F8FAFC; font-weight: bold; font-size: 10pt; } QLineEdit { background-color: #0F172A; border: 1px solid #334155; border-radius: 6px; padding: 6px; color: #F8FAFC; font-size: 10pt; }")
+        dialog
         
         layout = QFormLayout(dialog)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -260,7 +254,7 @@ class BusRecords(QWidget):
 
         save_btn = QPushButton("Save Bus Changes")
         save_btn.setFixedHeight(40)
-        save_btn.setStyleSheet("QPushButton { background-color: #10B981; color: #FFFFFF; border: none; border-radius: 6px; font-weight: bold; font-size: 10.5pt; margin-top: 10px; } QPushButton:hover { background-color: #059669; }")
+        save_btn.setObjectName("primaryButton")
         
         def save_changes():
             from dal import db_dal
