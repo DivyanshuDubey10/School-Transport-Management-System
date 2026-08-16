@@ -195,6 +195,10 @@ class DriverDashboard(QWidget):
         self.setMinimumSize(1200, 800)
         self.resize(1200, 750)
         
+        # Load user theme
+        from theme_manager import ThemeManager
+        ThemeManager.get_instance().set_user('driver', self.bus_id)
+        
         self.fetch_data()
         self.create_widgets()
         self.show_frame(MyStudentsView, self.btn_students)
@@ -242,6 +246,9 @@ class DriverDashboard(QWidget):
         self.btn_students = self.add_sidebar_button("My Route Students", lambda: self.show_frame(MyStudentsView, self.btn_students))
         self.btn_route_map = self.add_sidebar_button("My Route Map", lambda: self.show_frame(RouteMapView, self.btn_route_map))
         
+        self.btn_profile = self.add_sidebar_button("Profile & Security", self.open_profile_view)
+        self.btn_settings = self.add_sidebar_button("System Settings", self.open_settings_view)
+        
         self.sidebar_layout.addStretch()
         
         self.btn_sos = QPushButton("EMERGENCY SOS")
@@ -271,14 +278,14 @@ class DriverDashboard(QWidget):
         top_bar_layout.addStretch()
         
         # Theme Toggle
-        self.theme_btn = QPushButton("Night Mode")
+        self.theme_btn = QPushButton("🌙")
         self.theme_btn.setObjectName("secondaryButton")
         self.theme_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.theme_btn.setStyleSheet("QPushButton { font-size: 11pt; border: none; background: transparent; font-weight: bold; color: #64748B; padding: 4px 10px; } QPushButton:hover { color: #38BDF8; }")
+        self.theme_btn.setStyleSheet("QPushButton { font-size: 16pt; border: none; background: transparent; padding: 4px 10px; } QPushButton:hover { color: #38BDF8; }")
         self.theme_btn.clicked.connect(self.toggle_theme)
         from theme_manager import ThemeManager
         if ThemeManager.get_instance().get_current_theme() == "dark":
-            self.theme_btn.setText("Day Mode")
+            self.theme_btn.setText("☀️")
         top_bar_layout.addWidget(self.theme_btn)
         logout_btn = QPushButton("Logout")
         logout_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -312,6 +319,14 @@ class DriverDashboard(QWidget):
             else:
                 btn.setStyleSheet("QPushButton#sidebarBtn { background-color: transparent;  border: none; font-weight: 600; }")
 
+    def open_profile_view(self):
+        from ui.profile_view import ProfileView
+        self.show_frame(ProfileView, self.btn_profile)
+
+    def open_settings_view(self):
+        from ui.settings_view import SettingsView
+        self.show_frame(SettingsView, self.btn_settings)
+
     def show_frame(self, frame_class, active_btn=None):
         if active_btn:
             self.set_active_sidebar_btn(active_btn)
@@ -321,7 +336,12 @@ class DriverDashboard(QWidget):
             if child.widget():
                 child.widget().deleteLater()
 
-        frame = frame_class(self)
+        if hasattr(frame_class, '__name__') and frame_class.__name__ == "ProfileView":
+            frame = frame_class('driver', user_id=self.bus_id, dashboard_ref=self)
+        elif hasattr(frame_class, '__name__') and frame_class.__name__ == "SettingsView":
+            frame = frame_class('driver', user_id=self.bus_id, dashboard_ref=self)
+        else:
+            frame = frame_class(self)
         self.content_layout.addWidget(frame)
 
     def toggle_theme(self):
@@ -329,9 +349,9 @@ class DriverDashboard(QWidget):
         tm = ThemeManager.get_instance()
         mode = tm.toggle_theme()
         if mode == "dark":
-            self.theme_btn.setText("Day Mode")
+            self.theme_btn.setText("☀️")
         else:
-            self.theme_btn.setText("Night Mode")
+            self.theme_btn.setText("🌙")
 
     def logout(self):
         from ui.login import LoginWindow

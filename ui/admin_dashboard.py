@@ -3,6 +3,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushBut
 from PyQt6.QtCore import Qt
 import sys
 import os
+from theme_manager import apply_shadow
+
 
 def create_initials_avatar(name, size=40, bg_color="#38BDF8", text_color="#FFFFFF"):
     """Helper to create a circular initials avatar badge."""
@@ -92,6 +94,7 @@ class DashboardHome(QWidget):
         def create_kpi_card(title, subtext, val_color="#38BDF8"):
             card = QFrame()
             card.setObjectName("statCard")
+            apply_shadow(card)
             card.setStyleSheet("QFrame#cardFrame {   border-radius: 10px; }")
             layout = QVBoxLayout(card)
             layout.setContentsMargins(18, 18, 18, 18)

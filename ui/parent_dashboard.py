@@ -1,14 +1,73 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
                                QFrame, QGridLayout, QScrollArea, QTableWidget, QTableWidgetItem, 
-                               QHeaderView, QLineEdit, QMessageBox, QSpacerItem, QSizePolicy, QDialog, QFormLayout, QComboBox, QCheckBox, QCalendarWidget)
+                               QHeaderView, QLineEdit, QMessageBox, QSpacerItem, QSizePolicy, QDialog, QFormLayout, QComboBox, QCheckBox, QCalendarWidget, QGraphicsDropShadowEffect)
 from PyQt6.QtCore import Qt, QDate, QRect
 from PyQt6.QtGui import QPainter, QColor
 import sys
+
+def apply_shadow(widget):
+    shadow = QGraphicsDropShadowEffect()
+    shadow.setBlurRadius(25)
+    shadow.setColor(QColor(0, 0, 0, 20))
+    shadow.setOffset(0, 5)
+    widget.setGraphicsEffect(shadow)
+
 import os
+import io
+
+try:
+    from PyQt6.QtWebEngineWidgets import QWebEngineView
+    import folium
+    HAS_WEBENGINE = True
+except ImportError as e:
+    print(f"IMPORT ERROR: {e}")
+    HAS_WEBENGINE = False
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import connect_database
 from dal import db_dal
+
+class BusTrackingDialog(QDialog):
+    def __init__(self, parent, student_name, bus_no, route_name):
+        super().__init__(parent)
+        self.setWindowTitle(f"Live Bus Tracking - {student_name} ({bus_no})")
+        self.setFixedSize(800, 600)
+        
+        layout = QVBoxLayout(self)
+        
+        if not HAS_WEBENGINE:
+            lbl = QLabel("PyQt6-WebEngine or folium is not installed.\nPlease run: pip install PyQt6-WebEngine folium")
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(lbl)
+            
+            close_btn = QPushButton("Close")
+            close_btn.clicked.connect(self.accept)
+            layout.addWidget(close_btn)
+            return
+
+        self.web_view = QWebEngineView()
+        
+        # Generate map
+        m = folium.Map(location=[28.6139, 77.2090], zoom_start=13) # Default location
+        folium.Marker(
+            [28.6139, 77.2090], 
+            popup=f"<b>Bus:</b> {bus_no}<br><b>Route:</b> {route_name}",
+            tooltip="Current Location",
+            icon=folium.Icon(color='blue', icon='bus', prefix='fa')
+        ).add_to(m)
+        
+        data = io.BytesIO()
+        m.save(data, close_file=False)
+        html_content = data.getvalue().decode()
+        
+        self.web_view.setHtml(html_content)
+        layout.addWidget(self.web_view)
+        
+        close_btn = QPushButton("Close Tracking")
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_btn.setObjectName("secondaryButton")
+        close_btn.clicked.connect(self.accept)
+        layout.addWidget(close_btn)
 
 class CustomCalendarWidget(QCalendarWidget):
     def __init__(self, attendance_map):
@@ -134,6 +193,7 @@ class ChildrenView(QWidget):
             card = QFrame()
             card.setObjectName("statCard")
             card.setStyleSheet("QFrame#cardFrame {   border-radius: 10px; }")
+            apply_shadow(card)
             layout = QVBoxLayout(card)
             layout.setContentsMargins(16, 14, 16, 14)
 
@@ -214,6 +274,7 @@ class ChildrenView(QWidget):
         card = QFrame()
         card.setObjectName("statCard")
         card.setStyleSheet("QFrame#cardFrame {   border-radius: 10px; } QFrame#cardFrame:hover {  background- }")
+        apply_shadow(card)
         
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(20, 18, 20, 16)
@@ -330,6 +391,14 @@ class ChildrenView(QWidget):
         cal_btn.clicked.connect(lambda checked=False, sid=s_id, sname=s_name: self.open_calendar(sid, sname))
         right_layout.addWidget(cal_btn)
 
+        if bus_no and bus_no != 'Unassigned':
+            track_btn = QPushButton("📍 Live Bus Tracking")
+            track_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            track_btn.setFixedWidth(220)
+            track_btn.setStyleSheet("QPushButton { background-color: #10B981; color: white; border-radius: 6px; padding: 5px 12px; font-weight: bold; font-size: 9.5pt; } QPushButton:hover { background-color: #059669; }")
+            track_btn.clicked.connect(lambda checked=False, s=s_name, b=bus_no, r=r_name: self.open_tracking(s, b, r))
+            right_layout.addWidget(track_btn)
+
         
         right_layout.addStretch()
         body_layout.addLayout(right_layout, 0, 1)
@@ -380,6 +449,10 @@ class ChildrenView(QWidget):
 
     def open_calendar(self, student_id, student_name):
         dialog = AttendanceCalendarDialog(self, student_id, student_name)
+        dialog.exec()
+
+    def open_tracking(self, student_name, bus_no, route_name):
+        dialog = BusTrackingDialog(self, student_name, bus_no, route_name)
         dialog.exec()
 
     def call_driver(self, driver_name, phone):
@@ -635,6 +708,10 @@ class ParentDashboard(QWidget):
         self.setMinimumSize(1200, 800)
         self.resize(1200, 750)
         
+        # Load user theme
+        from theme_manager import ThemeManager
+        ThemeManager.get_instance().set_user('parent', self.parent_id)
+        
         self.fetch_data()
         self.create_widgets()
         self.show_frame(ChildrenView)
@@ -785,14 +862,14 @@ class ParentDashboard(QWidget):
         # System Online and Alerts have been removed
 
         # Theme Toggle
-        self.theme_btn = QPushButton("Night Mode")
+        self.theme_btn = QPushButton("🌙")
         self.theme_btn.setObjectName("secondaryButton")
         self.theme_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.theme_btn.setStyleSheet("QPushButton { font-size: 11pt; border: none; background: transparent; font-weight: bold; color: #64748B; padding: 4px 10px; } QPushButton:hover { color: #38BDF8; }")
+        self.theme_btn.setStyleSheet("QPushButton { font-size: 16pt; border: none; background: transparent; padding: 4px 10px; } QPushButton:hover { color: #38BDF8; }")
         self.theme_btn.clicked.connect(self.toggle_theme)
         from theme_manager import ThemeManager
         if ThemeManager.get_instance().get_current_theme() == "dark":
-            self.theme_btn.setText("Day Mode")
+            self.theme_btn.setText("☀️")
         top_bar_layout.addWidget(self.theme_btn)
         logout_btn = QPushButton("Logout")
         logout_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -859,7 +936,7 @@ class ParentDashboard(QWidget):
         if hasattr(frame_class, '__name__') and frame_class.__name__ == "ProfileView":
             frame = frame_class('parent', user_id=self.parent_id, dashboard_ref=self)
         elif hasattr(frame_class, '__name__') and frame_class.__name__ == "SettingsView":
-            frame = frame_class('parent', dashboard_ref=self)
+            frame = frame_class('parent', user_id=self.parent_id, dashboard_ref=self)
         else:
             frame = frame_class(self)
         self.content_layout.addWidget(frame)
@@ -893,9 +970,9 @@ class ParentDashboard(QWidget):
         tm = ThemeManager.get_instance()
         mode = tm.toggle_theme()
         if mode == "dark":
-            self.theme_btn.setText("Day Mode")
+            self.theme_btn.setText("☀️")
         else:
-            self.theme_btn.setText("Night Mode")
+            self.theme_btn.setText("🌙")
 
     def logout(self):
         from ui.login import LoginWindow

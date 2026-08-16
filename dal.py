@@ -58,6 +58,15 @@ class DAL:
         finally:
             conn.close()
 
+    def get_bus_by_id(self, bus_id: int) -> Optional[Tuple]:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM bus WHERE bus_id = %s", (bus_id,))
+            return cursor.fetchone()
+        finally:
+            conn.close()
+
     def update_admin_profile(self, admin_id: int, username: str, full_name: str, password: Optional[str] = None) -> bool:
         conn = self._get_connection()
         try:
@@ -98,10 +107,40 @@ class DAL:
                 cursor.execute(
                     """
                     UPDATE parent
-                    SET parent_name = %s, phone = %s, address = %s, pickup_point = %s, username = %s
-                    WHERE parent_id = %s
+                SET parent_name = %s, phone = %s, address = %s, pickup_point = %s, username = %s
+                WHERE parent_id = %s
+                """,
+                (name, phone, address, pickup_point, username, parent_id)
+            )
+            conn.commit()
+            return True
+        except Exception:
+            return False
+        finally:
+            conn.close()
+
+    def update_driver_profile(self, bus_id: int, driver_name: str, driver_phone: str, username: str, password: Optional[str] = None) -> bool:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            if password and password.strip():
+                hashed_pw = security.hash_password(password.strip())
+                cursor.execute(
+                    """
+                    UPDATE bus
+                    SET driver_name = %s, driver_phone = %s, username = %s, password = %s
+                    WHERE bus_id = %s
                     """,
-                    (name, phone, address, pickup_point, username, parent_id)
+                    (driver_name, driver_phone, username, hashed_pw, bus_id)
+                )
+            else:
+                cursor.execute(
+                    """
+                    UPDATE bus
+                    SET driver_name = %s, driver_phone = %s, username = %s
+                    WHERE bus_id = %s
+                    """,
+                    (driver_name, driver_phone, username, bus_id)
                 )
             conn.commit()
             return True
@@ -657,6 +696,41 @@ class DAL:
                 query += " ORDER BY a.date DESC"
                 cursor.execute(query)
             return cursor.fetchall()
+        finally:
+            conn.close()
+
+    # --- User Settings ---
+    def get_user_settings(self, user_type: str, user_id: int) -> dict:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT setting_key, setting_value FROM user_settings
+                WHERE user_type = %s AND user_id = %s
+            ''', (user_type, user_id))
+            rows = cursor.fetchall()
+            return {row[0]: row[1] for row in rows}
+        except Exception as e:
+            print(f"Error getting user settings: {e}")
+            return {}
+        finally:
+            conn.close()
+
+    def set_user_setting(self, user_type: str, user_id: int, key: str, value: str) -> bool:
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO user_settings (user_type, user_id, setting_key, setting_value)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (user_type, user_id, setting_key) 
+                DO UPDATE SET setting_value = EXCLUDED.setting_value
+            ''', (user_type, user_id, key, value))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error setting user setting: {e}")
+            return False
         finally:
             conn.close()
 

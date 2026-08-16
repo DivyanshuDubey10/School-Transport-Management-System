@@ -9,6 +9,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from dal import db_dal
 from theme_manager import ThemeManager
+from theme_manager import apply_shadow
+
 
 
 
@@ -99,10 +101,14 @@ QLabel#titleLabel {
 """
 
 class SettingsView(QWidget):
-    def __init__(self, user_type='admin', dashboard_ref=None):
+    def __init__(self, user_type='admin', user_id=1, dashboard_ref=None):
         super().__init__()
         self.user_type = user_type
+        self.user_id = user_id
         self.dashboard_ref = dashboard_ref
+        
+        from dal import db_dal
+        self.user_settings = db_dal.get_user_settings(self.user_type, self.user_id)
         
         self.init_ui()
 
@@ -157,6 +163,8 @@ class SettingsView(QWidget):
 
         if self.user_type == 'admin':
             self.build_admin_settings(content_layout)
+        elif self.user_type == 'driver':
+            self.build_driver_settings(content_layout)
         else:
             self.build_parent_settings(content_layout)
 
@@ -168,6 +176,7 @@ class SettingsView(QWidget):
         # 1. Appearance, Accessibility & UI Scaling Card
         card1 = QFrame()
         card1.setObjectName("statCard")
+        apply_shadow(card1)
         l1 = QVBoxLayout(card1)
         l1.setContentsMargins(22, 20, 22, 22)
         l1.setSpacing(15)
@@ -216,13 +225,11 @@ class SettingsView(QWidget):
         l1.addLayout(grid_acc)
         
         self.chk_contrast = QCheckBox("Enable High-Contrast Gridlines & Bold Row Borders in Data Directories (Accessibility Mode)")
-        self.chk_contrast.setChecked(True)
-        self.chk_contrast
+        self.chk_contrast.setChecked(self.user_settings.get("high_contrast", "true") == "true")
         l1.addWidget(self.chk_contrast)
         
         self.chk_tooltips = QCheckBox("Enable Screen Reader Compatible Table Cell Tooltips & Keyboard Focus Indicators")
-        self.chk_tooltips.setChecked(True)
-        self.chk_tooltips
+        self.chk_tooltips.setChecked(self.user_settings.get("tooltips", "true") == "true")
         l1.addWidget(self.chk_tooltips)
         
         layout.addWidget(card1)
@@ -230,6 +237,7 @@ class SettingsView(QWidget):
         # 2. Global Security & Access Policies Card
         card2 = QFrame()
         card2.setObjectName("statCard")
+        apply_shadow(card2)
         l2 = QVBoxLayout(card2)
         l2.setContentsMargins(22, 20, 22, 22)
         l2.setSpacing(15)
@@ -239,13 +247,11 @@ class SettingsView(QWidget):
         l2.addWidget(lbl_title2)
         
         self.chk_2fa = QCheckBox("Enforce Two-Factor Authentication (2FA) for All Administrator & Staff Logins")
-        self.chk_2fa.setChecked(True)
-        self.chk_2fa
+        self.chk_2fa.setChecked(self.user_settings.get("2fa", "true") == "true")
         l2.addWidget(self.chk_2fa)
         
         self.chk_autolock = QCheckBox("Automatically Lock Administrative Portal Session After 15 Minutes of Inactivity")
-        self.chk_autolock.setChecked(True)
-        self.chk_autolock
+        self.chk_autolock.setChecked(self.user_settings.get("autolock", "true") == "true")
         l2.addWidget(self.chk_autolock)
         
         self.chk_ip = QCheckBox("Restrict Administrative Portal Access to Approved Campus Network IP Addresses")
@@ -282,6 +288,7 @@ class SettingsView(QWidget):
         # 3. Automated Fleet Operations Card
         card3 = QFrame()
         card3.setObjectName("statCard")
+        apply_shadow(card3)
         l3 = QVBoxLayout(card3)
         l3.setContentsMargins(22, 20, 22, 22)
         l3.setSpacing(15)
@@ -329,6 +336,7 @@ class SettingsView(QWidget):
         # 4. Database Management & System Actions Card
         card4 = QFrame()
         card4.setObjectName("statCard")
+        apply_shadow(card4)
         l4 = QVBoxLayout(card4)
         l4.setContentsMargins(22, 20, 22, 22)
         l4.setSpacing(15)
@@ -376,6 +384,7 @@ class SettingsView(QWidget):
         # 1. Theme Card
         theme_card = QFrame()
         theme_card.setObjectName("statCard")
+        apply_shadow(theme_card)
         l1 = QVBoxLayout(theme_card)
         l1.setContentsMargins(22, 20, 22, 22)
         l1.setSpacing(15)
@@ -411,6 +420,7 @@ class SettingsView(QWidget):
         # 2. Child Transport Alerts Card
         notif_card = QFrame()
         notif_card.setObjectName("statCard")
+        apply_shadow(notif_card)
         l2 = QVBoxLayout(notif_card)
         l2.setContentsMargins(22, 20, 22, 22)
         l2.setSpacing(15)
@@ -420,23 +430,19 @@ class SettingsView(QWidget):
         l2.addWidget(lbl_n_title)
         
         self.chk_sms = QCheckBox("SMS Notification when Bus Arrives at Assigned School Stop")
-        self.chk_sms.setChecked(True)
-        self.chk_sms
+        self.chk_sms.setChecked(self.user_settings.get("sms", "true") == "true")
         l2.addWidget(self.chk_sms)
         
         self.chk_push = QCheckBox("Instant Mobile Push Alert on Student Boarding & Alighting")
-        self.chk_push.setChecked(True)
-        self.chk_push
+        self.chk_push.setChecked(self.user_settings.get("push", "true") == "true")
         l2.addWidget(self.chk_push)
         
         self.chk_emergency = QCheckBox("Emergency Route Delay & Weather Traffic Broadcasts")
-        self.chk_emergency.setChecked(True)
-        self.chk_emergency
+        self.chk_emergency.setChecked(self.user_settings.get("emergency", "true") == "true")
         l2.addWidget(self.chk_emergency)
         
         self.chk_email = QCheckBox("Receive Monthly Fee & Payment Receipt Confirmations via Email")
-        self.chk_email.setChecked(True)
-        self.chk_email
+        self.chk_email.setChecked(self.user_settings.get("email", "true") == "true")
         l2.addWidget(self.chk_email)
         
         layout.addWidget(notif_card)
@@ -444,6 +450,7 @@ class SettingsView(QWidget):
         # 3. Contact & Localization Card
         loc_card = QFrame()
         loc_card.setObjectName("statCard")
+        apply_shadow(loc_card)
         l3 = QVBoxLayout(loc_card)
         l3.setContentsMargins(22, 20, 22, 22)
         l3.setSpacing(15)
@@ -483,6 +490,7 @@ class SettingsView(QWidget):
         # 4. Privacy & Account Actions Card
         sys_card = QFrame()
         sys_card.setObjectName("statCard")
+        apply_shadow(sys_card)
         l4 = QVBoxLayout(sys_card)
         l4.setContentsMargins(22, 20, 22, 22)
         l4.setSpacing(15)
@@ -521,11 +529,50 @@ class SettingsView(QWidget):
             QMessageBox.information(self, "Theme Applied", "Day Mode applied successfully!")
 
     def save_preferences(self):
-        QMessageBox.information(
-            self,
-            "Preferences Saved",
-            "All portal configuration settings, security rules, and alert preferences have been successfully updated and saved!"
-        )
+        from dal import db_dal
+        try:
+            if self.user_type == 'admin':
+                db_dal.set_user_setting(self.user_type, self.user_id, "high_contrast", str(self.chk_contrast.isChecked()).lower())
+                db_dal.set_user_setting(self.user_type, self.user_id, "tooltips", str(self.chk_tooltips.isChecked()).lower())
+                db_dal.set_user_setting(self.user_type, self.user_id, "2fa", str(self.chk_2fa.isChecked()).lower())
+                db_dal.set_user_setting(self.user_type, self.user_id, "autolock", str(self.chk_autolock.isChecked()).lower())
+            elif self.user_type == 'parent':
+                db_dal.set_user_setting(self.user_type, self.user_id, "sms", str(self.chk_sms.isChecked()).lower())
+                db_dal.set_user_setting(self.user_type, self.user_id, "push", str(self.chk_push.isChecked()).lower())
+                db_dal.set_user_setting(self.user_type, self.user_id, "emergency", str(self.chk_emergency.isChecked()).lower())
+                db_dal.set_user_setting(self.user_type, self.user_id, "email", str(self.chk_email.isChecked()).lower())
+            elif self.user_type == 'driver':
+                db_dal.set_user_setting(self.user_type, self.user_id, "bg_location", str(self.chk_bg_loc.isChecked()).lower())
+                db_dal.set_user_setting(self.user_type, self.user_id, "high_accuracy", str(self.chk_high_acc.isChecked()).lower())
+                
+            QMessageBox.information(self, "Success", 
+                "All portal configuration settings, security rules, and alert preferences have been successfully updated and saved!")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Could not save settings: {e}")
+            
+    def build_driver_settings(self, layout):
+        card1 = QFrame()
+        card1.setObjectName("statCard")
+        apply_shadow(card1)
+        l1 = QVBoxLayout(card1)
+        l1.setContentsMargins(22, 20, 22, 22)
+        l1.setSpacing(15)
+        
+        lbl_title1 = QLabel("GPS & LOCATION PREFERENCES")
+        lbl_title1
+        l1.addWidget(lbl_title1)
+        
+        lbl_sub1 = QLabel("Manage your location tracking and route mapping settings.")
+        lbl_sub1
+        l1.addWidget(lbl_sub1)
+        
+        self.chk_bg_loc = QCheckBox("Enable Background Location Tracking")
+        self.chk_bg_loc.setChecked(self.user_settings.get("bg_location", "true") == "true")
+        self.chk_high_acc = QCheckBox("High Accuracy Mode (uses more battery)")
+        self.chk_high_acc.setChecked(self.user_settings.get("high_accuracy", "false") == "true")
+        l1.addWidget(self.chk_bg_loc)
+        l1.addWidget(self.chk_high_acc)
+        layout.addWidget(card1)
 
     def export_backup(self):
         if not os.path.exists("school_transport.db"):

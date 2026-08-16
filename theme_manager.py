@@ -1,6 +1,14 @@
 import os
 import json
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QGraphicsDropShadowEffect
+from PyQt6.QtGui import QColor
+
+def apply_shadow(widget):
+    shadow = QGraphicsDropShadowEffect()
+    shadow.setBlurRadius(25)
+    shadow.setColor(QColor(0, 0, 0, 20))
+    shadow.setOffset(0, 5)
+    widget.setGraphicsEffect(shadow)
 
 class ThemeManager:
     _instance = None
@@ -8,6 +16,8 @@ class ThemeManager:
     
     def __init__(self):
         self.current_theme = "light"
+        self.user_type = None
+        self.user_id = None
         self.load_preference()
         
     @classmethod
@@ -15,6 +25,16 @@ class ThemeManager:
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
+        
+    def set_user(self, user_type: str, user_id: int):
+        from dal import db_dal
+        self.user_type = user_type
+        self.user_id = user_id
+        
+        user_settings = db_dal.get_user_settings(user_type, user_id)
+        if "theme" in user_settings:
+            self.current_theme = user_settings["theme"]
+            self.apply_theme()
 
     def load_preference(self):
         try:
@@ -26,11 +46,15 @@ class ThemeManager:
             pass
 
     def save_preference(self):
-        try:
-            with open(self._config_file, 'w') as f:
-                json.dump({"theme": self.current_theme}, f)
-        except Exception:
-            pass
+        if self.user_type and self.user_id:
+            from dal import db_dal
+            db_dal.set_user_setting(self.user_type, self.user_id, "theme", self.current_theme)
+        else:
+            try:
+                with open(self._config_file, 'w') as f:
+                    json.dump({"theme": self.current_theme}, f)
+            except Exception:
+                pass
 
     def toggle_theme(self):
         self.current_theme = "dark" if self.current_theme == "light" else "light"

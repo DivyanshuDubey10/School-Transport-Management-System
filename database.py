@@ -77,7 +77,7 @@ def initialize_database():
         pass # Columns likely exist, or another error occurred. We should probably wrap this in a separate transaction or just rely on CREATE TABLE if we drop.
     else:
         # Just commit if alter succeeds
-        pass
+        pass 
     cursor.execute("""
                    CREATE TABLE IF NOT EXISTS student (
                         student_id SERIAL PRIMARY KEY,
@@ -112,6 +112,16 @@ def initialize_database():
                        FOREIGN KEY (student_id) REFERENCES student(student_id),
                        FOREIGN KEY (bus_id) REFERENCES bus(bus_id),
                        UNIQUE (student_id, date)
+                   )
+                   """)
+    cursor.execute("""
+                   CREATE TABLE IF NOT EXISTS user_settings (
+                       setting_id SERIAL PRIMARY KEY,
+                       user_type VARCHAR(50) NOT NULL,
+                       user_id INTEGER NOT NULL,
+                       setting_key VARCHAR(255) NOT NULL,
+                       setting_value VARCHAR(255),
+                       UNIQUE(user_type, user_id, setting_key)
                    )
                    """)
     connection.commit()

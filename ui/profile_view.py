@@ -4,6 +4,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from dal import db_dal
+from theme_manager import apply_shadow
+
 
 def create_initials_avatar(name, size=54, bg_color="#2563EB", text_color="#FFFFFF"):
     lbl = QLabel()
@@ -71,6 +73,7 @@ class ProfileView(QWidget):
         # 2. Executive Profile Banner
         banner_card = QFrame()
         banner_card.setObjectName("statCard")
+        apply_shadow(banner_card)
         banner_layout = QHBoxLayout(banner_card)
         banner_layout.setContentsMargins(20, 18, 20, 18)
         banner_layout.setSpacing(16)
@@ -100,6 +103,7 @@ class ProfileView(QWidget):
         # 3. Personal Information Edit Form
         form_card = QFrame()
         form_card.setObjectName("statCard")
+        apply_shadow(form_card)
         form_card_layout = QVBoxLayout(form_card)
         form_card_layout.setContentsMargins(22, 20, 22, 22)
         form_card_layout.setSpacing(15)
@@ -163,6 +167,7 @@ class ProfileView(QWidget):
         # 4. Security & Password Update Card
         sec_card = QFrame()
         sec_card.setObjectName("statCard")
+        apply_shadow(sec_card)
         sec_layout = QVBoxLayout(sec_card)
         sec_layout.setContentsMargins(22, 20, 22, 22)
         sec_layout.setSpacing(15)
