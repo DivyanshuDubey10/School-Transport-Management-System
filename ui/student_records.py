@@ -1,8 +1,9 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, 
-                               QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QDialog, QFormLayout, QFrame)
+                               QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QDialog, QFormLayout, QFrame, QComboBox, QFileDialog)
 from PyQt6.QtCore import Qt
 import sys
 import os
+import csv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -105,11 +106,25 @@ class StudentRecords(QWidget):
         self.delete_button.clicked.connect(self.delete_student)
         search_layout.addWidget(self.delete_button)
 
+        self.export_button = QPushButton("Export CSV")
+        self.export_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.export_button.setFixedHeight(38)
+        self.export_button.setObjectName("actionButton")
+        self.export_button.clicked.connect(self.export_csv)
+        search_layout.addWidget(self.export_button)
+
         search_layout.addStretch()
         
+        self.filter_combo = QComboBox()
+        self.filter_combo.addItems(["All Classes", "Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12"])
+        self.filter_combo.setFixedHeight(38)
+        self.filter_combo.currentTextChanged.connect(self.load_students)
+        search_layout.addWidget(self.filter_combo)
+
         self.search_entry = QLineEdit()
         self.search_entry.setPlaceholderText("Search student name, class, or phone...")
         self.search_entry.setFixedWidth(320)
+        self.search_entry.setFixedHeight(38)
         self.search_entry.textChanged.connect(self.load_students)
         search_layout.addWidget(self.search_entry)
         
@@ -120,7 +135,7 @@ class StudentRecords(QWidget):
         self.students_table.setColumnCount(8)
         self.students_table.setHorizontalHeaderLabels(["ID", "Student Profile", "Class & Route", "Parent Contact", "Address", "Bus", "Fee Paid", "Balance Due"])
         header = self.students_table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.students_table.setColumnWidth(0, 50)
         self.students_table.setColumnWidth(1, 230)
         self.students_table.setColumnWidth(2, 140)
@@ -137,7 +152,7 @@ class StudentRecords(QWidget):
         self.students_table.setAlternatingRowColors(True)
         self.students_table.setObjectName("dataTable")
         self.students_table.itemSelectionChanged.connect(self.select_student)
-        self.students_table.verticalScrollBar().setSingleStep(15)
+        self.students_table.verticalScrollBar().setSingleStep(5)
         main_layout.addWidget(self.students_table)
 
         # 4. Footer Bar
@@ -161,8 +176,13 @@ class StudentRecords(QWidget):
 
     def load_students(self):
         search_query = self.search_entry.text().strip()
+        filter_class = self.filter_combo.currentText()
+        
         from dal import db_dal
         students = db_dal.get_all_students(search_query=search_query)
+
+        if filter_class != "All Classes":
+            students = [s for s in students if str(s[2]).strip().lower() == filter_class.lower()]
 
         self.students_table.setRowCount(0)
         for row_idx, row_data in enumerate(students):
@@ -273,3 +293,21 @@ class StudentRecords(QWidget):
         layout.addWidget(save_btn)
         
         dialog.exec()
+
+    def export_csv(self):
+        path, _ = QFileDialog.getSaveFileName(self, "Export Student Records", "student_records.csv", "CSV Files (*.csv)")
+        if path:
+            try:
+                with open(path, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    headers = [self.students_table.horizontalHeaderItem(i).text() for i in range(self.students_table.columnCount())]
+                    writer.writerow(headers)
+                    for row in range(self.students_table.rowCount()):
+                        row_data = []
+                        for col in range(self.students_table.columnCount()):
+                            item = self.students_table.item(row, col)
+                            row_data.append(item.text() if item else "")
+                        writer.writerow(row_data)
+                QMessageBox.information(self, "Success", "Data exported successfully!")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to export CSV: {e}")

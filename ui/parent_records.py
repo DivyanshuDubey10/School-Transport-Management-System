@@ -1,8 +1,9 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, 
-                               QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QDialog, QFormLayout, QFrame)
+                               QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QDialog, QFormLayout, QFrame, QComboBox, QFileDialog)
 from PyQt6.QtCore import Qt
 import sys
 import os
+import csv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -105,11 +106,27 @@ class ParentRecords(QWidget):
         self.delete_button.clicked.connect(self.delete_parent)
         search_layout.addWidget(self.delete_button)
 
+        self.export_button = QPushButton("Export CSV")
+        self.export_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.export_button.setFixedHeight(38)
+        self.export_button.setObjectName("actionButton")
+        self.export_button.clicked.connect(self.export_csv)
+        search_layout.addWidget(self.export_button)
+
         search_layout.addStretch()
         
+        self.filter_combo = QComboBox()
+        self.filter_combo.addItem("All Stops")
+        from dal import db_dal
+        self.filter_combo.addItems(db_dal.get_all_pickup_points())
+        self.filter_combo.setFixedHeight(38)
+        self.filter_combo.currentTextChanged.connect(self.load_parents)
+        search_layout.addWidget(self.filter_combo)
+
         self.search_entry = QLineEdit()
         self.search_entry.setPlaceholderText("Search parent name, username, or phone...")
         self.search_entry.setFixedWidth(320)
+        self.search_entry.setFixedHeight(38)
         self.search_entry.textChanged.connect(self.load_parents)
         search_layout.addWidget(self.search_entry)
         
@@ -120,7 +137,7 @@ class ParentRecords(QWidget):
         self.parents_table.setColumnCount(6)
         self.parents_table.setHorizontalHeaderLabels(["ID", "Parent Profile", "Contact Phone", "Home Address", "Designated Stop", "Portal Account"])
         header = self.parents_table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.parents_table.setColumnWidth(0, 50)
         self.parents_table.setColumnWidth(1, 240)
         self.parents_table.setColumnWidth(2, 150)
@@ -135,7 +152,7 @@ class ParentRecords(QWidget):
         self.parents_table.setAlternatingRowColors(True)
         self.parents_table.setObjectName("dataTable")
         self.parents_table.itemSelectionChanged.connect(self.select_parent)
-        self.parents_table.verticalScrollBar().setSingleStep(15)
+        self.parents_table.verticalScrollBar().setSingleStep(5)
         main_layout.addWidget(self.parents_table)
 
         # 4. Footer Bar
@@ -159,8 +176,13 @@ class ParentRecords(QWidget):
 
     def load_parents(self):
         search_query = self.search_entry.text().strip()
+        filter_stop = self.filter_combo.currentText()
+        
         from dal import db_dal
         parents = db_dal.get_all_parents(search_query=search_query)
+        
+        if filter_stop != "All Stops":
+            parents = [p for p in parents if str(p[4]).strip().lower() == filter_stop.lower()]
 
         self.parents_table.setRowCount(0)
         for row_idx, row_data in enumerate(parents):
@@ -256,3 +278,21 @@ class ParentRecords(QWidget):
         layout.addWidget(save_btn)
         
         dialog.exec()
+
+    def export_csv(self):
+        path, _ = QFileDialog.getSaveFileName(self, "Export Parent Records", "parent_records.csv", "CSV Files (*.csv)")
+        if path:
+            try:
+                with open(path, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    headers = [self.parents_table.horizontalHeaderItem(i).text() for i in range(self.parents_table.columnCount())]
+                    writer.writerow(headers)
+                    for row in range(self.parents_table.rowCount()):
+                        row_data = []
+                        for col in range(self.parents_table.columnCount()):
+                            item = self.parents_table.item(row, col)
+                            row_data.append(item.text() if item else "")
+                        writer.writerow(row_data)
+                QMessageBox.information(self, "Success", "Data exported successfully!")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to export CSV: {e}")

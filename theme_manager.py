@@ -3,6 +3,8 @@ import json
 from PyQt6.QtWidgets import QApplication, QGraphicsDropShadowEffect
 from PyQt6.QtGui import QColor
 
+import sys
+
 def apply_shadow(widget):
     shadow = QGraphicsDropShadowEffect()
     shadow.setBlurRadius(25)
@@ -68,7 +70,12 @@ class ThemeManager:
             return
             
         theme_file = os.path.join("themes", f"{self.current_theme}.qss")
-        theme_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), theme_file)
+        if getattr(sys, 'frozen', False):
+            base_path = sys._MEIPASS
+        else:
+            base_path = os.path.dirname(os.path.abspath(__file__))
+            
+        theme_path = os.path.join(base_path, theme_file)
         
         try:
             # Explicitly unset stylesheet before applying new one to prevent stale styles

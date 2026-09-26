@@ -1,8 +1,9 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, 
-                               QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QFrame)
+                               QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QFrame, QComboBox, QFileDialog)
 from PyQt6.QtCore import Qt
 import sys
 import os
+import csv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -108,11 +109,27 @@ class BusRecords(QWidget):
         self.delete_button.clicked.connect(self.delete_bus)
         search_layout.addWidget(self.delete_button)
         
+        self.export_button = QPushButton("Export CSV")
+        self.export_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.export_button.setFixedHeight(38)
+        self.export_button.setObjectName("actionButton")
+        self.export_button.clicked.connect(self.export_csv)
+        search_layout.addWidget(self.export_button)
+
         search_layout.addStretch()
         
+        self.filter_combo = QComboBox()
+        self.filter_combo.addItem("All Routes")
+        from dal import db_dal
+        self.filter_combo.addItems([r[1] for r in db_dal.get_all_routes()])
+        self.filter_combo.setFixedHeight(38)
+        self.filter_combo.currentTextChanged.connect(self.load_buses)
+        search_layout.addWidget(self.filter_combo)
+
         self.search_entry = QLineEdit()
         self.search_entry.setPlaceholderText("Search by Bus Number, Driver, or Route...")
         self.search_entry.setFixedWidth(320)
+        self.search_entry.setFixedHeight(38)
         self.search_entry.textChanged.connect(self.load_buses)
         search_layout.addWidget(self.search_entry)
         
@@ -124,7 +141,7 @@ class BusRecords(QWidget):
         self.buses_table.setHorizontalHeaderLabels(["ID", "Bus & Capacity", "Driver Profile", "Contact Phone", "Status & Tenant", "Assigned Travel Route"])
         
         header = self.buses_table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.buses_table.setColumnWidth(0, 50)   # ID
         self.buses_table.setColumnWidth(1, 160)  # Bus & Capacity
         self.buses_table.setColumnWidth(2, 240)  # Driver Profile (with Avatar)
@@ -138,7 +155,7 @@ class BusRecords(QWidget):
         self.buses_table.setAlternatingRowColors(True)
         self.buses_table.setObjectName("dataTable")
         self.buses_table.itemSelectionChanged.connect(self.select_bus)
-        self.buses_table.verticalScrollBar().setSingleStep(15)
+        self.buses_table.verticalScrollBar().setSingleStep(5)
         
         main_layout.addWidget(self.buses_table)
 
@@ -168,8 +185,13 @@ class BusRecords(QWidget):
 
     def load_buses(self):
         search_query = self.search_entry.text().strip()
+        filter_route = self.filter_combo.currentText()
+        
         from dal import db_dal
         buses = db_dal.get_all_buses(search_query=search_query)
+
+        if filter_route != "All Routes":
+            buses = [b for b in buses if str(b[6]).strip().lower() == filter_route.lower()]
 
         self.buses_table.setRowCount(0)
         self.bus_data_map.clear()
@@ -216,6 +238,26 @@ class BusRecords(QWidget):
                 self.load_buses()
             else:
                 QMessageBox.critical(self, "Error", "Failed to delete bus.")
+
+    def export_csv(self):
+        import csv
+        from PyQt6.QtWidgets import QFileDialog
+        path, _ = QFileDialog.getSaveFileName(self, "Export Bus Records", "bus_records.csv", "CSV Files (*.csv)")
+        if path:
+            try:
+                with open(path, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    headers = [self.buses_table.horizontalHeaderItem(i).text() for i in range(self.buses_table.columnCount())]
+                    writer.writerow(headers)
+                    for row in range(self.buses_table.rowCount()):
+                        row_data = []
+                        for col in range(self.buses_table.columnCount()):
+                            item = self.buses_table.item(row, col)
+                            row_data.append(item.text() if item else "")
+                        writer.writerow(row_data)
+                QMessageBox.information(self, "Success", "Data exported successfully!")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to export CSV: {e}")
 
     def open_update_window(self):
         if not hasattr(self, "selected_bus_id"):

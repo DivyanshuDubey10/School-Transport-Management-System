@@ -50,7 +50,7 @@ class AttendanceRecordsView(QWidget):
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(["Date", "Student Name", "Class", "Bus Number", "Status"])
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.table.setObjectName("dataTable")
         
         main_layout.addWidget(self.table)

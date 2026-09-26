@@ -3,7 +3,13 @@ import os
 from dotenv import load_dotenv
 import security
 
-load_dotenv()
+import sys
+
+if getattr(sys, 'frozen', False):
+    env_path = os.path.join(sys._MEIPASS, '.env')
+else:
+    env_path = '.env'
+load_dotenv(dotenv_path=env_path)
 
 def connect_database():
     connection = psycopg2.connect(

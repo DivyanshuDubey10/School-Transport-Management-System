@@ -118,7 +118,7 @@ class MyStudentsView(QWidget):
         self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels(["Student Name", "Class", "Pickup Point", "Parent Phone", "Status (Today)", "Action"])
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.table.setObjectName("dataTable")
         
         main_layout.addWidget(self.table)

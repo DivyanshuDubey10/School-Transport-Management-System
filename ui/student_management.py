@@ -226,7 +226,7 @@ class PendingRequestsDialog(QDialog):
         self.table = QTableWidget()
         self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels(["ID", "Name", "Class", "Parent", "Pickup Point", "Status", "Action"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setObjectName("dataTable")
         self.table.setAlternatingRowColors(True)

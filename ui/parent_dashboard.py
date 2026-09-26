@@ -27,11 +27,17 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import connect_database
 from dal import db_dal
 
+from PyQt6.QtCore import Qt, QDate, QRect, QTimer
+
 class BusTrackingDialog(QDialog):
     def __init__(self, parent, student_name, bus_no, route_name):
         super().__init__(parent)
         self.setWindowTitle(f"Live Bus Tracking - {student_name} ({bus_no})")
         self.setFixedSize(800, 600)
+        self.bus_no = bus_no
+        self.route_name = route_name
+        self.current_lat = 28.6139
+        self.current_lon = 77.2090
         
         layout = QVBoxLayout(self)
         
@@ -46,21 +52,7 @@ class BusTrackingDialog(QDialog):
             return
 
         self.web_view = QWebEngineView()
-        
-        # Generate map
-        m = folium.Map(location=[28.6139, 77.2090], zoom_start=13) # Default location
-        folium.Marker(
-            [28.6139, 77.2090], 
-            popup=f"<b>Bus:</b> {bus_no}<br><b>Route:</b> {route_name}",
-            tooltip="Current Location",
-            icon=folium.Icon(color='blue', icon='bus', prefix='fa')
-        ).add_to(m)
-        
-        data = io.BytesIO()
-        m.save(data, close_file=False)
-        html_content = data.getvalue().decode()
-        
-        self.web_view.setHtml(html_content)
+        self.update_map()
         layout.addWidget(self.web_view)
         
         close_btn = QPushButton("Close Tracking")
@@ -68,6 +60,29 @@ class BusTrackingDialog(QDialog):
         close_btn.setObjectName("secondaryButton")
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn)
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.move_bus)
+        self.timer.start(2500)
+
+    def move_bus(self):
+        # Mock GPS movement
+        self.current_lat += 0.0005
+        self.current_lon += 0.0005
+        self.update_map()
+
+    def update_map(self):
+        m = folium.Map(location=[self.current_lat, self.current_lon], zoom_start=14)
+        folium.Marker(
+            [self.current_lat, self.current_lon], 
+            popup=f"<b>Bus:</b> {self.bus_no}<br><b>Route:</b> {self.route_name}",
+            tooltip="Current Location",
+            icon=folium.Icon(color='blue', icon='bus', prefix='fa')
+        ).add_to(m)
+        
+        data = io.BytesIO()
+        m.save(data, close_file=False)
+        self.web_view.setHtml(data.getvalue().decode())
 
 class CustomCalendarWidget(QCalendarWidget):
     def __init__(self, attendance_map):
@@ -231,7 +246,7 @@ class ChildrenView(QWidget):
         self.scroll_layout.setSpacing(16)
 
         scroll_area.setWidget(scroll_content)
-        scroll_area.verticalScrollBar().setSingleStep(15)
+        scroll_area.verticalScrollBar().setSingleStep(5)
         main_layout.addWidget(scroll_area)
 
         self.all_child_widgets = []
@@ -516,7 +531,7 @@ class ParentBusSchedule(QWidget):
         self.buses_table.setHorizontalHeaderLabels(["Bus Number", "Driver Profile", "Contact Number", "Assigned Travel Path"])
         
         header = self.buses_table.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.buses_table.setColumnWidth(0, 150)
         self.buses_table.setColumnWidth(1, 230)
         self.buses_table.setColumnWidth(2, 170)
@@ -526,7 +541,7 @@ class ParentBusSchedule(QWidget):
         self.buses_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.buses_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.buses_table.setAlternatingRowColors(True)
-        self.buses_table.verticalScrollBar().setSingleStep(15)
+        self.buses_table.verticalScrollBar().setSingleStep(5)
         self.buses_table.setObjectName("dataTable")
         
         main_layout.addWidget(self.buses_table)
@@ -628,7 +643,7 @@ class AttendanceView(QWidget):
                 table = QTableWidget()
                 table.setColumnCount(2)
                 table.setHorizontalHeaderLabels(["Date", "Status"])
-                table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+                table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
                 table.setObjectName("dataTable")
                 table.setRowCount(len(records))
                 table.setFixedHeight(min(300, 40 + len(records)*35))
