@@ -1,9 +1,44 @@
-# Python
+# Node dependencies (crucial for git - avoids committing thousands of files)
+node_modules/
+*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Production frontend build output
+dist/
+*/dist/
+build/
+*/build/
+
+# Local Environment Variables
+.env
+*.env
+!.env.example
+backend/.env
+
+# Python Virtual Environments & Bytecode
+.venv/
+env/
+venv/
+ENV/
 __pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
 *.pyc
 
-# VS Code
+# IDE & Editor files
 .vscode/
-build/
-dist/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# PyInstaller / Desktop build relics
 *.spec
+
+# OS Generated Files
+.DS_Store
+Thumbs.db

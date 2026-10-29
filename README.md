@@ -1,219 +1,78 @@
-# NeoYatra Transport Portal
+# 🚌 NeoYatra — School Transport Management System
 
-A desktop-based **NeoYatra Transport Portal** developed using **Python**, **PyQt6**, and **SQLite** to simplify school transport administration. The system enables administrators to efficiently manage students, parents, buses, drivers, and routes while providing parents with access to their child's transport information through a dedicated dashboard.
-
-
-## Features
-
-###  Authentication
-- Secure Login System
-- Admin Dashboard
-- Parent Dashboard
-- Role-Based Access
-
-###  Student Management
-- Add New Student
-- Update Student Details
-- Delete Student Records
-- View Student Information
-- Fee Management
-
-###  Parent Management
-- Add Parent Details
-- Parent Login Credentials
-- Update Parent Information
-- Delete Parent Records
-
-###  Bus Management
-- Register New Buses
-- Driver Assignment
-- Route Assignment
-- Bus Capacity Management
-
-###  Route Management
-- Create Routes
-- Manage Pickup Points
-- Assign Routes to Buses
-
-###  Dashboard
-- Total Students
-- Active Buses
-- Total Routes
-- Quick Navigation Buttons
-
-###  Database
-- SQLite Database
-- Relational Database Design
-- CRUD Operations
-- Parameterized SQL Queries
-
-
-# Technologies Used
-
-- Python
-- PyQt6
-- SQLite
-- SQL
-- Git
-- GitHub
-
-
-#  Project Structure
-
-```text
-School-Transport-Management-System/
-│
-├── main.py
-├── database.py
-├── database.db
-│
-├── ui/
-│   ├── login.py
-│   ├── admin_dashboard.py
-│   ├── parent_dashboard.py
-│   ├── student_management.py
-│   ├── student_records.py
-│   ├── parent_management.py
-│   ├── parent_records.py
-│   ├── bus_management.py
-│   └── bus_records.py
-│
-├── assets/
-│   └── screenshots/
-│
-├── docs/
-│
-├── requirements.txt
-└── README.md
-```
+A modern full-stack web application developed using **React + Vite + TypeScript** and **FastAPI + PostgreSQL** to streamline school transport administration. The system provides dedicated web portals for Administrators, Parents, and Drivers.
 
 ---
 
-#  Installation
+## 🌟 Key Features
 
-Clone the repository
+### 🔐 Multi-Role Authentication
+- Single unified login screen with automatic redirection based on user role (Admin, Parent, Driver).
+- Secure JWT Bearer token authentication with bcrypt password hashing.
 
+### 📊 Admin Portal
+- **Dashboard Overview**: Live KPI statistics (Total Students, Active Fleet, Designated Routes, Total Parents), Route Occupancy bar chart, and Fee distribution pie chart.
+- **Student Management**: Full CRUD operations, route allocations, parent linkages, and fee tracking.
+- **Parent Management**: Register parent accounts, manage designated home pickup points, and track emergency contacts.
+- **Bus Fleet Management**: Register transport vehicles, assign drivers with login credentials, set seat capacities, and link routes.
+- **Route Management**: Add, update, and manage travel paths across city and suburban sectors.
+- **Daily Attendance Logs**: Real-time review of bus boarding records marked by drivers.
+- **Transport Change Requests**: Review and approve/reject pickup point change requests submitted by parents.
+
+### 👨‍👩‍👧 Parent Portal
+- **Children Overview**: Cards displaying each child's assigned bus number, driver name, direct phone call link, designated pickup/drop stop, and fee balance status.
+- **Boarding Logs**: Detailed attendance history and attendance percentage per student for the last 30 recorded trips.
+- **Fleet Schedule**: Searchable directory of all operational school buses and travel routes.
+- **Pickup Change Requests**: Submit online requests to change a child's designated bus stop.
+
+### 🚍 Driver Portal
+- **Route Student List**: View students allocated to the driver's bus with one-click **Present** and **Absent** boarding buttons, plus a **Mark All Present** bulk action.
+- **Route Itinerary Map**: Ordered sequence of designated pickup stops showing which students board at each location with parent contact numbers.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, TanStack Query, Recharts, Lucide Icons |
+| **Backend** | FastAPI, Python 3, Uvicorn, python-jose (JWT), bcrypt, psycopg2 |
+| **Database** | PostgreSQL (`stms_db`) |
+| **Tooling** | npm, Git |
+
+---
+
+## 🚀 Getting Started
+
+### 1. Database Setup & Seeding
+Ensure PostgreSQL is running, then run the seeder:
 ```bash
-git clone https://github.com/DivyanshuDubey10/School-Transport-Management-System.git
+py seed.py
 ```
 
-Go to the project directory
+### 2. Running Locally
 
+**Terminal 1 — Backend:**
 ```bash
-cd School-Transport-Management-System
+cd backend
+py -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+# API running at: http://localhost:8000
+# Interactive API docs: http://localhost:8000/docs
 ```
 
-Install dependencies
-
+**Terminal 2 — Frontend:**
 ```bash
-pip install -r requirements.txt
-```
-
-Run the application
-
-```bash
-python main.py
+cd frontend
+npm run dev
+# Web application running at: http://localhost:5173
 ```
 
 ---
 
-# 📸 Screenshots
+## 🔑 Default Credentials
 
-## Login Screen
-
-![Login Screen]<img width="682" height="470" alt="Screenshot 2026-07-21 105635" src="https://github.com/user-attachments/assets/c68818f1-13a3-46b4-9dbd-f8fe94a4aa3a" />
-
-
-## Admin Dashboard
-
-![Admin Dashboard]<img width="677" height="467" alt="Screenshot 2026-07-21 110110" src="https://github.com/user-attachments/assets/0cf479af-daf3-4de3-a5f2-dafee539b502" />
-
-
----
-
-## Student Management
-
-![Student Management]<img width="674" height="467" alt="Screenshot 2026-07-21 105717" src="https://github.com/user-attachments/assets/f9425a3e-bb34-4bf3-b8c0-732d87c599c0" />
-
-
----
-
-## Parent Management
-
-![Parent Management]<img width="670" height="466" alt="Screenshot 2026-07-21 105729" src="https://github.com/user-attachments/assets/4deca03b-3290-4b24-b8a7-072e08f54f9a" />
-
-
----
-
-## Bus Management
-
-![Bus Management]<img width="674" height="467" alt="Screenshot 2026-07-21 105741" src="https://github.com/user-attachments/assets/c09d5503-5d3d-4e07-8480-2d5441351a70" />
-
-
----
-
-## Route Management
-
-![Route Management]<img width="670" height="466" alt="Screenshot 2026-07-21 105750" src="https://github.com/user-attachments/assets/fc3e1f2c-b452-46e7-aa11-2063a649317c" />
-
-
----
-
-## Parent Dashboard
-
-![Parent Dashboard]<img width="673" height="466" alt="Screenshot 2026-07-21 110300" src="https://github.com/user-attachments/assets/f81790fb-0e24-4de0-8458-3d25efe35259" />
-
-
----
-
-# Documentation
-
-The project includes software engineering documentation:
-
-- Product Requirements Document (PRD)
-- Technical Requirements Document (TRD)
-- Implementation Plan
-
----
-
-# Future Improvements
-
-- Password Hashing
-- Search & Filter Records
-- Export Reports (PDF/CSV)
-- Email Notifications
-- GPS Tracking Integration
-- Cloud Database Support
-- Mobile Application
-
----
-
-# Learning Outcomes
-
-This project enhanced my understanding of:
-
-- Python Application Development
-- GUI Design with CustomTkinter
-- SQLite Database Management
-- CRUD Operations
-- SQL Queries
-- Software Architecture
-- Git Version Control
-- GitHub Collaboration
-- Software Documentation
-
----
-
-# Author
-
-**Divyanshu Dubey**
-
-GitHub:
-https://github.com/DivyanshuDubey10
-
-LinkedIn:
-https://www.linkedin.com/in/divyanshu-dubey-4662b1378
-
-# 📄 License
-
-This project is intended for educational and portfolio purposes.
+| Portal | Username | Password |
+|---|---|---|
+| **Admin** | `admin` | `admin123` |
+| **Parent** | `parent1` | `password123` |
+| **Driver** | `driver1` (or custom created in Bus Management) | (as set in bus form) |
