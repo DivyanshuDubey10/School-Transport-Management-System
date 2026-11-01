@@ -48,6 +48,25 @@ def on_startup():
 
 
 # ---------------------------------------------------------------------------
+# Welcome root & Health check
+# ---------------------------------------------------------------------------
+@app.get("/", tags=["Root"])
+def root():
+    return {
+        "status": "online",
+        "service": "NeoYatra School Transport API",
+        "documentation": "/docs",
+        "health": "/health",
+        "version": "1.0.0",
+    }
+
+
+@app.get("/health", tags=["Health"])
+def health_check():
+    return {"status": "ok", "service": "NeoYatra API", "environment": os.getenv("ENVIRONMENT", "production")}
+
+
+# ---------------------------------------------------------------------------
 # Routers — all grouped under /api/v1/
 # ---------------------------------------------------------------------------
 API_PREFIX = "/api/v1"
@@ -62,11 +81,3 @@ app.include_router(attendance.router, prefix=API_PREFIX)
 app.include_router(requests.router, prefix=API_PREFIX)
 app.include_router(tracking.router, prefix=API_PREFIX)
 app.include_router(requests.router, prefix=f"{API_PREFIX}/transport-requests", tags=["Transport Requests Alias"])
-
-
-# ---------------------------------------------------------------------------
-# Health check
-# ---------------------------------------------------------------------------
-@app.get("/health", tags=["Health"])
-def health_check():
-    return {"status": "ok", "service": "NeoYatra API", "environment": os.getenv("ENVIRONMENT", "production")}
