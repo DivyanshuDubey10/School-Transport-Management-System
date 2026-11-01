@@ -208,7 +208,7 @@ class DAL:
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT s.student_id, s.student_name, s.student_class, s.fee_paid, s.fee_balance, b.bus_number,
-                       b.driver_name, b.driver_phone, r.route_name, p.pickup_point
+                       b.driver_name, b.driver_phone, r.route_name, p.pickup_point, b.bus_id
                 FROM student s
                 JOIN parent p ON s.parent_id = p.parent_id
                 LEFT JOIN route r ON s.route_id = r.route_id

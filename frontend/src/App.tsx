@@ -16,6 +16,7 @@ import Buses from './pages/admin/Buses'
 import AdminRoutes from './pages/admin/Routes'
 import Attendance from './pages/admin/Attendance'
 import Requests from './pages/admin/Requests'
+import FleetMap from './pages/admin/FleetMap'
 import ParentDashboard from './pages/parent/ParentDashboard'
 import ParentAttendance from './pages/parent/ParentAttendance'
 import ParentSchedule from './pages/parent/ParentSchedule'
@@ -68,6 +69,7 @@ function AppRoutes() {
         <Route path="routes" element={<AdminRoutes />} />
         <Route path="attendance" element={<Attendance />} />
         <Route path="requests" element={<Requests />} />
+        <Route path="live-map" element={<FleetMap />} />
       </Route>
 
       {/* Parent Routes */}

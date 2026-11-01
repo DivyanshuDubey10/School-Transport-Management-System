@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import auth, students, parents, buses, routes, attendance, dashboard, requests
+from routers import auth, students, parents, buses, routes, attendance, dashboard, requests, tracking
 
 app = FastAPI(
     title="NeoYatra — School Transport Management API",
@@ -46,6 +46,7 @@ app.include_router(buses.router, prefix=API_PREFIX)
 app.include_router(routes.router, prefix=API_PREFIX)
 app.include_router(attendance.router, prefix=API_PREFIX)
 app.include_router(requests.router, prefix=API_PREFIX)
+app.include_router(tracking.router, prefix=API_PREFIX)
 app.include_router(requests.router, prefix=f"{API_PREFIX}/transport-requests", tags=["Transport Requests Alias"])
 
 

@@ -7,6 +7,7 @@ import {
   Map,
   CalendarCheck,
   FileText,
+  Navigation,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -22,9 +23,9 @@ interface SidebarProps {
 }
 
 const roleConfig: Record<string, { color: string; bg: string; label: string }> = {
-  admin:  { color: 'text-sky-300',     bg: 'bg-sky-500/10',     label: 'Admin Portal' },
+  admin: { color: 'text-sky-300', bg: 'bg-sky-500/10', label: 'Admin Portal' },
   parent: { color: 'text-emerald-300', bg: 'bg-emerald-500/10', label: 'Parent Portal' },
-  driver: { color: 'text-amber-300',   bg: 'bg-amber-500/10',   label: 'Driver Portal' },
+  driver: { color: 'text-amber-300', bg: 'bg-amber-500/10', label: 'Driver Portal' },
 }
 
 export { type NavItem }
@@ -44,7 +45,9 @@ export function Sidebar({ navItems, role }: SidebarProps) {
             <span className="text-lg font-bold text-white tracking-tight">
               Neo<span className="text-accent">Yatra</span>
             </span>
-            <div className={`inline-flex items-center gap-1.5 mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.color} ${cfg.bg} border border-white/5`}>
+            <div
+              className={`inline-flex items-center gap-1.5 mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.color} ${cfg.bg} border border-white/5`}
+            >
               <div className={`h-1.5 w-1.5 rounded-full pulse-dot ${cfg.color.replace('text-', 'bg-')}`} />
               {cfg.label}
             </div>
@@ -62,9 +65,7 @@ export function Sidebar({ navItems, role }: SidebarProps) {
             className={({ isActive }) =>
               [
                 'relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group',
-                isActive
-                  ? 'bg-accent/10 text-accent'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5',
+                isActive ? 'bg-accent/10 text-accent' : 'text-slate-400 hover:text-white hover:bg-white/5',
               ].join(' ')
             }
           >
@@ -73,7 +74,12 @@ export function Sidebar({ navItems, role }: SidebarProps) {
                 {isActive && (
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-accent rounded-r-full" />
                 )}
-                <Icon size={17} className={`flex-shrink-0 transition-colors ${isActive ? 'text-accent' : 'text-slate-500 group-hover:text-white'}`} />
+                <Icon
+                  size={17}
+                  className={`flex-shrink-0 transition-colors ${
+                    isActive ? 'text-accent' : 'text-slate-500 group-hover:text-white'
+                  }`}
+                />
                 <span>{label}</span>
               </>
             )}
@@ -91,22 +97,23 @@ export function Sidebar({ navItems, role }: SidebarProps) {
 
 // Pre-built nav configs
 export const adminNavItems: NavItem[] = [
-  { to: '/admin/dashboard',  label: 'Dashboard',  Icon: LayoutDashboard },
-  { to: '/admin/students',   label: 'Students',   Icon: Users },
-  { to: '/admin/parents',    label: 'Parents',    Icon: UserCircle },
-  { to: '/admin/buses',      label: 'Buses',      Icon: Bus },
-  { to: '/admin/routes',     label: 'Routes',     Icon: Map },
+  { to: '/admin/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+  { to: '/admin/live-map', label: 'Live Fleet Map', Icon: Navigation },
+  { to: '/admin/students', label: 'Students', Icon: Users },
+  { to: '/admin/parents', label: 'Parents', Icon: UserCircle },
+  { to: '/admin/buses', label: 'Buses', Icon: Bus },
+  { to: '/admin/routes', label: 'Routes', Icon: Map },
   { to: '/admin/attendance', label: 'Attendance', Icon: CalendarCheck },
-  { to: '/admin/requests',   label: 'Requests',   Icon: FileText },
+  { to: '/admin/requests', label: 'Requests', Icon: FileText },
 ]
 
 export const parentNavItems: NavItem[] = [
-  { to: '/parent/dashboard',  label: 'Dashboard',  Icon: LayoutDashboard },
+  { to: '/parent/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
   { to: '/parent/attendance', label: 'Attendance', Icon: CalendarCheck },
-  { to: '/parent/schedule',   label: 'Schedule',   Icon: Map },
+  { to: '/parent/schedule', label: 'Schedule', Icon: Map },
 ]
 
 export const driverNavItems: NavItem[] = [
-  { to: '/driver/students',  label: 'My Students', Icon: Users },
-  { to: '/driver/route-map', label: 'Route Map',   Icon: Map },
+  { to: '/driver/students', label: 'My Students', Icon: Users },
+  { to: '/driver/route-map', label: 'Route & Navigation', Icon: Map },
 ]

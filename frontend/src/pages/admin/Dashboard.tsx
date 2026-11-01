@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import {
   Users, Bus, Map, UserCircle,
-  TrendingUp, Calendar, ArrowUpRight,
+  Calendar, ArrowUpRight, Navigation,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getDashboard } from '../../api/dashboard'
@@ -15,12 +15,12 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
 const PIE_COLORS = ['#10B981', '#F97316']
 
 const QUICK_ACTIONS = [
-  { label: 'Students', path: '/admin/students', color: 'text-sky-600 bg-sky-50 border-sky-100', icon: Users },
+  { label: 'Live Fleet Map', path: '/admin/live-map', color: 'text-sky-600 bg-sky-50 border-sky-100', icon: Navigation },
+  { label: 'Students', path: '/admin/students', color: 'text-indigo-600 bg-indigo-50 border-indigo-100', icon: Users },
   { label: 'Parents', path: '/admin/parents', color: 'text-purple-600 bg-purple-50 border-purple-100', icon: UserCircle },
   { label: 'Buses', path: '/admin/buses', color: 'text-amber-600 bg-amber-50 border-amber-100', icon: Bus },
   { label: 'Routes', path: '/admin/routes', color: 'text-emerald-600 bg-emerald-50 border-emerald-100', icon: Map },
   { label: 'Attendance', path: '/admin/attendance', color: 'text-blue-600 bg-blue-50 border-blue-100', icon: Calendar },
-  { label: 'Requests', path: '/admin/requests', color: 'text-rose-600 bg-rose-50 border-rose-100', icon: TrendingUp },
 ]
 
 export default function Dashboard() {

@@ -71,3 +71,15 @@ body {
   50%       { opacity: 0.4; }
 }
 .pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
+
+/* Leaflet map styling overrides */
+.leaflet-container {
+  font-family: inherit;
+  z-index: 0 !important;
+}
+.leaflet-pane {
+  z-index: 10 !important;
+}
+.leaflet-top, .leaflet-bottom {
+  z-index: 20 !important;
+}

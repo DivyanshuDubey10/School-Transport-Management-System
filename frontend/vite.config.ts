@@ -12,6 +12,7 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-charts': ['recharts'],
+          'vendor-map': ['leaflet'],
           'vendor-query': ['@tanstack/react-query', 'axios'],
           'vendor-icons': ['lucide-react'],
         },

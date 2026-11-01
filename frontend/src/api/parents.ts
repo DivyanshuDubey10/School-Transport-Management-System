@@ -35,6 +35,7 @@ export interface Child {
   driver_phone: string | null
   route_name: string | null
   pickup_point: string | null
+  bus_id?: number | null
 }
 
 export async function getParents(search: string = ''): Promise<Parent[]> {

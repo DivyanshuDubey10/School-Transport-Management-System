@@ -56,6 +56,7 @@ class ChildOut(BaseModel):
     driver_phone: Optional[str]
     route_name: Optional[str]
     pickup_point: Optional[str]
+    bus_id: Optional[int] = None
 
 
 @router.get("", response_model=List[ParentOut])
@@ -144,6 +145,7 @@ def my_children(user: dict = Depends(require_parent)):
             driver_phone=r[7],
             route_name=r[8],
             pickup_point=r[9],
+            bus_id=r[10] if len(r) > 10 else None,
         )
         for r in rows
     ]
