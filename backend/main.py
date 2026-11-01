@@ -92,6 +92,8 @@ def health_check():
 
 @app.get("/api/v1/setup-test-accounts", tags=["Setup"])
 @app.post("/api/v1/setup-test-accounts", tags=["Setup"])
+@app.get("/setup-test-accounts", tags=["Setup"])
+@app.post("/setup-test-accounts", tags=["Setup"])
 def setup_test_accounts():
     """
     Public setup helper: verifies database connection and ensures
@@ -104,8 +106,8 @@ def setup_test_accounts():
             "message": "Default test accounts have been verified and initialized in database!",
             "credentials": [
                 {"role": "Admin", "username": "admin", "password": "admin123"},
-                {"role": "Parent", "username": "parent1", "password": "parent123"},
-                {"role": "Driver", "username": "driver1", "password": "driver123"},
+                {"role": "Parent", "username": "parent", "password": "parent123", "alias": "parent1"},
+                {"role": "Driver", "username": "driver", "password": "driver123", "alias": "driver1"},
             ],
         }
     except Exception as e:
@@ -113,10 +115,11 @@ def setup_test_accounts():
 
 
 # ---------------------------------------------------------------------------
-# Routers — all grouped under /api/v1/
+# Routers — both under /api/v1/ and root fallback
 # ---------------------------------------------------------------------------
 API_PREFIX = "/api/v1"
 
+# 1. Standard /api/v1 prefix
 app.include_router(auth.router, prefix=API_PREFIX)
 app.include_router(dashboard.router, prefix=API_PREFIX)
 app.include_router(students.router, prefix=API_PREFIX)
@@ -127,3 +130,14 @@ app.include_router(attendance.router, prefix=API_PREFIX)
 app.include_router(requests.router, prefix=API_PREFIX)
 app.include_router(tracking.router, prefix=API_PREFIX)
 app.include_router(requests.router, prefix=f"{API_PREFIX}/transport-requests", tags=["Transport Requests Alias"])
+
+# 2. Direct root alias fallback (in case frontend calls /auth/login directly)
+app.include_router(auth.router, tags=["Root Auth Alias"])
+app.include_router(dashboard.router, tags=["Root Dashboard Alias"])
+app.include_router(students.router, tags=["Root Students Alias"])
+app.include_router(parents.router, tags=["Root Parents Alias"])
+app.include_router(buses.router, tags=["Root Buses Alias"])
+app.include_router(routes.router, tags=["Root Routes Alias"])
+app.include_router(attendance.router, tags=["Root Attendance Alias"])
+app.include_router(requests.router, tags=["Root Requests Alias"])
+app.include_router(tracking.router, tags=["Root Tracking Alias"])

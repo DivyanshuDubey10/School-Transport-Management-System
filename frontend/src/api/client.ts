@@ -1,9 +1,14 @@
 import axios from 'axios'
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
+// Normalize URL: handles trailing slashes and missing /api/v1 automatically
+let rawUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').trim()
+rawUrl = rawUrl.replace(/\/+$/, '')
+if (!rawUrl.endsWith('/api/v1')) {
+  rawUrl = `${rawUrl}/api/v1`
+}
 
 const apiClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: rawUrl,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -21,11 +26,12 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 )
 
-// Response interceptor — handle 401
+// Response interceptor — handle 401 without breaking login attempts
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isLoginEndpoint = error.config?.url?.includes('/auth/login')
+    if (error.response?.status === 401 && !isLoginEndpoint) {
       localStorage.removeItem('neoyatra_token')
       localStorage.removeItem('neoyatra_user')
       window.location.href = '/login'

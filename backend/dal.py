@@ -16,7 +16,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM admin WHERE LOWER(USERNAME) = LOWER(%s)", (username,))
+            cursor.execute("SELECT * FROM admin WHERE LOWER(USERNAME) = LOWER(%s) LIMIT 1", (username.strip(),))
             return cursor.fetchone()
         finally:
             conn.close()
@@ -25,7 +25,14 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM parent WHERE LOWER(username) = LOWER(%s)", (username,))
+            u = username.strip().lower()
+            if u in ('parent', 'parent1'):
+                cursor.execute(
+                    "SELECT * FROM parent WHERE LOWER(username) IN ('parent', 'parent1') ORDER BY (LOWER(username) = %s) DESC LIMIT 1",
+                    (u,)
+                )
+            else:
+                cursor.execute("SELECT * FROM parent WHERE LOWER(username) = %s LIMIT 1", (u,))
             return cursor.fetchone()
         finally:
             conn.close()
@@ -34,7 +41,14 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM bus WHERE LOWER(username) = LOWER(%s)", (username,))
+            u = username.strip().lower()
+            if u in ('driver', 'driver1'):
+                cursor.execute(
+                    "SELECT * FROM bus WHERE LOWER(username) IN ('driver', 'driver1') ORDER BY (LOWER(username) = %s) DESC LIMIT 1",
+                    (u,)
+                )
+            else:
+                cursor.execute("SELECT * FROM bus WHERE LOWER(username) = %s LIMIT 1", (u,))
             return cursor.fetchone()
         finally:
             conn.close()
