@@ -8,7 +8,7 @@ export default function ParentLayout() {
       <Sidebar navItems={parentNavItems} role="parent" />
       <TopBar />
       <main className="ml-60 pt-14 min-h-screen">
-        <div className="p-6">
+        <div className="p-6 max-w-7xl mx-auto page-enter">
           <Outlet />
         </div>
       </main>

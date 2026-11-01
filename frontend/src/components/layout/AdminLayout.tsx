@@ -8,7 +8,7 @@ export default function AdminLayout() {
       <Sidebar navItems={adminNavItems} role="admin" />
       <TopBar />
       <main className="ml-60 pt-14 min-h-screen">
-        <div className="p-6">
+        <div className="p-6 max-w-7xl mx-auto page-enter">
           <Outlet />
         </div>
       </main>
