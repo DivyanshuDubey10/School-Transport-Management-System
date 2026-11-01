@@ -30,7 +30,8 @@ def connect_database():
 def initialize_database():
     """
     Creates all necessary schema tables if they do not exist,
-    and ensures default admin credentials exist for first login.
+    and sets up default test credentials (admin, parent, driver)
+    so the app can be immediately tested online.
     Safe to run repeatedly (idempotent).
     """
     conn = connect_database()
@@ -46,20 +47,6 @@ def initialize_database():
                 full_name VARCHAR(255) NOT NULL
             );
         """)
-
-        cursor.execute("SELECT admin_id FROM admin LIMIT 1;")
-        admin = cursor.fetchone()
-        if admin is None:
-            default_admin_user = os.getenv("DEFAULT_ADMIN_USER", "admin")
-            default_admin_pass = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin123")
-            hashed_pw = security.hash_password(default_admin_pass)
-            cursor.execute(
-                """
-                INSERT INTO admin (USERNAME, password, full_name)
-                VALUES (%s, %s, %s);
-                """,
-                (default_admin_user, hashed_pw, "System Administrator"),
-            )
 
         # 2. Parent table
         cursor.execute("""
@@ -145,6 +132,79 @@ def initialize_database():
             );
         """)
 
+        # -------------------------------------------------------------------
+        # Default Test Accounts for Testing/Portfolio Access
+        # -------------------------------------------------------------------
+
+        # A. Default Admin (admin / admin123)
+        cursor.execute("SELECT admin_id FROM admin LIMIT 1;")
+        if not cursor.fetchone():
+            default_admin_user = os.getenv("DEFAULT_ADMIN_USER", "admin")
+            default_admin_pass = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin123")
+            hashed_admin = security.hash_password(default_admin_pass)
+            cursor.execute(
+                """
+                INSERT INTO admin (USERNAME, password, full_name)
+                VALUES (%s, %s, %s);
+                """,
+                (default_admin_user, hashed_admin, "System Administrator"),
+            )
+
+        # B. Sample Route
+        cursor.execute("SELECT route_id FROM route LIMIT 1;")
+        route_row = cursor.fetchone()
+        if not route_row:
+            cursor.execute(
+                "INSERT INTO route (route_name) VALUES (%s) RETURNING route_id;",
+                ("North Route - Purana Bazar",),
+            )
+            route_id = cursor.fetchone()[0]
+        else:
+            route_id = route_row[0]
+
+        # C. Default Driver & Bus (driver1 / driver123)
+        cursor.execute("SELECT bus_id FROM bus LIMIT 1;")
+        bus_row = cursor.fetchone()
+        if not bus_row:
+            hashed_driver = security.hash_password("driver123")
+            cursor.execute(
+                """
+                INSERT INTO bus (bus_number, driver_name, driver_phone, capacity, route_id, username, password)
+                VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING bus_id;
+                """,
+                ("DL 1P 1001", "Rajesh Sharma", "9876543210", 40, route_id, "driver1", hashed_driver),
+            )
+            bus_id = cursor.fetchone()[0]
+        else:
+            bus_id = bus_row[0]
+
+        # D. Default Parent (parent1 / parent123)
+        cursor.execute("SELECT parent_id FROM parent WHERE username = 'parent1' LIMIT 1;")
+        parent_row = cursor.fetchone()
+        if not parent_row:
+            hashed_parent = security.hash_password("parent123")
+            cursor.execute(
+                """
+                INSERT INTO parent (parent_name, phone, address, pickup_point, username, password)
+                VALUES (%s, %s, %s, %s, %s, %s) RETURNING parent_id;
+                """,
+                ("Rahul Sharma", "9876543200", "42, Purana Bazar, New Delhi", "Purana Bazar Chowk", "parent1", hashed_parent),
+            )
+            parent_id = cursor.fetchone()[0]
+        else:
+            parent_id = parent_row[0]
+
+        # E. Sample Student linked to parent1 and the route
+        cursor.execute("SELECT student_id FROM student LIMIT 1;")
+        if not cursor.fetchone():
+            cursor.execute(
+                """
+                INSERT INTO student (student_name, student_class, parent_id, route_id, transport_status, fee_status, fee_paid, fee_balance)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+                """,
+                ("Aarav Sharma", "Class 5A", parent_id, route_id, "Active", "Paid", 1500.0, 0.0),
+            )
+
         conn.commit()
     finally:
         cursor.close()
@@ -153,4 +213,4 @@ def initialize_database():
 
 if __name__ == "__main__":
     initialize_database()
-    print("Database initialized successfully.")
+    print("Database initialized with test credentials successfully.")
