@@ -156,11 +156,11 @@ export default function DriverRouteMap() {
               dot
               className={isTripActive ? 'bg-emerald-500/20 text-emerald-300 ring-emerald-500/40' : 'bg-slate-700 text-slate-300'}
             >
-              {isTripActive ? 'Broadcasting Live GPS' : 'Trip Idle'}
+              {isTripActive ? 'Live GPS Active' : 'Trip Idle'}
             </Badge>
           </div>
           <h1 className="text-2xl font-bold tracking-tight">
-            {tracking?.bus_number || 'Route Bus'} — Live Route Navigation
+            {tracking?.bus_number || 'Route Bus'} — Live Route Map
           </h1>
           <p className="text-xs text-slate-300 mt-1">
             Route: <b className="text-white">{tracking?.route_name || 'Assigned Route'}</b> • Driver: {user?.name}
@@ -211,12 +211,12 @@ export default function DriverRouteMap() {
           <div className="flex items-center justify-between mb-3 px-1">
             <div className="flex items-center gap-2">
               <Navigation size={18} className="text-sky-500" />
-              <h2 className="text-sm font-bold text-slate-800">Live GPS Navigation Map</h2>
+              <h2 className="text-sm font-bold text-slate-800">Live GPS Map</h2>
             </div>
             {isTripActive && (
               <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 pulse-dot" />
-                Live Satellite Stream
+                Live Tracking Active
               </span>
             )}
           </div>
@@ -233,12 +233,12 @@ export default function DriverRouteMap() {
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-card flex flex-col justify-between">
           <div>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
-              Trip Telemetry
+              Trip Details
             </h3>
 
             <div className="space-y-4">
               <div>
-                <span className="text-xs text-slate-400 font-medium">Next Designated Stop</span>
+                <span className="text-xs text-slate-400 font-medium">Next Stop</span>
                 <p className="text-base font-bold text-slate-800 mt-0.5">
                   {tracking?.next_stop || 'Purana Bazar'}
                 </p>
