@@ -14,6 +14,8 @@ def connect_database():
     """
     database_url = os.getenv("DATABASE_URL")
     if database_url:
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
         return psycopg2.connect(database_url)
 
     return psycopg2.connect(
