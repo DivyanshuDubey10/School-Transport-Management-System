@@ -39,7 +39,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
-    """Ensure database schema and default admin exist on boot."""
+    """Ensure database schema and default test accounts exist on boot."""
     try:
         database.initialize_database()
         print("INFO: Database schema verified and initialized.")
@@ -57,13 +57,59 @@ def root():
         "service": "NeoYatra School Transport API",
         "documentation": "/docs",
         "health": "/health",
+        "setup_test_accounts": "/api/v1/setup-test-accounts",
         "version": "1.0.0",
     }
 
 
 @app.get("/health", tags=["Health"])
 def health_check():
-    return {"status": "ok", "service": "NeoYatra API", "environment": os.getenv("ENVIRONMENT", "production")}
+    db_status = "connected"
+    counts = {}
+    try:
+        conn = database.connect_database()
+        cur = conn.cursor()
+        cur.execute("SELECT count(*) FROM admin;")
+        admin_c = cur.fetchone()[0]
+        cur.execute("SELECT count(*) FROM parent;")
+        parent_c = cur.fetchone()[0]
+        cur.execute("SELECT count(*) FROM bus;")
+        bus_c = cur.fetchone()[0]
+        counts = {"admins": admin_c, "parents": parent_c, "buses": bus_c}
+        cur.close()
+        conn.close()
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+
+    return {
+        "status": "ok",
+        "service": "NeoYatra API",
+        "database": db_status,
+        "records": counts,
+        "environment": os.getenv("ENVIRONMENT", "production"),
+    }
+
+
+@app.get("/api/v1/setup-test-accounts", tags=["Setup"])
+@app.post("/api/v1/setup-test-accounts", tags=["Setup"])
+def setup_test_accounts():
+    """
+    Public setup helper: verifies database connection and ensures
+    admin123, parent123, and driver123 test accounts exist.
+    """
+    try:
+        database.initialize_database()
+        return {
+            "status": "success",
+            "message": "Default test accounts have been verified and initialized in database!",
+            "credentials": [
+                {"role": "Admin", "username": "admin", "password": "admin123"},
+                {"role": "Parent", "username": "parent1", "password": "parent123"},
+                {"role": "Driver", "username": "driver1", "password": "driver123"},
+            ],
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 # ---------------------------------------------------------------------------

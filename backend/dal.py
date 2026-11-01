@@ -16,7 +16,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM admin WHERE USERNAME = %s", (username,))
+            cursor.execute("SELECT * FROM admin WHERE LOWER(USERNAME) = LOWER(%s)", (username,))
             return cursor.fetchone()
         finally:
             conn.close()
@@ -25,7 +25,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM parent WHERE username = %s", (username,))
+            cursor.execute("SELECT * FROM parent WHERE LOWER(username) = LOWER(%s)", (username,))
             return cursor.fetchone()
         finally:
             conn.close()
@@ -34,7 +34,7 @@ class DAL:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM bus WHERE username = %s", (username,))
+            cursor.execute("SELECT * FROM bus WHERE LOWER(username) = LOWER(%s)", (username,))
             return cursor.fetchone()
         finally:
             conn.close()

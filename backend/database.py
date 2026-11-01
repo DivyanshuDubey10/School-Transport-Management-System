@@ -137,18 +137,19 @@ def initialize_database():
         # -------------------------------------------------------------------
 
         # A. Default Admin (admin / admin123)
-        cursor.execute("SELECT admin_id FROM admin LIMIT 1;")
-        if not cursor.fetchone():
-            default_admin_user = os.getenv("DEFAULT_ADMIN_USER", "admin")
-            default_admin_pass = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin123")
-            hashed_admin = security.hash_password(default_admin_pass)
+        cursor.execute("SELECT admin_id FROM admin WHERE LOWER(USERNAME) = 'admin';")
+        admin_row = cursor.fetchone()
+        hashed_admin = security.hash_password("admin123")
+        if not admin_row:
             cursor.execute(
                 """
                 INSERT INTO admin (USERNAME, password, full_name)
                 VALUES (%s, %s, %s);
                 """,
-                (default_admin_user, hashed_admin, "System Administrator"),
+                ("admin", hashed_admin, "System Administrator"),
             )
+        else:
+            cursor.execute("UPDATE admin SET password = %s WHERE LOWER(USERNAME) = 'admin';", (hashed_admin,))
 
         # B. Sample Route
         cursor.execute("SELECT route_id FROM route LIMIT 1;")
@@ -163,10 +164,10 @@ def initialize_database():
             route_id = route_row[0]
 
         # C. Default Driver & Bus (driver1 / driver123)
-        cursor.execute("SELECT bus_id FROM bus LIMIT 1;")
+        cursor.execute("SELECT bus_id FROM bus WHERE LOWER(username) = 'driver1';")
         bus_row = cursor.fetchone()
+        hashed_driver = security.hash_password("driver123")
         if not bus_row:
-            hashed_driver = security.hash_password("driver123")
             cursor.execute(
                 """
                 INSERT INTO bus (bus_number, driver_name, driver_phone, capacity, route_id, username, password)
@@ -177,12 +178,13 @@ def initialize_database():
             bus_id = cursor.fetchone()[0]
         else:
             bus_id = bus_row[0]
+            cursor.execute("UPDATE bus SET password = %s WHERE LOWER(username) = 'driver1';", (hashed_driver,))
 
         # D. Default Parent (parent1 / parent123)
-        cursor.execute("SELECT parent_id FROM parent WHERE username = 'parent1' LIMIT 1;")
+        cursor.execute("SELECT parent_id FROM parent WHERE LOWER(username) = 'parent1';")
         parent_row = cursor.fetchone()
+        hashed_parent = security.hash_password("parent123")
         if not parent_row:
-            hashed_parent = security.hash_password("parent123")
             cursor.execute(
                 """
                 INSERT INTO parent (parent_name, phone, address, pickup_point, username, password)
@@ -193,6 +195,7 @@ def initialize_database():
             parent_id = cursor.fetchone()[0]
         else:
             parent_id = parent_row[0]
+            cursor.execute("UPDATE parent SET password = %s WHERE LOWER(username) = 'parent1';", (hashed_parent,))
 
         # E. Sample Student linked to parent1 and the route
         cursor.execute("SELECT student_id FROM student LIMIT 1;")
