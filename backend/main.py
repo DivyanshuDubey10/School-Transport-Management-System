@@ -2,11 +2,14 @@ import os
 import sys
 from dotenv import load_dotenv
 
-# Load environment variables from .env in the backend directory
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
+# Ensure backend directory is in sys.path with absolute path
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
 
-# Ensure the backend directory is importable as a root package
-sys.path.insert(0, os.path.dirname(__file__))
+# Load environment variables
+load_dotenv(dotenv_path=os.path.join(BACKEND_DIR, '.env'))
+load_dotenv()  # Also load any root .env if present
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
