@@ -10,28 +10,39 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+import database
 from routers import auth, students, parents, buses, routes, attendance, dashboard, requests, tracking
 
 app = FastAPI(
     title="NeoYatra — School Transport Management API",
     version="1.0.0",
-    description="FastAPI backend for NeoYatra school transport management system.",
+    description="Production FastAPI backend for NeoYatra school transport management system.",
 )
 
 # ---------------------------------------------------------------------------
-# CORS
+# CORS Configuration (Configurable via ALLOWED_ORIGINS env variable)
 # ---------------------------------------------------------------------------
+raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,*")
+allowed_origins = [orig.strip() for orig in raw_origins.split(",") if orig.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # Vite dev server
-        "*",                      # allow all origins (tighten for production)
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def on_startup():
+    """Ensure database schema and default admin exist on boot."""
+    try:
+        database.initialize_database()
+        print("INFO: Database schema verified and initialized.")
+    except Exception as e:
+        print(f"WARNING: Could not auto-initialize database on startup: {e}")
+
 
 # ---------------------------------------------------------------------------
 # Routers — all grouped under /api/v1/
@@ -55,18 +66,4 @@ app.include_router(requests.router, prefix=f"{API_PREFIX}/transport-requests", t
 # ---------------------------------------------------------------------------
 @app.get("/health", tags=["Health"])
 def health_check():
-    return {"status": "ok", "service": "NeoYatra API"}
-
-
-# ---------------------------------------------------------------------------
-# Entry point for direct execution
-# ---------------------------------------------------------------------------
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-    )
+    return {"status": "ok", "service": "NeoYatra API", "environment": os.getenv("ENVIRONMENT", "production")}

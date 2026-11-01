@@ -250,3 +250,4 @@ def get_fleet_tracking(
             })
 
     return {"count": len(fleet), "buses": fleet}
+
