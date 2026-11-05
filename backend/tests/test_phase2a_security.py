@@ -180,6 +180,7 @@ class TestAuthenticationHardening:
         saved_hashes = []
         monkeypatch.setattr(db_dal, "get_admin_by_id", lambda uid: MOCK_ADMIN)
         monkeypatch.setattr(db_dal, "set_admin_password_hash", lambda uid, h: saved_hashes.append(h) or True)
+        monkeypatch.setattr(db_dal, "clear_all_password_reset_tokens", lambda ut, uid: True)
 
         resp = client.post(
             "/api/v1/auth/change-password",
@@ -189,6 +190,79 @@ class TestAuthenticationHardening:
         assert resp.status_code == 200
         assert len(saved_hashes) == 1
         assert security.verify_password("NewStrongPass456!", saved_hashes[0])
+
+    def test_forgot_password_enumeration_protection_and_no_token_leak(self, monkeypatch):
+        monkeypatch.setattr(db_dal, "get_admin_by_username", lambda u: MOCK_ADMIN if u == "admin" else None)
+        monkeypatch.setattr(db_dal, "get_parent_by_username", lambda u: None)
+        monkeypatch.setattr(db_dal, "get_driver_by_username", lambda u: None)
+        monkeypatch.setattr(db_dal, "save_password_reset_token", lambda *a, **k: True)
+
+        # Existing user
+        resp_existing = client.post("/api/v1/auth/forgot-password", json={"username": "admin"})
+        assert resp_existing.status_code == 200
+        data_existing = resp_existing.json()
+        assert "reset_token" not in data_existing
+        assert data_existing["status"] == "ok"
+
+        # Non-existing user
+        resp_missing = client.post("/api/v1/auth/forgot-password", json={"username": "nonexistent_user_999"})
+        assert resp_missing.status_code == 200
+        data_missing = resp_missing.json()
+        assert "reset_token" not in data_missing
+        assert data_missing["status"] == "ok"
+
+        # Responses must be identical to prevent enumeration
+        assert data_existing["message"] == data_missing["message"]
+
+    def test_reset_token_is_hashed_and_single_use(self, monkeypatch):
+        import time
+        import hashlib
+        saved_settings = {}
+        now_ts = int(time.time())
+
+        # Mock settings store
+        monkeypatch.setattr(db_dal, "get_user_settings", lambda ut, uid: dict(saved_settings))
+        def mock_set_setting(ut, uid, k, v):
+            saved_settings[k] = v
+            return True
+        monkeypatch.setattr(db_dal, "set_user_setting", mock_set_setting)
+        def mock_clear_all(ut, uid):
+            for k in list(saved_settings.keys()):
+                if k.startswith("pwd_reset_"):
+                    del saved_settings[k]
+            return True
+        monkeypatch.setattr(db_dal, "clear_all_password_reset_tokens", mock_clear_all)
+        monkeypatch.setattr(db_dal, "get_admin_by_username", lambda u: MOCK_ADMIN if u == "admin" else None)
+        monkeypatch.setattr(db_dal, "set_admin_password_hash", lambda uid, h: True)
+
+        # Save token
+        raw_token = security.generate_secure_token()
+        db_dal.save_password_reset_token("admin", 1, raw_token, now_ts + 900)
+
+        # Verify key contains SHA-256 hash and NOT raw token
+        raw_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+        assert f"pwd_reset_{raw_hash}" in saved_settings
+        assert f"pwd_reset_{raw_token}" not in saved_settings
+
+        # First use succeeds
+        resp1 = client.post("/api/v1/auth/reset-password", json={
+            "username": "admin",
+            "user_type": "admin",
+            "reset_token": raw_token,
+            "new_password": "BrandNewPassword123!",
+        })
+        assert resp1.status_code == 200
+        assert "reset successfully" in resp1.json()["message"]
+
+        # Replay attempt fails because token was invalidated
+        resp2 = client.post("/api/v1/auth/reset-password", json={
+            "username": "admin",
+            "user_type": "admin",
+            "reset_token": raw_token,
+            "new_password": "AnotherNewPassword456!",
+        })
+        assert resp2.status_code == 400
+        assert "Invalid or expired" in resp2.json()["detail"]
 
 
 # ===========================================================================

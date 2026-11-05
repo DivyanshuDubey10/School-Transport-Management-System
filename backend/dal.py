@@ -1,7 +1,13 @@
 import psycopg2
+import hashlib
 import database
 import security
 from typing import List, Dict, Any, Optional, Tuple
+
+
+def _hash_reset_token(token: str) -> str:
+    """Hashes a password reset token using SHA-256 before storing it in the database."""
+    return hashlib.sha256(token.strip().encode('utf-8')).hexdigest()
 
 
 class DAL:
@@ -120,11 +126,17 @@ class DAL:
             conn.close()
 
     def save_password_reset_token(self, user_type: str, user_id: int, token: str, expiry_timestamp: int) -> bool:
-        return self.set_user_setting(user_type, user_id, f"pwd_reset_{token}", str(expiry_timestamp))
+        """Saves a SHA-256 hashed password reset token with its expiration timestamp."""
+        token_hash = _hash_reset_token(token)
+        # Invalidate any prior active reset tokens for this user first
+        self.clear_all_password_reset_tokens(user_type, user_id)
+        return self.set_user_setting(user_type, user_id, f"pwd_reset_{token_hash}", str(expiry_timestamp))
 
     def verify_password_reset_token(self, user_type: str, user_id: int, token: str, current_timestamp: int) -> bool:
+        """Verifies an incoming reset token by comparing its SHA-256 hash against the database."""
+        token_hash = _hash_reset_token(token)
         settings = self.get_user_settings(user_type, user_id)
-        expiry_str = settings.get(f"pwd_reset_{token}")
+        expiry_str = settings.get(f"pwd_reset_{token_hash}")
         if not expiry_str:
             return False
         try:
@@ -134,17 +146,36 @@ class DAL:
             return False
 
     def clear_password_reset_token(self, user_type: str, user_id: int, token: str) -> bool:
+        """Deletes a used password reset token from the database."""
+        token_hash = _hash_reset_token(token)
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
                 "DELETE FROM user_settings WHERE user_type = %s AND user_id = %s AND setting_key = %s",
-                (user_type, user_id, f"pwd_reset_{token}")
+                (user_type, user_id, f"pwd_reset_{token_hash}")
             )
             conn.commit()
             return True
         except Exception as e:
             print(f"Error clearing reset token: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def clear_all_password_reset_tokens(self, user_type: str, user_id: int) -> bool:
+        """Invalidates all pending password reset tokens for a given user."""
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "DELETE FROM user_settings WHERE user_type = %s AND user_id = %s AND setting_key LIKE 'pwd_reset_%%'",
+                (user_type, user_id)
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error clearing all reset tokens: {e}")
             return False
         finally:
             conn.close()

@@ -214,6 +214,9 @@ def change_password(body: ChangePasswordRequest, current_user: dict = Depends(ge
     if not updated:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update password.")
 
+    # 4. Invalidate any active password reset tokens
+    db_dal.clear_all_password_reset_tokens(user_type, user_id)
+
     return {"status": "success", "message": "Password changed successfully."}
 
 
@@ -242,11 +245,16 @@ def admin_reset_password(body: AdminResetPasswordRequest, current_user: dict = D
 
 
 @router.post("/forgot-password")
-def forgot_password(body: ForgotPasswordRequest):
+def forgot_password(body: ForgotPasswordRequest, request: Request):
     """
     Generates a secure, time-limited reset token for an account.
     Valid for 15 minutes.
+    Generic response is returned to prevent user enumeration attacks.
+    Reset tokens are NEVER returned in API responses or logs.
     """
+    client_ip = request.client.host if request.client and request.client.host else "127.0.0.1"
+    check_rate_limit(f"forgot_pwd:{client_ip}", max_requests=5, window_seconds=300, block_duration_seconds=600)
+
     username = body.username.strip()
     user_info = None
 
@@ -262,22 +270,19 @@ def forgot_password(body: ForgotPasswordRequest):
             if driver_row:
                 user_info = ("driver", driver_row[0])
 
-    # Generic response to prevent user enumeration attacks
+    # Consistent generic response whether user exists or not (preventing enumeration)
     generic_msg = "If an account with that username exists, password reset instructions have been generated."
-    if not user_info:
-        return {"status": "ok", "message": generic_msg}
-
-    u_type, u_id = user_info
-    token = security.generate_secure_token()
-    expiry = int(time.time()) + 900  # 15 minutes
-
-    db_dal.save_password_reset_token(u_type, u_id, token, expiry)
+    if user_info:
+        u_type, u_id = user_info
+        token = security.generate_secure_token()
+        expiry = int(time.time()) + 900  # 15 minutes
+        db_dal.save_password_reset_token(u_type, u_id, token, expiry)
+        # Out-of-band email/SMS dispatch would occur here in production.
+        # Credentials and tokens are NEVER returned in response or logs.
 
     return {
         "status": "ok",
         "message": generic_msg,
-        "reset_token": token,  # Provided for API client / integration test delivery
-        "expires_in_seconds": 900,
     }
 
 
@@ -285,6 +290,7 @@ def forgot_password(body: ForgotPasswordRequest):
 def reset_password_with_token(body: ResetPasswordWithTokenRequest):
     """
     Resets an account password using a valid, unexpired reset token.
+    Enforces single-use token lifecycle: all reset tokens are invalidated upon use.
     """
     # 1. Validate password strength
     is_strong, err_msg = security.validate_password_strength(body.new_password)
@@ -325,8 +331,8 @@ def reset_password_with_token(body: ResetPasswordWithTokenRequest):
     elif body.user_type == "driver":
         updated = db_dal.set_driver_password_hash(user_id, new_hash)
 
-    # 5. Clear used token
-    db_dal.clear_password_reset_token(body.user_type, user_id, body.reset_token)
+    # 5. Invalidate used token and any other active reset tokens for this user
+    db_dal.clear_all_password_reset_tokens(body.user_type, user_id)
 
     if not updated:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to reset password.")
