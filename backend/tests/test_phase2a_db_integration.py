@@ -302,4 +302,3 @@ class TestLivePostgreSQLIntegration:
 
         assert client.get(f"/api/v1/tracking/bus/{bus1_id}", headers={"Authorization": f"Bearer {d1_token}"}).status_code == 200
         assert client.get(f"/api/v1/tracking/bus/{bus2_id}", headers={"Authorization": f"Bearer {d1_token}"}).status_code == 403
-
