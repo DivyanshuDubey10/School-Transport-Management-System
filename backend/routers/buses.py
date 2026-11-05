@@ -6,7 +6,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from dal import db_dal
-from middleware.auth_middleware import require_admin
+from middleware.auth_middleware import require_admin, get_current_user
 
 router = APIRouter(prefix="/buses", tags=["Buses"])
 

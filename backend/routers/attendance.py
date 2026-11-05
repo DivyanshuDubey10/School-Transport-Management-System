@@ -82,10 +82,13 @@ def my_students(user: dict = Depends(require_driver)):
 
 @router.post("/mark", status_code=status.HTTP_201_CREATED)
 def mark_attendance(body: MarkAttendanceRequest, user: dict = Depends(require_driver)):
-    """Mark attendance for all students on the driver's bus for a given date (driver only)."""
+    """Mark attendance for students on the driver's bus for a given date (driver only)."""
     bus_id = user.get("bus_id") or user.get("user_id")
     failures = []
     for record in body.records:
+        if not db_dal.is_student_on_driver_bus(record.student_id, bus_id):
+            failures.append(record.student_id)
+            continue
         ok = db_dal.mark_attendance(
             student_id=record.student_id,
             bus_id=bus_id,
@@ -97,14 +100,48 @@ def mark_attendance(body: MarkAttendanceRequest, user: dict = Depends(require_dr
     if failures:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to mark attendance for student IDs: {failures}",
+            detail=f"Failed or unauthorized to mark attendance for student IDs: {failures}",
         )
     return {"message": "Attendance marked successfully"}
 
 
 @router.get("/student/{student_id}", response_model=List[StudentAttendanceHistory])
 def student_attendance_history(student_id: int, user: dict = Depends(get_current_user)):
-    """Return last 30 attendance records for a student (any authenticated user)."""
+    """
+    Return last 30 attendance records for a student.
+    Enforces object-level ownership:
+    - Admin: can view any student
+    - Parent: can ONLY view their own children
+    - Driver: can ONLY view students assigned to their bus
+    """
+    student = db_dal.get_student_by_id(student_id)
+    if not student:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
+
+    user_type = user.get("user_type")
+    user_id = user.get("user_id")
+
+    if user_type == "parent":
+        parent_id = user.get("parent_id") or user_id
+        student_parent_id = student[3]  # parent_id is at index 3
+        if student_parent_id != parent_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to view attendance records for this student.",
+            )
+    elif user_type == "driver":
+        bus_id = user.get("bus_id") or user_id
+        if not db_dal.is_student_on_driver_bus(student_id, bus_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to view attendance for students not on your assigned bus.",
+            )
+    elif user_type != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized access.",
+        )
+
     rows = db_dal.get_attendance_history_for_student(student_id=student_id)
     return [
         StudentAttendanceHistory(date=str(r[0]), attendance_status=r[1])

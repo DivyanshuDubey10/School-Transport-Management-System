@@ -1,6 +1,10 @@
 import os
 import sys
+import logging
 from dotenv import load_dotenv
+
+# Configure basic logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
 # Ensure backend directory is in sys.path with absolute path
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -11,7 +15,8 @@ if BACKEND_DIR not in sys.path:
 load_dotenv(dotenv_path=os.path.join(BACKEND_DIR, '.env'))
 load_dotenv()  # Also load any root .env if present
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import database
 from routers import auth, students, parents, buses, routes, attendance, dashboard, requests, tracking
@@ -23,28 +28,59 @@ app = FastAPI(
 )
 
 # ---------------------------------------------------------------------------
-# CORS Configuration (Configurable via ALLOWED_ORIGINS env variable)
+# Production Configuration & CORS Hardening
 # ---------------------------------------------------------------------------
-raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,*")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").strip().lower()
+
+# Parse allowed origins - strictly prohibit wildcard origins in production
+raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173")
 allowed_origins = [orig.strip() for orig in raw_origins.split(",") if orig.strip()]
+
+if ENVIRONMENT == "production":
+    allowed_origins = [orig for orig in allowed_origins if orig != "*"]
+    if not allowed_origins:
+        logging.warning("No explicit ALLOWED_ORIGINS configured in production! Falling back to secure domain.")
+        allowed_origins = ["https://neoyatra.app"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_unhandled_exception_handler(request: Request, exc: Exception):
+    """
+    Catch-all exception handler to prevent leaking internal database schemas,
+    stack traces, or credential fragments in HTTP responses.
+    """
+    logging.exception(f"Unhandled exception during request {request.method} {request.url.path}: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal server error occurred. Please contact system support."},
+    )
 
 
 @app.on_event("startup")
 def on_startup():
-    """Ensure database schema and default test accounts exist on boot."""
+    """Ensure database schema, validate production secrets on boot."""
+    if ENVIRONMENT == "production":
+        import security
+        try:
+            security.get_jwt_secret()
+            logging.info("Production security configuration validated: JWT_SECRET verified.")
+        except RuntimeError as e:
+            logging.critical(f"FATAL: Application failed to boot due to insecure production configuration: {e}")
+            raise e
+
     try:
         database.initialize_database()
-        print("INFO: Database schema verified and initialized.")
+        logging.info("Database schema verified and initialized.")
     except Exception as e:
-        print(f"WARNING: Could not auto-initialize database on startup: {e}")
+        logging.warning(f"Could not auto-initialize database on startup: {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -78,14 +114,15 @@ def health_check():
         cur.close()
         conn.close()
     except Exception as e:
-        db_status = f"error: {str(e)}"
+        logging.error(f"Health check database ping failed: {e}")
+        db_status = "unhealthy"
 
     return {
         "status": "ok",
         "service": "NeoYatra API",
         "database": db_status,
         "records": counts,
-        "environment": os.getenv("ENVIRONMENT", "production"),
+        "environment": ENVIRONMENT,
     }
 
 

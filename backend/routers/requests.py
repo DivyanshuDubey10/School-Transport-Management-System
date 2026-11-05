@@ -61,7 +61,19 @@ def list_pending_requests(user: dict = Depends(require_admin)):
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_request(body: CreateRequestBody, user: dict = Depends(require_parent)):
-    """Create a transport change request (parent only)."""
+    """Create a transport change request (parent only for their own children)."""
+    parent_id = user.get("parent_id") or user.get("user_id")
+    student = db_dal.get_student_by_id(body.student_id)
+    if not student:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
+
+    student_parent_id = student[3]
+    if student_parent_id != parent_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only submit transport change requests for your own children.",
+        )
+
     ok = db_dal.create_change_request(
         student_id=body.student_id,
         new_pickup_point=body.requested_pickup_point,

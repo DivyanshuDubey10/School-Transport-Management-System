@@ -1,7 +1,7 @@
 import datetime
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from middleware.auth_middleware import get_current_user
 from dal import db_dal
 
@@ -35,17 +35,17 @@ LIVE_BUS_LOCATIONS: Dict[int, Dict[str, Any]] = {}
 
 
 class LocationUpdatePayload(BaseModel):
-    bus_id: int
-    latitude: float
-    longitude: float
-    speed: Optional[float] = 0.0
-    heading: Optional[float] = 0.0
+    bus_id: int = Field(..., gt=0)
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    speed: Optional[float] = Field(0.0, ge=0.0, le=160.0)
+    heading: Optional[float] = Field(0.0, ge=0.0, le=360.0)
     status: Optional[str] = "In Transit"
     next_stop: Optional[str] = None
 
 
 class TripControlPayload(BaseModel):
-    bus_id: int
+    bus_id: int = Field(..., gt=0)
 
 
 def _get_route_waypoints(route_name: str) -> List[Dict[str, Any]]:
@@ -64,7 +64,24 @@ def update_bus_location(
 ):
     """
     Called periodically by driver's device (or driver portal simulator) to push GPS updates.
+    Enforces authorization: Drivers can only update their own assigned bus.
     """
+    user_type = current_user.get("user_type")
+    user_id = current_user.get("user_id")
+
+    if user_type == "driver":
+        assigned_bus_id = current_user.get("bus_id") or user_id
+        if assigned_bus_id != payload.bus_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are only authorized to broadcast locations for your assigned bus.",
+            )
+    elif user_type != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only drivers and administrators can broadcast bus locations.",
+        )
+
     bus = db_dal.get_bus_by_id(payload.bus_id)
     if not bus:
         raise HTTPException(status_code=404, detail="Bus not found")
@@ -83,7 +100,7 @@ def update_bus_location(
 
     waypoints = _get_route_waypoints(route_name)
 
-    now_iso = datetime.datetime.utcnow().isoformat() + "Z"
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     LIVE_BUS_LOCATIONS[payload.bus_id] = {
         "bus_id": payload.bus_id,
@@ -109,7 +126,23 @@ def start_trip(
     payload: TripControlPayload,
     current_user: Dict[str, Any] = Depends(get_current_user),
 ):
-    """Starts trip for a bus."""
+    """Starts trip for a bus (Driver of that bus or Admin)."""
+    user_type = current_user.get("user_type")
+    user_id = current_user.get("user_id")
+
+    if user_type == "driver":
+        assigned_bus_id = current_user.get("bus_id") or user_id
+        if assigned_bus_id != payload.bus_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are only authorized to start trips for your assigned bus.",
+            )
+    elif user_type != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only drivers and administrators can start bus trips.",
+        )
+
     bus = db_dal.get_bus_by_id(payload.bus_id)
     if not bus:
         raise HTTPException(status_code=404, detail="Bus not found")
@@ -126,7 +159,7 @@ def start_trip(
     waypoints = _get_route_waypoints(route_name)
     start_pt = waypoints[0]
 
-    now_iso = datetime.datetime.utcnow().isoformat() + "Z"
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
     LIVE_BUS_LOCATIONS[payload.bus_id] = {
         "bus_id": payload.bus_id,
         "bus_number": bus[1],
@@ -151,7 +184,23 @@ def stop_trip(
     payload: TripControlPayload,
     current_user: Dict[str, Any] = Depends(get_current_user),
 ):
-    """Stops trip for a bus."""
+    """Stops trip for a bus (Driver of that bus or Admin)."""
+    user_type = current_user.get("user_type")
+    user_id = current_user.get("user_id")
+
+    if user_type == "driver":
+        assigned_bus_id = current_user.get("bus_id") or user_id
+        if assigned_bus_id != payload.bus_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are only authorized to stop trips for your assigned bus.",
+            )
+    elif user_type != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only drivers and administrators can stop bus trips.",
+        )
+
     if payload.bus_id in LIVE_BUS_LOCATIONS:
         LIVE_BUS_LOCATIONS[payload.bus_id]["status"] = "Completed"
         LIVE_BUS_LOCATIONS[payload.bus_id]["speed"] = 0.0
@@ -167,8 +216,34 @@ def get_bus_tracking(
 ):
     """
     Returns live tracking data for a specific bus.
-    If no live GPS data has been sent yet, returns initialized route data.
+    Enforces object-level authorization:
+    - Admin: can track any bus
+    - Driver: can track their assigned bus
+    - Parent: can ONLY track buses assigned to their children's routes
     """
+    user_type = current_user.get("user_type")
+    user_id = current_user.get("user_id")
+
+    if user_type == "parent":
+        parent_id = current_user.get("parent_id") or user_id
+        if not db_dal.is_parent_authorized_for_bus(parent_id, bus_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not authorized to track this bus. It is not assigned to any of your children.",
+            )
+    elif user_type == "driver":
+        assigned_bus_id = current_user.get("bus_id") or user_id
+        if assigned_bus_id != bus_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are only authorized to track your own assigned bus.",
+            )
+    elif user_type != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized access.",
+        )
+
     if bus_id in LIVE_BUS_LOCATIONS:
         return LIVE_BUS_LOCATIONS[bus_id]
 
@@ -200,7 +275,7 @@ def get_bus_tracking(
         "heading": 0.0,
         "status": "Idle",
         "next_stop": waypoints[1]["name"] if len(waypoints) > 1 else "Purana Bazar",
-        "last_updated": datetime.datetime.utcnow().isoformat() + "Z",
+        "last_updated": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "waypoints": waypoints,
     }
 
@@ -210,8 +285,14 @@ def get_fleet_tracking(
     current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """
-    Returns live location of all buses in the fleet for Admin view.
+    Returns live location of all buses in the fleet (Admin only).
     """
+    if current_user.get("user_type") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Fleet tracking overview requires administrator privileges.",
+        )
+
     all_buses = db_dal.get_all_buses()
     fleet = []
 
@@ -245,7 +326,7 @@ def get_fleet_tracking(
                 "heading": 0.0,
                 "status": "Idle",
                 "next_stop": waypoints[1]["name"] if len(waypoints) > 1 else "School Campus",
-                "last_updated": datetime.datetime.utcnow().isoformat() + "Z",
+                "last_updated": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 "waypoints": waypoints,
             })
 
