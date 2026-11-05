@@ -57,7 +57,6 @@ def root():
         "service": "NeoYatra School Transport API",
         "documentation": "/docs",
         "health": "/health",
-        "setup_test_accounts": "/api/v1/setup-test-accounts",
         "version": "1.0.0",
     }
 
@@ -88,30 +87,6 @@ def health_check():
         "records": counts,
         "environment": os.getenv("ENVIRONMENT", "production"),
     }
-
-
-@app.get("/api/v1/setup-test-accounts", tags=["Setup"])
-@app.post("/api/v1/setup-test-accounts", tags=["Setup"])
-@app.get("/setup-test-accounts", tags=["Setup"])
-@app.post("/setup-test-accounts", tags=["Setup"])
-def setup_test_accounts():
-    """
-    Public setup helper: verifies database connection and ensures
-    admin123, parent123, and driver123 test accounts exist.
-    """
-    try:
-        database.initialize_database()
-        return {
-            "status": "success",
-            "message": "Default test accounts have been verified and initialized in database!",
-            "credentials": [
-                {"role": "Admin", "username": "admin", "password": "admin123"},
-                {"role": "Parent", "username": "parent", "password": "parent123", "alias": "parent1"},
-                {"role": "Driver", "username": "driver", "password": "driver123", "alias": "driver1"},
-            ],
-        }
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
 
 
 # ---------------------------------------------------------------------------
