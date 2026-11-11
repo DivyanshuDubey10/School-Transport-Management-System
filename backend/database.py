@@ -73,11 +73,25 @@ def connect_database():
     )
 
 
+def run_alembic_migrations():
+    """Applies all Alembic migrations to the current database."""
+    try:
+        from alembic.config import Config
+        from alembic import command
+        alembic_ini_path = os.path.join(os.path.dirname(__file__), "alembic.ini")
+        if os.path.exists(alembic_ini_path):
+            cfg = Config(alembic_ini_path)
+            command.upgrade(cfg, "head")
+    except Exception as e:
+        # If running in an environment without alembic CLI or during testing, log or re-raise
+        print(f"Notice: alembic migration execution: {e}")
+
+
 def initialize_database():
     """
     Creates all necessary schema tables if they do not exist,
-    and sets up default test credentials (admin, parent, driver)
-    so the app can be immediately tested online with zero friction.
+    applies all Alembic migrations, and sets up default test credentials
+    (admin, parent, driver) linked to the default school.
     Safe to run repeatedly (idempotent).
     """
     conn = connect_database()
@@ -123,7 +137,7 @@ def initialize_database():
                 driver_name VARCHAR(255) NOT NULL,
                 driver_phone VARCHAR(50) NOT NULL,
                 capacity INTEGER NOT NULL,
-                route_id INTEGER REFERENCES route(route_id) ON DELETE SET NULL,
+                route_id INTEGER,
                 username VARCHAR(255) UNIQUE,
                 password VARCHAR(255)
             );
@@ -135,8 +149,8 @@ def initialize_database():
                 student_id SERIAL PRIMARY KEY,
                 student_name VARCHAR(255) NOT NULL,
                 student_class VARCHAR(50) NOT NULL,
-                parent_id INTEGER NOT NULL REFERENCES parent(parent_id) ON DELETE CASCADE,
-                route_id INTEGER REFERENCES route(route_id) ON DELETE SET NULL,
+                parent_id INTEGER NOT NULL,
+                route_id INTEGER,
                 transport_status VARCHAR(50) DEFAULT 'Active',
                 fee_status VARCHAR(50) DEFAULT 'Pending',
                 fee_paid DECIMAL DEFAULT 0.0,
@@ -148,7 +162,7 @@ def initialize_database():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS transport_change_request (
                 request_id SERIAL PRIMARY KEY,
-                student_id INTEGER NOT NULL REFERENCES student(student_id) ON DELETE CASCADE,
+                student_id INTEGER NOT NULL,
                 requested_pickup_point VARCHAR(255) NOT NULL,
                 status VARCHAR(50) DEFAULT 'Pending'
             );
@@ -158,8 +172,8 @@ def initialize_database():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS attendance (
                 attendance_id SERIAL PRIMARY KEY,
-                student_id INTEGER NOT NULL REFERENCES student(student_id) ON DELETE CASCADE,
-                bus_id INTEGER NOT NULL REFERENCES bus(bus_id) ON DELETE CASCADE,
+                student_id INTEGER NOT NULL,
+                bus_id INTEGER NOT NULL,
                 date DATE NOT NULL,
                 status VARCHAR(50) NOT NULL,
                 UNIQUE (student_id, date)
@@ -178,188 +192,220 @@ def initialize_database():
             );
         """)
 
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Apply all Alembic migrations up to head (adding school, multi-tenancy columns, composite FKs, etc.)
+    run_alembic_migrations()
+
+    # Reconnect to seed default data with dynamic school_id resolution
+    conn = connect_database()
+    cursor = conn.cursor()
+    try:
+        # Dynamically resolve default school_id
+        cursor.execute("SELECT school_id FROM school WHERE LOWER(school_code) = 'default' LIMIT 1;")
+        school_row = cursor.fetchone()
+        default_school_id = school_row[0] if school_row else 1
+
         # -------------------------------------------------------------------
         # Default Test Accounts for Testing/Portfolio Access
         # -------------------------------------------------------------------
 
         # A. Default Admin (admin / admin123)
         hashed_admin = security.hash_password("admin123")
-        cursor.execute("SELECT admin_id FROM admin WHERE LOWER(USERNAME) = 'admin';")
+        cursor.execute("SELECT admin_id FROM admin WHERE school_id = %s AND LOWER(USERNAME) = 'admin';", (default_school_id,))
         admin_row = cursor.fetchone()
         if not admin_row:
             cursor.execute(
                 """
-                INSERT INTO admin (USERNAME, password, full_name)
-                VALUES (%s, %s, %s);
+                INSERT INTO admin (school_id, USERNAME, password, full_name)
+                VALUES (%s, %s, %s, %s);
                 """,
-                ("admin", hashed_admin, "System Administrator"),
+                (default_school_id, "admin", hashed_admin, "System Administrator"),
             )
         else:
-            cursor.execute("UPDATE admin SET password = %s WHERE LOWER(USERNAME) = 'admin';", (hashed_admin,))
+            cursor.execute("UPDATE admin SET password = %s WHERE school_id = %s AND LOWER(USERNAME) = 'admin';", (hashed_admin, default_school_id))
 
         # B. Routes
-        # Route 1: North Route
-        cursor.execute("SELECT route_id FROM route WHERE route_name = %s LIMIT 1;", ("North Route - Purana Bazar",))
+        cursor.execute("SELECT route_id FROM route WHERE school_id = %s AND route_name = %s LIMIT 1;", (default_school_id, "North Route - Purana Bazar"))
         r1_row = cursor.fetchone()
         if not r1_row:
-            cursor.execute("INSERT INTO route (route_name) VALUES (%s) RETURNING route_id;", ("North Route - Purana Bazar",))
+            cursor.execute("INSERT INTO route (school_id, route_name) VALUES (%s, %s) RETURNING route_id;", (default_school_id, "North Route - Purana Bazar"))
             route_id_1 = cursor.fetchone()[0]
         else:
             route_id_1 = r1_row[0]
 
-        # Route 2: South Route
-        cursor.execute("SELECT route_id FROM route WHERE route_name = %s LIMIT 1;", ("South Route - Sector 14 & Ring Road",))
+        cursor.execute("SELECT route_id FROM route WHERE school_id = %s AND route_name = %s LIMIT 1;", (default_school_id, "South Route - Sector 14 & Ring Road"))
         r2_row = cursor.fetchone()
         if not r2_row:
-            cursor.execute("INSERT INTO route (route_name) VALUES (%s) RETURNING route_id;", ("South Route - Sector 14 & Ring Road",))
+            cursor.execute("INSERT INTO route (school_id, route_name) VALUES (%s, %s) RETURNING route_id;", (default_school_id, "South Route - Sector 14 & Ring Road"))
             route_id_2 = cursor.fetchone()[0]
         else:
             route_id_2 = r2_row[0]
 
-        # C. Drivers & Buses (driver / driver123 AND driver1 / driver123)
+        # C. Drivers & Buses
         hashed_driver = security.hash_password("driver123")
-
-        # Bus 1: username 'driver'
-        cursor.execute("SELECT bus_id FROM bus WHERE LOWER(username) = 'driver';")
+        cursor.execute("SELECT bus_id FROM bus WHERE school_id = %s AND LOWER(username) = 'driver';", (default_school_id,))
         b1_row = cursor.fetchone()
         if not b1_row:
             cursor.execute(
                 """
-                INSERT INTO bus (bus_number, driver_name, driver_phone, capacity, route_id, username, password)
-                VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING bus_id;
+                INSERT INTO bus (school_id, bus_number, driver_name, driver_phone, capacity, route_id, username, password)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING bus_id;
                 """,
-                ("DL 1P 1001", "Rajesh Sharma", "9876543210", 40, route_id_1, "driver", hashed_driver),
+                (default_school_id, "DL 1P 1001", "Rajesh Sharma", "9876543210", 40, route_id_1, "driver", hashed_driver),
             )
             bus_id_1 = cursor.fetchone()[0]
         else:
             bus_id_1 = b1_row[0]
-            cursor.execute("UPDATE bus SET password = %s, route_id = %s WHERE LOWER(username) = 'driver';", (hashed_driver, route_id_1))
+            cursor.execute("UPDATE bus SET password = %s, route_id = %s WHERE school_id = %s AND LOWER(username) = 'driver';", (hashed_driver, route_id_1, default_school_id))
 
-        # Bus 2: username 'driver1' (alias)
-        cursor.execute("SELECT bus_id FROM bus WHERE LOWER(username) = 'driver1';")
+        cursor.execute("SELECT bus_id FROM bus WHERE school_id = %s AND LOWER(username) = 'driver1';", (default_school_id,))
         b2_row = cursor.fetchone()
         if not b2_row:
             cursor.execute(
                 """
-                INSERT INTO bus (bus_number, driver_name, driver_phone, capacity, route_id, username, password)
-                VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING bus_id;
+                INSERT INTO bus (school_id, bus_number, driver_name, driver_phone, capacity, route_id, username, password)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING bus_id;
                 """,
-                ("DL 1P 1002", "Suresh Kumar", "9876543211", 35, route_id_2, "driver1", hashed_driver),
+                (default_school_id, "DL 1P 1002", "Suresh Kumar", "9876543211", 35, route_id_2, "driver1", hashed_driver),
             )
             bus_id_2 = cursor.fetchone()[0]
         else:
             bus_id_2 = b2_row[0]
-            cursor.execute("UPDATE bus SET password = %s, route_id = %s WHERE LOWER(username) = 'driver1';", (hashed_driver, route_id_2))
+            cursor.execute("UPDATE bus SET password = %s, route_id = %s WHERE school_id = %s AND LOWER(username) = 'driver1';", (hashed_driver, route_id_2, default_school_id))
 
-        # D. Parents (parent / parent123 AND parent1 / parent123)
+        # D. Parents
         hashed_parent = security.hash_password("parent123")
-
-        # Parent 1: username 'parent'
-        cursor.execute("SELECT parent_id FROM parent WHERE LOWER(username) = 'parent';")
+        cursor.execute("SELECT parent_id FROM parent WHERE school_id = %s AND LOWER(username) = 'parent';", (default_school_id,))
         p1_row = cursor.fetchone()
         if not p1_row:
             cursor.execute(
                 """
-                INSERT INTO parent (parent_name, phone, address, pickup_point, username, password)
-                VALUES (%s, %s, %s, %s, %s, %s) RETURNING parent_id;
+                INSERT INTO parent (school_id, parent_name, phone, address, pickup_point, username, password)
+                VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING parent_id;
                 """,
-                ("Sharma Family", "9876543200", "42, Purana Bazar, New Delhi", "Purana Bazar Chowk", "parent", hashed_parent),
+                (default_school_id, "Sharma Family", "9876543200", "42, Purana Bazar, New Delhi", "Purana Bazar Chowk", "parent", hashed_parent),
             )
             parent_id_1 = cursor.fetchone()[0]
         else:
             parent_id_1 = p1_row[0]
-            cursor.execute("UPDATE parent SET password = %s WHERE LOWER(username) = 'parent';", (hashed_parent,))
+            cursor.execute("UPDATE parent SET password = %s WHERE school_id = %s AND LOWER(username) = 'parent';", (hashed_parent, default_school_id))
 
-        # Parent 2: username 'parent1'
-        cursor.execute("SELECT parent_id FROM parent WHERE LOWER(username) = 'parent1';")
+        cursor.execute("SELECT parent_id FROM parent WHERE school_id = %s AND LOWER(username) = 'parent1';", (default_school_id,))
         p2_row = cursor.fetchone()
         if not p2_row:
             cursor.execute(
                 """
-                INSERT INTO parent (parent_name, phone, address, pickup_point, username, password)
-                VALUES (%s, %s, %s, %s, %s, %s) RETURNING parent_id;
+                INSERT INTO parent (school_id, parent_name, phone, address, pickup_point, username, password)
+                VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING parent_id;
                 """,
-                ("Verma Family", "9876543201", "15, Sector 14, New Delhi", "Sector 14 Metro Station", "parent1", hashed_parent),
+                (default_school_id, "Verma Family", "9876543201", "15, Sector 14, New Delhi", "Sector 14 Metro Station", "parent1", hashed_parent),
             )
             parent_id_2 = cursor.fetchone()[0]
         else:
             parent_id_2 = p2_row[0]
-            cursor.execute("UPDATE parent SET password = %s WHERE LOWER(username) = 'parent1';", (hashed_parent,))
+            cursor.execute("UPDATE parent SET password = %s WHERE school_id = %s AND LOWER(username) = 'parent1';", (hashed_parent, default_school_id))
 
-        # E. Students linked to parents and routes
-        cursor.execute("SELECT student_id FROM student WHERE student_name = %s LIMIT 1;", ("Aarav Sharma",))
+        # E. Students
+        cursor.execute("SELECT student_id FROM student WHERE school_id = %s AND student_name = %s LIMIT 1;", (default_school_id, "Aarav Sharma"))
         s1 = cursor.fetchone()
         if not s1:
             cursor.execute(
                 """
-                INSERT INTO student (student_name, student_class, parent_id, route_id, transport_status, fee_status, fee_paid, fee_balance)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING student_id;
+                INSERT INTO student (school_id, student_name, student_class, parent_id, route_id, transport_status, fee_status, fee_paid, fee_balance)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING student_id;
                 """,
-                ("Aarav Sharma", "Class 5A", parent_id_1, route_id_1, "Active", "Paid", 1500.0, 0.0),
+                (default_school_id, "Aarav Sharma", "Class 5A", parent_id_1, route_id_1, "Active", "Paid", 1500.0, 0.0),
             )
             s1_id = cursor.fetchone()[0]
         else:
             s1_id = s1[0]
 
-        cursor.execute("SELECT student_id FROM student WHERE student_name = %s LIMIT 1;", ("Diya Sharma",))
+        cursor.execute("SELECT student_id FROM student WHERE school_id = %s AND student_name = %s LIMIT 1;", (default_school_id, "Diya Sharma"))
         s2 = cursor.fetchone()
         if not s2:
             cursor.execute(
                 """
-                INSERT INTO student (student_name, student_class, parent_id, route_id, transport_status, fee_status, fee_paid, fee_balance)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING student_id;
+                INSERT INTO student (school_id, student_name, student_class, parent_id, route_id, transport_status, fee_status, fee_paid, fee_balance)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING student_id;
                 """,
-                ("Diya Sharma", "Class 8B", parent_id_1, route_id_1, "Active", "Pending", 1000.0, 500.0),
+                (default_school_id, "Diya Sharma", "Class 8B", parent_id_1, route_id_1, "Active", "Pending", 1000.0, 500.0),
             )
             s2_id = cursor.fetchone()[0]
         else:
             s2_id = s2[0]
 
-        cursor.execute("SELECT student_id FROM student WHERE student_name = %s LIMIT 1;", ("Kabir Verma",))
+        cursor.execute("SELECT student_id FROM student WHERE school_id = %s AND student_name = %s LIMIT 1;", (default_school_id, "Kabir Verma"))
         s3 = cursor.fetchone()
         if not s3:
             cursor.execute(
                 """
-                INSERT INTO student (student_name, student_class, parent_id, route_id, transport_status, fee_status, fee_paid, fee_balance)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING student_id;
+                INSERT INTO student (school_id, student_name, student_class, parent_id, route_id, transport_status, fee_status, fee_paid, fee_balance)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING student_id;
                 """,
-                ("Kabir Verma", "Class 6C", parent_id_2, route_id_2, "Active", "Paid", 1500.0, 0.0),
+                (default_school_id, "Kabir Verma", "Class 6C", parent_id_2, route_id_2, "Active", "Paid", 1500.0, 0.0),
             )
             s3_id = cursor.fetchone()[0]
         else:
             s3_id = s3[0]
 
-        # F. Sample Attendance (Today & Yesterday)
+        # F. Sample Attendance
         today = datetime.date.today()
         yesterday = today - datetime.timedelta(days=1)
         for (sid, bid) in [(s1_id, bus_id_1), (s2_id, bus_id_1), (s3_id, bus_id_2)]:
             cursor.execute(
                 """
-                INSERT INTO attendance (student_id, bus_id, date, status)
-                VALUES (%s, %s, %s, %s)
-                ON CONFLICT (student_id, date) DO NOTHING;
+                INSERT INTO attendance (school_id, student_id, bus_id, date, status)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (school_id, student_id, date) DO NOTHING;
                 """,
-                (sid, bid, today, "Present"),
+                (default_school_id, sid, bid, today, "Present"),
             )
             cursor.execute(
                 """
-                INSERT INTO attendance (student_id, bus_id, date, status)
-                VALUES (%s, %s, %s, %s)
-                ON CONFLICT (student_id, date) DO NOTHING;
+                INSERT INTO attendance (school_id, student_id, bus_id, date, status)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (school_id, student_id, date) DO NOTHING;
                 """,
-                (sid, bid, yesterday, "Present"),
+                (default_school_id, sid, bid, yesterday, "Present"),
             )
 
         # G. Sample Transport Change Request
-        cursor.execute("SELECT request_id FROM transport_change_request LIMIT 1;")
+        cursor.execute("SELECT request_id FROM transport_change_request WHERE school_id = %s LIMIT 1;", (default_school_id,))
         if not cursor.fetchone():
             cursor.execute(
                 """
-                INSERT INTO transport_change_request (student_id, requested_pickup_point, status)
-                VALUES (%s, %s, %s);
+                INSERT INTO transport_change_request (school_id, student_id, requested_pickup_point, status)
+                VALUES (%s, %s, %s, %s);
                 """,
-                (s2_id, "Community Center Gate 2", "Pending"),
+                (default_school_id, s2_id, "Community Center Gate 2", "Pending"),
             )
+
+        # H. Seed Route Stops for North and South Routes if not present
+        cursor.execute("SELECT COUNT(*) FROM route_stop WHERE school_id = %s;", (default_school_id,))
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("""
+                INSERT INTO route_stop (school_id, route_id, sequence, stop_name, latitude, longitude, stop_type, geofence_radius_m)
+                VALUES
+                    (%s, %s, 1, 'School Main Campus', 28.6139, 77.2090, 'school', 80),
+                    (%s, %s, 2, 'Purana Bazar Chowk', 28.6190, 77.2150, 'stop', 50),
+                    (%s, %s, 3, 'Old Market Crossing', 28.6250, 77.2210, 'stop', 50),
+                    (%s, %s, 1, 'School South Gate', 28.6130, 77.2080, 'school', 80),
+                    (%s, %s, 2, 'Sector 14 Metro Station', 28.6010, 77.1990, 'stop', 50),
+                    (%s, %s, 3, 'Ring Road Junction', 28.5910, 77.1900, 'stop', 50);
+            """, (default_school_id, route_id_1, default_school_id, route_id_1, default_school_id, route_id_1,
+                  default_school_id, route_id_2, default_school_id, route_id_2, default_school_id, route_id_2))
+
+        # I. Initialize Bus Live Location records for seed buses
+        for bid in [bus_id_1, bus_id_2]:
+            cursor.execute("""
+                INSERT INTO bus_live_location (bus_id, school_id, status, is_stale)
+                VALUES (%s, %s, 'Idle', FALSE)
+                ON CONFLICT (bus_id) DO NOTHING;
+            """, (bid, default_school_id))
 
         conn.commit()
     finally:

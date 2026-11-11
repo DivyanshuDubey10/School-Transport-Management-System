@@ -8,10 +8,9 @@ BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
+ORIGINAL_DB_NAME = os.environ.get("DB_NAME", "stms_db")
 TEST_DB_NAME = "neoyatra_test_phase2a"
 
-# Configure environment to point to disposable test database
-os.environ["DB_NAME"] = TEST_DB_NAME
 os.environ["ENVIRONMENT"] = "development"
 
 import database
@@ -26,6 +25,9 @@ client = TestClient(app, raise_server_exceptions=False)
 @pytest.fixture(scope="module", autouse=True)
 def setup_disposable_database():
     """Create a completely isolated disposable PostgreSQL database for live integration tests."""
+    old_db = os.environ.get("DB_NAME", "stms_db")
+    os.environ["DB_NAME"] = TEST_DB_NAME
+
     # 1. Connect to default postgres to create test db
     admin_conn = psycopg2.connect(
         host=os.getenv("DB_HOST", "localhost"),
@@ -151,6 +153,8 @@ def setup_disposable_database():
         cleanup_conn.close()
     except Exception as e:
         print(f"Warning: could not drop test database: {e}")
+    finally:
+        os.environ["DB_NAME"] = ORIGINAL_DB_NAME
 
 
 @pytest.fixture(autouse=True)

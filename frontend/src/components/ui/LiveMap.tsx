@@ -175,22 +175,47 @@ export function LiveMap({
 
     // 3. Add Bus markers
     buses.forEach((b) => {
+      // Skip buses with no coordinates
+      if (!b.has_coordinates && b.status === 'Idle' && b.latitude === 28.6139 && b.longitude === 77.2090) {
+        return
+      }
+
       const isMoving = b.status === 'In Transit' && b.speed > 0
       const marker = L.marker([b.latitude, b.longitude], {
         icon: createBusIcon(b.bus_number, isMoving),
         zIndexOffset: 1000,
       })
 
+      // Draw accuracy radius circle if available
+      if (b.accuracy_metres && b.accuracy_metres > 0) {
+        const accuracyCircle = L.circle([b.latitude, b.longitude], {
+          radius: b.accuracy_metres,
+          color: b.is_stale ? '#F59E0B' : '#0284C7',
+          fillColor: b.is_stale ? '#F59E0B' : '#38BDF8',
+          fillOpacity: 0.15,
+          weight: 1,
+        })
+        markersLayer.addLayer(accuracyCircle)
+      }
+
+      const qualityBadge = b.gps_quality
+        ? `<span style="display: inline-block; padding: 1px 5px; border-radius: 4px; font-size: 9px; font-weight: 700; background: ${b.gps_quality === 'high' ? '#DCFCE7; color: #166534' : b.gps_quality === 'medium' ? '#E0F2FE; color: #075985' : '#FEF3C7; color: #92400E'};">${b.gps_quality.toUpperCase()}</span>`
+        : ''
+
       marker.bindPopup(`
-        <div style="font-family: sans-serif; font-size: 12px; min-width: 160px;">
-          <div style="font-weight: 800; font-size: 13px; color: #0284C7; margin-bottom: 4px;">
-            🚌 ${b.bus_number}
+        <div style="font-family: sans-serif; font-size: 12px; min-width: 180px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <div style="font-weight: 800; font-size: 13px; color: #0284C7;">
+              🚌 ${b.bus_number}
+            </div>
+            ${b.is_stale ? '<span style="background: #FEF2F2; color: #991B1B; padding: 1px 5px; border-radius: 4px; font-size: 9px; font-weight: bold;">STALE</span>' : ''}
           </div>
           <div style="color: #334155; line-height: 1.4;">
             <p style="margin: 2px 0;">Driver: <b>${b.driver_name}</b></p>
             <p style="margin: 2px 0;">Route: <b>${b.route_name}</b></p>
             <p style="margin: 2px 0;">Next Stop: <b>${b.next_stop}</b></p>
             <p style="margin: 2px 0;">Speed: <b>${Math.round(b.speed)} km/h</b></p>
+            ${b.accuracy_metres ? `<p style="margin: 2px 0;">Accuracy: <b>±${Math.round(b.accuracy_metres)}m</b> ${qualityBadge}</p>` : ''}
             <p style="margin: 2px 0;">Status: <span style="color: ${b.status === 'In Transit' ? '#10B981' : '#64748B'}; font-weight: 700;">${b.status}</span></p>
           </div>
         </div>

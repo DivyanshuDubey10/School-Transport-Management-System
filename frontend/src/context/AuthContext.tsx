@@ -6,6 +6,9 @@ export interface AuthUser {
   user_id: number
   user_type: 'admin' | 'parent' | 'driver'
   name: string
+  bus_id?: number
+  parent_id?: number
+  school_id?: number
 }
 
 export interface AuthContextValue {
@@ -46,9 +49,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(
     async (payload: LoginPayload) => {
       const response = await apiLogin(payload)
-      const { access_token, user_type, user_id, name } = response
+      const { access_token, user_type, user_id, name, school_id } = response
 
-      const authUser: AuthUser = { user_id, user_type, name }
+      const authUser: AuthUser = {
+        user_id,
+        user_type,
+        name,
+        school_id,
+        bus_id: user_type === 'driver' ? user_id : undefined,
+        parent_id: user_type === 'parent' ? user_id : undefined,
+      }
 
       localStorage.setItem(TOKEN_KEY, access_token)
       localStorage.setItem(USER_KEY, JSON.stringify(authUser))

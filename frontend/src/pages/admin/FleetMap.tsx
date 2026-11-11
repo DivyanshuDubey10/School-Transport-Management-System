@@ -147,9 +147,16 @@ export default function FleetMap() {
                         <Bus size={15} className="text-sky-500" />
                         {b.bus_number}
                       </span>
-                      <Badge variant={isInTransit ? 'success' : 'neutral'} dot>
-                        {b.status}
-                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        {b.is_stale && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                            STALE
+                          </span>
+                        )}
+                        <Badge variant={isInTransit ? 'success' : 'neutral'} dot>
+                          {b.status}
+                        </Badge>
+                      </div>
                     </div>
 
                     <div className="space-y-1 text-xs text-slate-600">
@@ -159,7 +166,9 @@ export default function FleetMap() {
                       </p>
                       <p className="truncate">Route: {b.route_name}</p>
                       <div className="flex items-center justify-between pt-1">
-                        <span className="text-slate-400">Speed:</span>
+                        <span className="text-slate-400">
+                          {b.accuracy_metres != null ? `±${Math.round(b.accuracy_metres)}m (${b.gps_quality || 'GPS'})` : 'Speed:'}
+                        </span>
                         <span className="font-semibold text-slate-700">{Math.round(b.speed)} km/h</span>
                       </div>
                     </div>

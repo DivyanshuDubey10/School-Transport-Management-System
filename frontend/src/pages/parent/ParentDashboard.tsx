@@ -275,19 +275,42 @@ export default function ParentDashboard() {
           {/* Status strip */}
           <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 pulse-dot" />
+              <span className={`h-2 w-2 rounded-full ${liveTracking?.status === 'In Transit' ? 'bg-emerald-500 pulse-dot' : 'bg-slate-400'}`} />
               <span className="font-semibold text-slate-800">
-                Status: {liveTracking?.status || 'Active'}
+                Status: {liveTracking?.status || 'Idle'}
               </span>
               <span className="text-slate-300">|</span>
               <span className="text-slate-600">
                 Speed: <b>{Math.round(liveTracking?.speed || 0)} km/h</b>
               </span>
+              {liveTracking?.accuracy_metres != null && (
+                <>
+                  <span className="text-slate-300">|</span>
+                  <span className="text-slate-500">
+                    Accuracy: <b>±{Math.round(liveTracking.accuracy_metres)}m</b>
+                  </span>
+                </>
+              )}
             </div>
             <div className="text-slate-500">
               Your Stop: <b className="text-emerald-600">{trackingChild?.pickup_point || 'Designated Stop'}</b>
             </div>
           </div>
+
+          {/* Stale or Waiting Notice */}
+          {liveTracking?.is_stale && (
+            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center gap-2">
+              <span>⚠️</span>
+              <span>Bus location is stale (last update was more than 30s ago). Vehicle may be in a low connectivity zone.</span>
+            </div>
+          )}
+
+          {liveTracking && !liveTracking.has_coordinates && (
+            <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-lg text-xs text-sky-800 flex items-center gap-2">
+              <span>ℹ️</span>
+              <span>Bus is currently idle. Waiting for driver to start trip and broadcast live coordinates.</span>
+            </div>
+          )}
 
           {/* Interactive Leaflet Map */}
           <LiveMap

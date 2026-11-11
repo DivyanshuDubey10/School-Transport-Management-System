@@ -3,6 +3,8 @@ import apiClient from './client'
 export interface LoginPayload {
   username: string
   password: string
+  school_code?: string
+  user_type?: 'admin' | 'parent' | 'driver'
 }
 
 export interface LoginResponse {
@@ -11,6 +13,7 @@ export interface LoginResponse {
   user_type: 'admin' | 'parent' | 'driver'
   user_id: number
   name: string
+  school_id?: number
 }
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {

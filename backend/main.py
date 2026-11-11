@@ -64,9 +64,31 @@ async def global_unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
+import asyncio
+from dal import db_dal
+
+async def _scheduled_retention_and_audit_worker():
+    """
+    Background worker that executes retention policy purging and IP masking.
+    Only purges telemetry if retention_policy.purge_enabled is TRUE.
+    Historical student attendance records are permanently preserved.
+    """
+    while True:
+        try:
+            purged = db_dal.run_retention_purge()
+            masked = db_dal.mask_audit_ips()
+            total_purged = sum(purged.values()) if isinstance(purged, dict) else (purged or 0)
+            if total_purged > 0 or masked > 0:
+                logging.info(f"Maintenance completed: {purged} telemetry events purged, {masked} audit logs masked.")
+        except Exception as e:
+            logging.error(f"Error in background maintenance worker: {e}")
+        # Wait 24 hours before next execution
+        await asyncio.sleep(86400)
+
+
 @app.on_event("startup")
-def on_startup():
-    """Ensure database schema, validate production secrets on boot."""
+async def on_startup():
+    """Ensure database schema, validate production secrets on boot, and start background workers."""
     if ENVIRONMENT == "production":
         import security
         try:
@@ -81,6 +103,9 @@ def on_startup():
         logging.info("Database schema verified and initialized.")
     except Exception as e:
         logging.warning(f"Could not auto-initialize database on startup: {e}")
+
+    # Launch daily maintenance task in background
+    asyncio.create_task(_scheduled_retention_and_audit_worker())
 
 
 # ---------------------------------------------------------------------------

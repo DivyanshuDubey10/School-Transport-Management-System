@@ -17,6 +17,8 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 class LoginRequest(BaseModel):
     username: str
     password: str
+    school_code: Optional[str] = None
+    user_type: Optional[Literal["admin", "parent", "driver"]] = None
 
 
 class LoginResponse(BaseModel):
@@ -25,6 +27,7 @@ class LoginResponse(BaseModel):
     user_type: str
     user_id: int
     name: str
+    school_id: Optional[int] = None
 
 
 class ChangePasswordRequest(BaseModel):
@@ -48,6 +51,13 @@ class ResetPasswordWithTokenRequest(BaseModel):
     user_type: Literal["admin", "parent", "driver"]
     reset_token: str
     new_password: str
+
+
+def _fetch_user(fetch_func, username: str, school_id: Optional[int]):
+    try:
+        return fetch_func(username, school_id=school_id)
+    except TypeError:
+        return fetch_func(username)
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -75,96 +85,135 @@ def login(body: LoginRequest, request: Request):
             detail="Invalid username or password.",
         )
 
-    # 3. Try admin
-    admin_row = db_dal.get_admin_by_username(username)
-    if admin_row:
-        # admin_row: (admin_id, USERNAME, password, full_name)
-        admin_id, admin_user, stored_cred, full_name = admin_row[0], admin_row[1], admin_row[2], admin_row[3]
-        is_valid, needs_upgrade = security.verify_and_check_upgrade(password, stored_cred)
-        if is_valid:
-            clear_rate_limit(lockout_id)
-            if needs_upgrade:
-                # Transparently upgrade legacy password to bcrypt
-                new_hash = security.hash_password(password)
-                db_dal.set_admin_password_hash(admin_id, new_hash)
-
-            token = security.create_access_token({
-                "user_id": admin_id,
-                "user_type": "admin",
-                "username": admin_user,
-            })
-            return LoginResponse(
-                access_token=token,
-                token_type="bearer",
-                user_type="admin",
-                user_id=admin_id,
-                name=full_name,
+    # 3. Resolve Tenant Institution
+    env = os.getenv("ENVIRONMENT", "development").strip().lower()
+    code = (body.school_code or "").strip()
+    if not code:
+        if env == "production":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="school_code is required in production environment."
             )
-        record_failed_login(lockout_id)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password.")
+        code = "DEFAULT"
 
-    # 4. Try parent
-    parent_row = db_dal.get_parent_by_username(username)
-    if parent_row:
-        # parent_row: (parent_id, parent_name, phone, address, pickup_point, username, password)
-        p_id, p_name, _, _, _, p_user, stored_cred = (
-            parent_row[0], parent_row[1], parent_row[2], parent_row[3], parent_row[4], parent_row[5], parent_row[6]
+    school = db_dal.get_school_by_code(code)
+    if not school or not school[3]:  # is_active
+        record_failed_login(lockout_id)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid institution code or institution account is inactive."
         )
-        is_valid, needs_upgrade = security.verify_and_check_upgrade(password, stored_cred)
-        if is_valid:
-            clear_rate_limit(lockout_id)
-            if needs_upgrade:
-                new_hash = security.hash_password(password)
-                db_dal.set_parent_password_hash(p_id, new_hash)
+    school_id = school[0]
 
-            token = security.create_access_token({
-                "user_id": p_id,
-                "user_type": "parent",
-                "username": p_user,
-                "parent_id": p_id,
-            })
-            return LoginResponse(
-                access_token=token,
-                token_type="bearer",
-                user_type="parent",
-                user_id=p_id,
-                name=p_name,
+    req_role = body.user_type
+
+    # 4. Try admin (if role is admin or unspecified)
+    if req_role in (None, "admin"):
+        admin_row = _fetch_user(db_dal.get_admin_by_username, username, school_id)
+        if admin_row:
+            # admin_row: (admin_id, USERNAME, password, full_name, ...)
+            admin_id, admin_user, stored_cred, full_name = admin_row[0], admin_row[1], admin_row[2], admin_row[3]
+            is_valid, needs_upgrade = security.verify_and_check_upgrade(password, stored_cred)
+            if is_valid:
+                clear_rate_limit(lockout_id)
+                if needs_upgrade:
+                    new_hash = security.hash_password(password)
+                    db_dal.set_admin_password_hash(admin_id, new_hash)
+
+                token = security.create_access_token({
+                    "user_id": admin_id,
+                    "user_type": "admin",
+                    "username": admin_user,
+                    "school_id": school_id,
+                })
+                return LoginResponse(
+                    access_token=token,
+                    token_type="bearer",
+                    user_type="admin",
+                    user_id=admin_id,
+                    name=full_name,
+                    school_id=school_id,
+                )
+            record_failed_login(lockout_id)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password.")
+        elif req_role == "admin":
+            record_failed_login(lockout_id)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password.")
+
+    # 5. Try parent (if role is parent or unspecified)
+    if req_role in (None, "parent"):
+        parent_row = _fetch_user(db_dal.get_parent_by_username, username, school_id)
+        if parent_row:
+            # parent_row: (parent_id, parent_name, phone, address, pickup_point, username, password, ...)
+            p_id, p_name, _, _, _, p_user, stored_cred = (
+                parent_row[0], parent_row[1], parent_row[2], parent_row[3], parent_row[4], parent_row[5], parent_row[6]
             )
-        record_failed_login(lockout_id)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password.")
+            is_valid, needs_upgrade = security.verify_and_check_upgrade(password, stored_cred)
+            if is_valid:
+                clear_rate_limit(lockout_id)
+                if needs_upgrade:
+                    new_hash = security.hash_password(password)
+                    db_dal.set_parent_password_hash(p_id, new_hash)
 
-    # 5. Try driver (bus table)
-    driver_row = db_dal.get_driver_by_username(username)
-    if driver_row:
-        # bus_row: (bus_id, bus_number, driver_name, driver_phone, capacity, route_id, username, password)
-        bus_id, _, driver_name, _, _, _, d_user, stored_cred = (
-            driver_row[0], driver_row[1], driver_row[2], driver_row[3],
-            driver_row[4], driver_row[5], driver_row[6], driver_row[7]
-        )
-        is_valid, needs_upgrade = security.verify_and_check_upgrade(password, stored_cred or "")
-        if is_valid:
-            clear_rate_limit(lockout_id)
-            if needs_upgrade:
-                new_hash = security.hash_password(password)
-                db_dal.set_driver_password_hash(bus_id, new_hash)
+                token = security.create_access_token({
+                    "user_id": p_id,
+                    "user_type": "parent",
+                    "username": p_user,
+                    "parent_id": p_id,
+                    "school_id": school_id,
+                })
+                return LoginResponse(
+                    access_token=token,
+                    token_type="bearer",
+                    user_type="parent",
+                    user_id=p_id,
+                    name=p_name,
+                    school_id=school_id,
+                )
+            record_failed_login(lockout_id)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password.")
+        elif req_role == "parent":
+            record_failed_login(lockout_id)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password.")
 
-            token = security.create_access_token({
-                "user_id": bus_id,
-                "user_type": "driver",
-                "username": d_user,
-                "bus_id": bus_id,
-            })
-            return LoginResponse(
-                access_token=token,
-                token_type="bearer",
-                user_type="driver",
-                user_id=bus_id,
-                name=driver_name,
+    # 6. Try driver (bus table) (if role is driver or unspecified)
+    if req_role in (None, "driver"):
+        driver_row = _fetch_user(db_dal.get_driver_by_username, username, school_id)
+        if driver_row:
+            # bus_row: (bus_id, bus_number, driver_name, driver_phone, capacity, route_id, username, password, ...)
+            bus_id, _, driver_name, _, _, _, d_user, stored_cred = (
+                driver_row[0], driver_row[1], driver_row[2], driver_row[3],
+                driver_row[4], driver_row[5], driver_row[6], driver_row[7]
             )
-        record_failed_login(lockout_id)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password.")
+            is_valid, needs_upgrade = security.verify_and_check_upgrade(password, stored_cred or "")
+            if is_valid:
+                clear_rate_limit(lockout_id)
+                if needs_upgrade:
+                    new_hash = security.hash_password(password)
+                    db_dal.set_driver_password_hash(bus_id, new_hash)
 
-    # User not found in any table: record failure against lockout and return 401
+                token = security.create_access_token({
+                    "user_id": bus_id,
+                    "user_type": "driver",
+                    "username": d_user,
+                    "bus_id": bus_id,
+                    "school_id": school_id,
+                })
+                return LoginResponse(
+                    access_token=token,
+                    token_type="bearer",
+                    user_type="driver",
+                    user_id=bus_id,
+                    name=driver_name,
+                    school_id=school_id,
+                )
+            record_failed_login(lockout_id)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password.")
+        elif req_role == "driver":
+            record_failed_login(lockout_id)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password.")
+
+    # User not found in any targeted table: record failure against lockout and return 401
     record_failed_login(lockout_id)
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password.")
 
