@@ -495,14 +495,26 @@ class TestProductionSafeguards:
         resp = client.options(
             "/api/v1/auth/login",
             headers={
-                "Origin": "https://neoyatra.app",
+                "Origin": "https://transportneoyatra.vercel.app",
                 "Access-Control-Request-Method": "POST",
                 "Access-Control-Request-Headers": "Content-Type",
             },
         )
         assert resp.status_code == 200
-        assert resp.headers.get("access-control-allow-origin") == "https://neoyatra.app"
+        assert resp.headers.get("access-control-allow-origin") == "https://transportneoyatra.vercel.app"
         assert "POST" in resp.headers.get("access-control-allow-methods", "")
+
+        # Also verify custom domain neoyatra.app
+        resp2 = client.options(
+            "/api/v1/auth/login",
+            headers={
+                "Origin": "https://neoyatra.app",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "Content-Type",
+            },
+        )
+        assert resp2.status_code == 200
+        assert resp2.headers.get("access-control-allow-origin") == "https://neoyatra.app"
 
     def test_cors_preflight_rejects_unauthorized_origin(self):
         resp = client.options(

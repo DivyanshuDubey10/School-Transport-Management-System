@@ -33,14 +33,14 @@ app = FastAPI(
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").strip().lower()
 
 # Parse allowed origins - strictly prohibit wildcard origins in production
-raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,https://neoyatra.app,https://www.neoyatra.app")
+raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,https://transportneoyatra.vercel.app,https://neoyatra.app,https://www.neoyatra.app")
 allowed_origins = [orig.strip() for orig in raw_origins.split(",") if orig.strip()]
 
 if ENVIRONMENT == "production":
     allowed_origins = [orig for orig in allowed_origins if orig != "*"]
     if not allowed_origins:
         logging.warning("No explicit ALLOWED_ORIGINS configured in production! Falling back to secure domain.")
-        allowed_origins = ["https://neoyatra.app", "https://www.neoyatra.app"]
+        allowed_origins = ["https://transportneoyatra.vercel.app", "https://neoyatra.app", "https://www.neoyatra.app"]
 
 app.add_middleware(
     CORSMiddleware,
