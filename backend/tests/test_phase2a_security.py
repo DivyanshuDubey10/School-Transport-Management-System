@@ -491,6 +491,19 @@ class TestProductionSafeguards:
         assert resp.headers.get("access-control-allow-origin") == "http://localhost:5173"
         assert "POST" in resp.headers.get("access-control-allow-methods", "")
 
+    def test_cors_preflight_production_domain_origin(self):
+        resp = client.options(
+            "/api/v1/auth/login",
+            headers={
+                "Origin": "https://neoyatra.app",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "Content-Type",
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.headers.get("access-control-allow-origin") == "https://neoyatra.app"
+        assert "POST" in resp.headers.get("access-control-allow-methods", "")
+
     def test_cors_preflight_rejects_unauthorized_origin(self):
         resp = client.options(
             "/api/v1/auth/login",
